@@ -23,12 +23,21 @@
 	double time1;					//計算カウント数(時間に比例)
 
 
+	double qs;					//フ−リエ変換(qs:-1)とフ−リエ逆変換(qs:1)の区別
+	double xi[ND][ND], xr[ND][ND], xif[ND], xrf[ND];//フ−リエ変換の実部・虚部配列
+	double s[ND],c[ND];	//sinとcosのテーブル
+	int ik[ND];					//ビット反転テーブル
+
+
     double Ms = 1.432E+6;
     double K1 = 2E+4, K2 = -4.5E+4;
     double ram100 = 2.64E-4, ram111 = 0;
     double c11 = 1.96E+11, c12 = 1.56E+11, c44 = 1.23E+11;
     double Astar = 0.0625;
-		double delt = 0.1;
+	double delt = 0.1;
+	double mu0;
+	double h[ND][ND][3], M;
+	double I[3][3];
 
 
 	void ini000();			//初期場の設定サブル−チン
@@ -38,9 +47,16 @@
 	void rcfft();				//２次元高速フーリエ変換
 
 int main(void){
-  double E, Eanis, Eexch, Ems, Eexternal, Eelastic;
-  double m[ND][ND][3];
-	double 
+	double E, Eslash, Eanis, Eexch, Ems, Eexternal, Eelastic;
+	double m[ND][ND][3];
+	double mstar1[ND][ND][3];
+	double mstar2[ND][ND][3];
+	double g[ND][ND][3];
+	double gstar[ND][ND][3];
+
+	double hfour[ND][ND][3];
+	double mfour[ND][ND][3];
+	double gfour[ND][ND][3];
 
 	//*** sinおよびcosテ−ブル、ビット反転テーブル、および初期場の設定 ***************
 	table();		//sinおよびcosテ−ブルとビット反転テーブルの設定
@@ -54,18 +70,20 @@ int main(void){
 	if((((int)(time1) % 10)==0)) {graph_s1();} 		//一定繰返しカウント毎に組織を表示
 	//if((((int)(time1) % 100)==0)) {datsave();} 		//一定繰返しカウント毎にデータを保存
 
+	E = Eanis + Eexch + Ems + Eexternal + Eelastic;
+	Eslash = Eanis + Ems + Eexternal + Eelastic;
 
+	for(i=0;i<=ndm;i++){
+		for(j=0;j<=ndm;j++){
+			for(k=0;k<3;k++){
+				h[i][j]k] = -1/Ms/mu0*(Eslash/x);
+				//g[i][j][k] = (1-Astar*delt*laplacian(i,j))*(m[i][j][k] + delt*h[k]);
+				//gstar[i][j][k] = (1-Astar*delt*laplacian(i,j))*;
 
-
-
-
-
-
-
-
-
-
-
+				gfour[i][j][k] = (mfour[i][j][k] + delt*hfour[i][j][k])/(1+(i*i+j*j)*Astar*delt)
+			}
+		}
+	}
 
 
 
@@ -89,7 +107,6 @@ int main(void){
   return 0;
 
 }
-
 
 
 //************ 初期場の設定サブル−チン *************
@@ -142,7 +159,6 @@ void graph_s1()
 			col_B *= 255;
 
 			chann.at<cv::Vec3b>(ii,jj) = cv::Vec3b(int(col_B), int(col_G), int(col_R));
-
 		}
 	}
 	cv::imwrite("test" + std::to_string(time1) + ".png", chann);
@@ -227,5 +243,7 @@ void laplacian(int i, int j){
 
 }
 
+void grad(int i, int j){
 
+}
 
