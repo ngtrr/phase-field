@@ -1,10 +1,31 @@
-# Phase-field
+
+# **Phase-field**
 <br>
 
 ## What is it for?
 
 This project is aiming to simulate the mechanism of magnetostriction by LLG equation using phase-field method.
 
+<br>
+
+## How to use?
+Before installing the code you need to get **gcc** to compile and **openCV4** to make the .png images.<br>
+
+We recommend to use **pkg-config** to link around opencv packages to compile.
+
+1. Make the directory for clone repository.<br>
+
+>`$ mkdir new_folder_name`<br>
+>`$ cd new_folder_name`<br>
+
+2. Clone the repository.<br>
+
+>`$ git clone git@github.com/ngtrr/phase-field.git`<br>
+
+3. Compile and excute it.<br>
+
+>$ g++ -o output magne.cpp `pkg-config --cflags opencv4` `pkg-config --libs opencv4`<br>
+>`$ ./output`<br>
 
 ## The directory
 
