@@ -11,7 +11,7 @@ This project is aiming to simulate the mechanism of magnetostriction by LLG equa
 ## How to use?
 Before installing the code you need to get **gcc** to compile and **openCV4** to make the .png images.<br>
 
-We recommend to use **pkg-config** to link around opencv packages to compile.
+We recommend to use **pkg-config** to link around opencv packages to compile. Please check your link before using it.
 
 1. Make the directory for clone repository.<br>
 
