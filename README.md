@@ -2,7 +2,7 @@
 # **Phase-field**
 <br>
 
-## What is it for?
+## What is it?
 
 This project is aiming to simulate the mechanism of magnetostriction by LLG equation using phase-field method.
 
