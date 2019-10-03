@@ -29,13 +29,13 @@
 	int ik[ND];					//ビット反転テーブル
 
 
-    double Ms = 1.432E+6;
-    double K1 = 2E+4, K2 = -4.5E+4;
-    double ram100 = 2.64E-4, ram111 = 0;
-    double c11 = 1.96E+11, c12 = 1.56E+11, c44 = 1.23E+11;
-    double Astar = 0.0625;
-	double delt = 0.1;
-	double mu0;
+	void ini000();			//初期場の設定サブル−チン
+	void graph_s1();		//組織描画サブル−チン
+	void table();				//sinとcosのテーブルとビット反転テーブルの作成サブル−チン
+	void fft();					//１次元高速フーリエ変換
+	void rcfft();				//２次元高速フーリエ変換
+
+int main(void){
 
 	double mlength;		//step3 計算用
 
@@ -57,17 +57,18 @@
 	double h[ND][ND][3];
 	double hfour[ND][ND][3];
 
-	void ini000();			//初期場の設定サブル−チン
-	void graph_s1();		//組織描画サブル−チン
-	void table();				//sinとcosのテーブルとビット反転テーブルの作成サブル−チン
-	void fft();					//１次元高速フーリエ変換
-	void rcfft();				//２次元高速フーリエ変換
-
-int main(void){
-
 	//*** sinおよびcosテ−ブル、ビット反転テーブル、および初期場の設定 ***************
 	table();		//sinおよびcosテ−ブルとビット反転テーブルの設定
 	ini000();		//初期場の設定
+
+
+  double Ms = 1.432E+6;
+  double K1 = 2E+4, K2 = -4.5E+4;
+  double ram100 = 2.64E-4, ram111 = 0;
+  double c11 = 1.96E+11, c12 = 1.56E+11, c44 = 1.23E+11;
+  double Astar = 0.0625;
+	double delt = 0.1;
+	double mu0;
 
 	//**** シミュレーションスタート ******************************
 	start: ;
@@ -76,6 +77,18 @@ int main(void){
 	//if((((int)(time1) % Nstep)==0)) {datsave();} 	//一定繰返しカウント毎に組織データを保存
 	if((((int)(time1) % 10)==0)) {graph_s1();} 		//一定繰返しカウント毎に組織を表示
 	//if((((int)(time1) % 100)==0)) {datsave();} 		//一定繰返しカウント毎にデータを保存
+
+
+
+	//	エネルギー関連
+	E = Eslash = Eanis = Eexch = Ems = Eexternal = Eelastic = 0;
+
+	for(i=0;i<=ndm;i++){
+		for(j=0;j<=ndm;j++){
+			Eanis += K1*(m[i][j][0]**2 * m[i][j][1]**2 + m[i][j][0]**2 * m[i][j][2]**2 + m[i][j][1]**2 * m[i][j][2]**2) + K2*(m[i][j][0]**2 * m[i][j][1]**2 * m[i][j][2]**2);
+			//Eexch += ;
+		}
+	}
 
 	E = Eanis + Eexch + Ems + Eexternal + Eelastic;
 	Eslash = Eanis + Ems + Eexternal + Eelastic;
@@ -132,7 +145,6 @@ int main(void){
 			for(k=0;k<3;k++){
 
 				m[i][j][k] = mstar2[i][j][k] / mlength;
-				
 			}
 		}
 	}
