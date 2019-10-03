@@ -36,9 +36,26 @@
     double Astar = 0.0625;
 	double delt = 0.1;
 	double mu0;
-	double h[ND][ND][3], M;
-	double I[3][3];
 
+	double mlength;		//step3 計算用
+
+	double E[ND][ND], Eslash[ND][ND], Eanis[ND][ND], Eexch[ND][ND], Ems[ND][ND], Eexternal[ND][ND], Eelastic[ND][ND];
+
+	double M[ND][ND][3];
+	double m[ND][ND][3];
+	double mstar1[ND][ND][3];
+	double mstar2[ND][ND][3];
+	double mfour[ND][ND][3];
+	double mstarfour[ND][ND][3];
+	double mstar2four[ND][ND][3];
+
+	double g[ND][ND][3];
+	double gstar[ND][ND][3];
+	double gfour[ND][ND][3];
+	double gstarfour[ND][ND][3];
+
+	double h[ND][ND][3];
+	double hfour[ND][ND][3];
 
 	void ini000();			//初期場の設定サブル−チン
 	void graph_s1();		//組織描画サブル−チン
@@ -47,16 +64,6 @@
 	void rcfft();				//２次元高速フーリエ変換
 
 int main(void){
-	double E, Eslash, Eanis, Eexch, Ems, Eexternal, Eelastic;
-	double m[ND][ND][3];
-	double mstar1[ND][ND][3];
-	double mstar2[ND][ND][3];
-	double g[ND][ND][3];
-	double gstar[ND][ND][3];
-
-	double hfour[ND][ND][3];
-	double mfour[ND][ND][3];
-	double gfour[ND][ND][3];
 
 	//*** sinおよびcosテ−ブル、ビット反転テーブル、および初期場の設定 ***************
 	table();		//sinおよびcosテ−ブルとビット反転テーブルの設定
@@ -73,32 +80,62 @@ int main(void){
 	E = Eanis + Eexch + Ems + Eexternal + Eelastic;
 	Eslash = Eanis + Ems + Eexternal + Eelastic;
 
+	//*********************************  STEP 1  ******************************************************
+
 	for(i=0;i<=ndm;i++){
 		for(j=0;j<=ndm;j++){
 			for(k=0;k<3;k++){
-				h[i][j]k] = -1/Ms/mu0*(Eslash/x);
+				h[i][j]k] = -1/Ms/mu0*(Eslash[i][j]/m[i][j][k]);
 				//g[i][j][k] = (1-Astar*delt*laplacian(i,j))*(m[i][j][k] + delt*h[k]);
 				//gstar[i][j][k] = (1-Astar*delt*laplacian(i,j))*;
 
-				gfour[i][j][k] = (mfour[i][j][k] + delt*hfour[i][j][k])/(1+(i*i+j*j)*Astar*delt)
+				// hfour mfour　の計算 (fft)
+
+				gfour[i][j][k] = (mfour[i][j][k] + delt*hfour[i][j][k])/(1+(i*i+j*j)*Astar*delt);
+				g[i][j][k] = gfour[i][j][k]; //ifft
+				gstarfour[i][j][k] = (mstarfour[i][j][k] + delt*hfour[i][j][k])/(1+(i*i+j*j)*Astar*delt);
+				gstar[i][j][k] = gstarfour[i][j][k]; //ifft
 			}
 		}
 	}
 
+	for(i=0;i<=ndm;i++){
+		for(j=0;j<=ndm;j++){
+			mstar[i][j][0] = m[i][j][0] + (g[i][j][1] * m[i][j][2] - g[i][j][2] * m[i][j][1] )
+			mstar[i][j][1] = m[i][j][1] + (g[i][j][2] * mstar[i][j][0] - gstar[i][j][0] * m[i][j][2] )
+			mstar[i][j][2] = m[i][j][2] + (gstar[i][j][0] * mstar[i][j][1] - gstar[i][j][1] * mstar[i][j][1] )
+		}
+	}
+
+	//*********************************  STEP 2  ******************************************************
 
 
 
+	for(i=0;i<=ndm;i++){
+		for(j=0;j<=ndm;j++){
+			for(k=0;k<3;k++){
+
+				// mstarfour　の計算 (fft)
+
+				mstar2four[i][j][k] = (mstarfour[i][j][k] + delt*hfour[i][j][k])/(1+(i*i+j*j)*Astar*delt);
+				mstar2[i][j][k] = mstar2four[i][j][k];
+			}
+		}
+	}
+
+	//*********************************  STEP 3  ******************************************************
 
 
+	for(i=0;i<=ndm;i++){
+		for(j=0;j<=ndm;j++){
+			mlength = sqrt(mstar2[i][j][0]**2 + mstar2[i][j][1]**2 + mstar2[i][j][2]**2);
+			for(k=0;k<3;k++){
 
-
-
-
-
-
-
-
-
+				m[i][j][k] = mstar2[i][j][k] / mlength;
+				
+			}
+		}
+	}
 
 	time1=time1+1.0;								//計算カウント数の加算
 	if(time1<time1max){goto start;}	//最大カウント数に到達したかどうかの判断
@@ -239,11 +276,11 @@ void rcfft()
 
 }
 
-void laplacian(int i, int j){
+void laplacian(int i, int j, int k){
 
 }
 
-void grad(int i, int j){
+void grad(int i, int j, int k){
 
 }
 
