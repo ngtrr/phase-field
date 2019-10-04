@@ -24,6 +24,39 @@
 	double time1;					//計算カウント数(時間に比例)
 	double time1max;
 
+	double Ms = 1.432E+6;
+  	double K1 = 2E+4, K2 = -4.5E+4;
+  	double ram100 = 2.64E-4, ram111 = 0;
+  	double c11 = 1.96E+11, c12 = 1.56E+11, c44 = 1.23E+11;
+	double A;
+  	double Astar = 0.0625;
+	double delt = 0.1;
+	double mu0;
+
+	double fai[ND][ND];
+	double faifour[ND][ND];
+
+	double M[ND][ND][3];
+	double m[ND][ND][3];
+	double mstar1[ND][ND][3];
+	double mstar2[ND][ND][3];
+	double mfour[ND][ND][3];
+	double mstarfour[ND][ND][3];
+	double mstar2four[ND][ND][3];
+
+	double g[ND][ND][3];
+	double gstar[ND][ND][3];
+	double gfour[ND][ND][3];
+	double gstarfour[ND][ND][3];
+
+	double h[ND][ND][3];
+	double hfour[ND][ND][3];
+
+	double Heff[ND][ND][3];
+	double Hanis[ND][ND][3];
+	double Hms[ND][ND][3];
+	double Hexternal[ND][ND][3];
+	double Helastic[ND][ND][3];
 
 	double qs;					//フ−リエ変換(qs:-1)とフ−リエ逆変換(qs:1)の区別
 	double xi[ND][ND], xr[ND][ND], xif[ND], xrf[ND];//フ−リエ変換の実部・虚部配列
@@ -47,35 +80,23 @@ int main(void){
 
 	double E, Eslash, Eanis, Eexch, Ems, Eexternal, Eelastic;
 
-	double M[ND][ND][3];
-	double m[ND][ND][3];
-	double mstar1[ND][ND][3];
-	double mstar2[ND][ND][3];
-	double mfour[ND][ND][3];
-	double mstarfour[ND][ND][3];
-	double mstar2four[ND][ND][3];
 
-	double g[ND][ND][3];
-	double gstar[ND][ND][3];
-	double gfour[ND][ND][3];
-	double gstarfour[ND][ND][3];
-
-	double h[ND][ND][3];
-	double hfour[ND][ND][3];
+	for(i=0;i<=ndm;i++){
+		for(j=0;j<=ndm;j++){
+			for(k=0;k<3;k++){
+				Heff[i][j][k] = 0;
+				Hanis[i][j][k] = 0;
+				Hms[i][j][k] = 0;
+				Hexternal[i][j][k] = 0;
+				Helastic[i][j][k] = 0;
+			}
+		}
+	}
 
 	//*** sinおよびcosテ−ブル、ビット反転テーブル、および初期場の設定 ***************
 	table();		//sinおよびcosテ−ブルとビット反転テーブルの設定
 	ini000();		//初期場の設定
 
-
-	double Ms = 1.432E+6;
-  	double K1 = 2E+4, K2 = -4.5E+4;
-  	double ram100 = 2.64E-4, ram111 = 0;
-  	double c11 = 1.96E+11, c12 = 1.56E+11, c44 = 1.23E+11;
-	double A;
-  	double Astar = 0.0625;
-	double delt = 0.1;
-	double mu0;
 
 	//**** シミュレーションスタート ******************************
 	start: ;
@@ -98,9 +119,10 @@ int main(void){
 
 	for(i=0;i<=ndm;i++){
 		for(j=0;j<=ndm;j++){
-			Eanis += K1*( pow(m[i][j][0], 2.0) * pow(m[i][j][1], 2.0) + pow(m[i][j][0], 2.0) * pow(m[i][j][2], 2.0) + pow(m[i][j][1], 2.0) * pow(m[i][j][2], 2.0)) + K2*( pow(m[i][j][0], 2.0) * pow(m[i][j][1], 2.0) * pow(m[i][j][2], 2.0));
+			//Eanis += K1*( pow(m[i][j][0], 2.0) * pow(m[i][j][1], 2.0) + pow(m[i][j][0], 2.0) * pow(m[i][j][2], 2.0) + pow(m[i][j][1], 2.0) * pow(m[i][j][2], 2.0)) + K2*( pow(m[i][j][0], 2.0) * pow(m[i][j][1], 2.0) * pow(m[i][j][2], 2.0));
 			//Eexch += A * ;
 			//Ems = -0.5 * mu0 * Ms * ;
+
 		}
 	}
 
@@ -174,13 +196,20 @@ int main(void){
 //************ 初期場の設定サブル−チン *************
 void ini000()
 {
-	int i, j;
-  //srand(time(NULL)); // 乱数初期化
+	int i, j ,k;
+	double mlength;
+
+	//srand(time(NULL)); // 乱数初期化
 
 	for(i=0;i<=ndm;i++){
 		for(j=0;j<=ndm;j++){
-			s1h[i][j]=0.2*DRND(1.0); s2h[i][j]=0.2*DRND(1.0);//場を最大20%の乱数にて設定
-			//if(abs(j-nd2)<(nd/40)){s1h[i][j]=DRND(1.0); s2h[i][j]=DRND(1.0);}
+			for(k=0;k<3;k++){
+				m[i][j][k] = rand();
+			}
+			mlength = sqrt( pow(m[i][j][0], 2.0) + pow(m[i][j][1], 2.0) + pow(m[i][j][2], 2.0));
+			for(k=0;k<3;k++){
+				m[i][j][k] = m[i][j][k] / mlength;
+			}
 		}
 	}
 }
@@ -210,9 +239,10 @@ void graph_s1()
 			//座標計算			//スクリーン座標系に変換
 			ii=i; jj=j; if(i==nd){ii=0;} if(j==nd){jj=0;}//周期的境界条件
 
-			col_R=s1h[ii][jj];//場の色をRGBにて設定
-			col_G=s2h[ii][jj];
-			col_RG=col_R+col_G;  if(col_RG>1.){col_RG=1.;}  col_B=1.-col_RG;
+			col_R=m[i][j][0];//場の色をRGBにて設定
+			col_G=m[i][j][0];
+			col_B=m[i][j][0];
+			//col_RG=col_R+col_G;  if(col_RG>1.){col_RG=1.;}  col_B=1.-col_RG;
 			if(col_R>=0.999){col_R=1.;} if(col_R<=0.001){col_R=0.;}//RGBの変域補正
 			if(col_G>=0.999){col_G=1.;} if(col_G<=0.001){col_G=0.;}
 			if(col_B>=0.999){col_B=1.;} if(col_B<=0.001){col_B=0.;}
