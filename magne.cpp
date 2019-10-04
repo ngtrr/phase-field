@@ -20,6 +20,7 @@
 	int ig=IG;						//2^ig=ND
 	double PI=3.14159;		//円周率
 	double rr=8.3145;			//ガス定数
+	double alpha=0.5;
 	double time1;					//計算カウント数(時間に比例)
 
 
@@ -62,11 +63,12 @@ int main(void){
 	ini000();		//初期場の設定
 
 
-  double Ms = 1.432E+6;
-  double K1 = 2E+4, K2 = -4.5E+4;
-  double ram100 = 2.64E-4, ram111 = 0;
-  double c11 = 1.96E+11, c12 = 1.56E+11, c44 = 1.23E+11;
-  double Astar = 0.0625;
+	double Ms = 1.432E+6;
+  	double K1 = 2E+4, K2 = -4.5E+4;
+  	double ram100 = 2.64E-4, ram111 = 0;
+  	double c11 = 1.96E+11, c12 = 1.56E+11, c44 = 1.23E+11;
+	double A;
+  	double Astar = 0.0625;
 	double delt = 0.1;
 	double mu0;
 
@@ -86,7 +88,8 @@ int main(void){
 	for(i=0;i<=ndm;i++){
 		for(j=0;j<=ndm;j++){
 			Eanis += K1*(m[i][j][0]**2 * m[i][j][1]**2 + m[i][j][0]**2 * m[i][j][2]**2 + m[i][j][1]**2 * m[i][j][2]**2) + K2*(m[i][j][0]**2 * m[i][j][1]**2 * m[i][j][2]**2);
-			//Eexch += ;
+			//Eexch += A * ;
+			//Ems = -0.5 * mu0 * Ms * ;
 		}
 	}
 
@@ -130,8 +133,8 @@ int main(void){
 
 				// mstarfour　の計算 (fft)
 
-				mstar2four[i][j][k] = (mstarfour[i][j][k] + delt*hfour[i][j][k])/(1+(i*i+j*j)*Astar*delt);
-				mstar2[i][j][k] = mstar2four[i][j][k];
+				mstar2four[i][j][k] = (mstarfour[i][j][k] + alpha*delt*hfour[i][j][k])/(1+(i*i+j*j)*Astar*alpha*delt);
+				mstar2[i][j][k] = mstar2four[i][j][k];	//fft
 			}
 		}
 	}
@@ -143,7 +146,6 @@ int main(void){
 		for(j=0;j<=ndm;j++){
 			mlength = sqrt(mstar2[i][j][0]**2 + mstar2[i][j][1]**2 + mstar2[i][j][2]**2);
 			for(k=0;k<3;k++){
-
 				m[i][j][k] = mstar2[i][j][k] / mlength;
 			}
 		}
