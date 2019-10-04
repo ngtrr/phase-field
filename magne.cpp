@@ -22,6 +22,7 @@
 	double rr=8.3145;			//ガス定数
 	double alpha=0.5;
 	double time1;					//計算カウント数(時間に比例)
+	double time1max;
 
 
 	double qs;					//フ−リエ変換(qs:-1)とフ−リエ逆変換(qs:1)の区別
@@ -38,9 +39,13 @@
 
 int main(void){
 
+	int i;
+	int j;
+	int k;
+
 	double mlength;		//step3 計算用
 
-	double E[ND][ND], Eslash[ND][ND], Eanis[ND][ND], Eexch[ND][ND], Ems[ND][ND], Eexternal[ND][ND], Eelastic[ND][ND];
+	double E, Eslash, Eanis, Eexch, Ems, Eexternal, Eelastic;
 
 	double M[ND][ND][3];
 	double m[ND][ND][3];
@@ -83,11 +88,17 @@ int main(void){
 
 
 	//	エネルギー関連
-	E = Eslash = Eanis = Eexch = Ems = Eexternal = Eelastic = 0;
+	E = 0;
+	Eslash = 0;
+	Eanis = 0;
+	Eexch = 0;
+	Ems = 0;
+	Eexternal = 0;
+	Eelastic = 0;
 
 	for(i=0;i<=ndm;i++){
 		for(j=0;j<=ndm;j++){
-			Eanis += K1*(m[i][j][0]**2 * m[i][j][1]**2 + m[i][j][0]**2 * m[i][j][2]**2 + m[i][j][1]**2 * m[i][j][2]**2) + K2*(m[i][j][0]**2 * m[i][j][1]**2 * m[i][j][2]**2);
+			Eanis += K1*( pow(m[i][j][0], 2.0) * pow(m[i][j][1], 2.0) + pow(m[i][j][0], 2.0) * pow(m[i][j][2], 2.0) + pow(m[i][j][1], 2.0) * pow(m[i][j][2], 2.0)) + K2*( pow(m[i][j][0], 2.0) * pow(m[i][j][1], 2.0) * pow(m[i][j][2], 2.0));
 			//Eexch += A * ;
 			//Ems = -0.5 * mu0 * Ms * ;
 		}
@@ -101,7 +112,7 @@ int main(void){
 	for(i=0;i<=ndm;i++){
 		for(j=0;j<=ndm;j++){
 			for(k=0;k<3;k++){
-				h[i][j]k] = -1/Ms/mu0*(Eslash[i][j]/m[i][j][k]);
+				h[i][j][k] = -1/Ms/mu0*(Eslash/m[i][j][k]);
 				//g[i][j][k] = (1-Astar*delt*laplacian(i,j))*(m[i][j][k] + delt*h[k]);
 				//gstar[i][j][k] = (1-Astar*delt*laplacian(i,j))*;
 
@@ -117,9 +128,9 @@ int main(void){
 
 	for(i=0;i<=ndm;i++){
 		for(j=0;j<=ndm;j++){
-			mstar[i][j][0] = m[i][j][0] + (g[i][j][1] * m[i][j][2] - g[i][j][2] * m[i][j][1] )
-			mstar[i][j][1] = m[i][j][1] + (g[i][j][2] * mstar[i][j][0] - gstar[i][j][0] * m[i][j][2] )
-			mstar[i][j][2] = m[i][j][2] + (gstar[i][j][0] * mstar[i][j][1] - gstar[i][j][1] * mstar[i][j][1] )
+			mstar1[i][j][0] = m[i][j][0] + (g[i][j][1] * m[i][j][2] - g[i][j][2] * m[i][j][1] );
+			mstar1[i][j][1] = m[i][j][1] + (g[i][j][2] * mstar1[i][j][0] - gstar[i][j][0] * m[i][j][2] );
+			mstar1[i][j][2] = m[i][j][2] + (gstar[i][j][0] * mstar1[i][j][1] - gstar[i][j][1] * mstar1[i][j][1] );
 		}
 	}
 
@@ -144,7 +155,7 @@ int main(void){
 
 	for(i=0;i<=ndm;i++){
 		for(j=0;j<=ndm;j++){
-			mlength = sqrt(mstar2[i][j][0]**2 + mstar2[i][j][1]**2 + mstar2[i][j][2]**2);
+			mlength = sqrt( pow(mstar2[i][j][0], 2.0) + pow(mstar2[i][j][1], 2.0) + pow(mstar2[i][j][2], 2.0));
 			for(k=0;k<3;k++){
 				m[i][j][k] = mstar2[i][j][k] / mlength;
 			}
