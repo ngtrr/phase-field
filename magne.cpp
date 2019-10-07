@@ -1,12 +1,13 @@
 //for magenetostriction model by llg equation with phase-field simulation
 
-
 #include <stdio.h>
 #include <stdlib.h>
 #include <time.h> 
 #include <math.h>
 #include <iostream>
 #include <opencv2/opencv.hpp>
+#include <complex.h>
+#include <fftw3.h>
 
 
 #define DRND(x) ((double)(x)/RAND_MAX*rand())//乱数の関数設定
