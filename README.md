@@ -14,7 +14,7 @@ Before installing the code you need to get **gcc** to compile and **openCV4** to
 We recommend to use **pkg-config** to link around opencv packages to compile. Please check your link before.
 
 -- 2019/10/7 --<br>
-We newly import fftw3.h for calculate dft more fast. please install by terminal before compiling.
+We newly import **fftw3** and **Eigen** for calculate dft more fast. please install by terminal before compiling.
 
 1. Make the directory for clone repository.<br>
 
