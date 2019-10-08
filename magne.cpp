@@ -9,12 +9,17 @@
 #include <complex.h>
 #include <fftw3.h>
 
+using namespace std;
 
 #define DRND(x) ((double)(x)/RAND_MAX*rand())//乱数の関数設定
 
 #define ND 256			//差分計算における計算領域一辺の分割数(高速フーリエ変換を用いるため２のべき乗)
 #define IG 8				//2^IG=ND
 #define INXY 400		//描画window１辺のピクセルサイズ(正方形の描画領域)
+#define SIZEX (ND)
+#define SIZEY (ND)
+#define SIZEZ 1
+#define SIZE (SIZEX*SIZEY*SIZEZ)
 
 	int nd=ND, ndm=ND-1; 	//計算領域の一辺の差分分割数(差分ブロック数)、ND-1を定義
 	int nd2=ND/2;				 	//ND/2を定義：高速フ−リエ変換で使用
@@ -36,6 +41,7 @@
 
 	double fai[ND][ND];
 	double faifour[ND][ND];
+	double faifour_i[ND][ND];
 
 	double M[ND][ND][3];
 	double m[ND][ND][3];
@@ -44,14 +50,20 @@
 	double mfour[ND][ND][3];
 	double mstarfour[ND][ND][3];
 	double mstar2four[ND][ND][3];
+	double mfour_i[ND][ND][3];
+	double mstarfour_i[ND][ND][3];
+	double mstar2four_i[ND][ND][3];
 
 	double g[ND][ND][3];
 	double gstar[ND][ND][3];
 	double gfour[ND][ND][3];
 	double gstarfour[ND][ND][3];
+	double gfour_i[ND][ND][3];
+	double gstarfour_i[ND][ND][3];
 
 	double h[ND][ND][3];
 	double hfour[ND][ND][3];
+	double hfour_i[ND][ND][3];
 
 	double Heff[ND][ND][3];
 	double Hanis[ND][ND][3];
@@ -64,12 +76,17 @@
 	double s[ND],c[ND];	//sinとcosのテーブル
 	int ik[ND];					//ビット反転テーブル
 
+	double fourier_output[ND][ND][3];
+	double fourier_output_i[ND][ND][3];
+	double fourier_input[ND][ND][3];
 
 	void ini000();			//初期場の設定サブル−チン
 	void graph_s1();		//組織描画サブル−チン
 	void table();				//sinとcosのテーブルとビット反転テーブルの作成サブル−チン
 	void fft();					//１次元高速フーリエ変換
 	void rcfft();				//２次元高速フーリエ変換
+	int DCexchange2D();
+	int fft3d();
 
 int main(void){
 
@@ -79,17 +96,14 @@ int main(void){
 
 	double mlength;		//step3 計算用
 
-	double E, Eslash, Eanis, Eexch, Ems, Eexternal, Eelastic;
-
-
 	for(i=0;i<=ndm;i++){
 		for(j=0;j<=ndm;j++){
 			for(k=0;k<3;k++){
-				Heff[i][j][k] = 0;
-				Hanis[i][j][k] = 0;
-				Hms[i][j][k] = 0;
-				Hexternal[i][j][k] = 0;
-				Helastic[i][j][k] = 0;
+				Heff[i][j][k] = 0;//init
+				Hanis[i][j][k] = (-4 * K1)/(3 * Ms);//ok
+				Hms[i][j][k] = 0;//init
+				Hexternal[i][j][k] = 0;//ok
+				Helastic[i][j][k] = 0;//ok
 			}
 		}
 	}
@@ -108,16 +122,7 @@ int main(void){
 	//if((((int)(time1) % 100)==0)) {datsave();} 		//一定繰返しカウント毎にデータを保存
 
 
-
-	//	エネルギー関連
-	E = 0;
-	Eslash = 0;
-	Eanis = 0;
-	Eexch = 0;
-	Ems = 0;
-	Eexternal = 0;
-	Eelastic = 0;
-
+	/*
 	for(i=0;i<=ndm;i++){
 		for(j=0;j<=ndm;j++){
 			//Eanis += K1*( pow(m[i][j][0], 2.0) * pow(m[i][j][1], 2.0) + pow(m[i][j][0], 2.0) * pow(m[i][j][2], 2.0) + pow(m[i][j][1], 2.0) * pow(m[i][j][2], 2.0)) + K2*( pow(m[i][j][0], 2.0) * pow(m[i][j][1], 2.0) * pow(m[i][j][2], 2.0));
@@ -126,28 +131,83 @@ int main(void){
 
 		}
 	}
+	*/
 
-	E = Eanis + Eexch + Ems + Eexternal + Eelastic;
-	Eslash = Eanis + Ems + Eexternal + Eelastic;
+	memcpy(fourier_input, m, sizeof(m));
+	fft3d();
+	memcpy(mfour, fourier_output, sizeof(m));
+	memcpy(mfour_i, fourier_output_i, sizeof(m));
+
+
+	for(i=0;i<=ndm;i++){
+		for(j=0;j<=ndm;j++){
+			faifour[i][j] = Ms*(mfour_i[i][j][0]*(i - nd/2) + mfour_i[i][j][1]*(j - nd/2) + mfour_i[i][j][2]*0 )/((i - nd/2) + (j - nd/2) + 0);
+			faifour_i[i][j] = -1*Ms*(mfour[i][j][0]*(i - nd/2) + mfour[i][j][1]*(j - nd/2) + mfour[i][j][2]*0 )/((i - nd/2) + (j - nd/2) + 0);
+		}
+	}
+
+	for(i=0;i<=ndm;i++){
+		for(j=0;j<=ndm;j++){
+			fourier_output[i][j][0] = faifour[i][j];
+			fourier_output[i][j][1] = faifour[i][j];
+			fourier_output[i][j][2] = faifour[i][j];
+			fourier_output_i[i][j][0] = faifour_i[i][j];
+			fourier_output_i[i][j][1] = faifour_i[i][j];
+			fourier_output_i[i][j][2] = faifour_i[i][j];
+		}
+	}
+
+	ifft3d();
+
+	for(i=0;i<=ndm;i++){
+		for(j=0;j<=ndm;j++){
+			fai[i][j] = fourier_input[i][j][0];
+		}
+	}
 
 	//*********************************  STEP 1  ******************************************************
 
 	for(i=0;i<=ndm;i++){
 		for(j=0;j<=ndm;j++){
 			for(k=0;k<3;k++){
-				h[i][j][k] = -1/Ms/mu0*(Eslash/m[i][j][k]);
-				//g[i][j][k] = (1-Astar*delt*laplacian(i,j))*(m[i][j][k] + delt*h[k]);
-				//gstar[i][j][k] = (1-Astar*delt*laplacian(i,j))*;
-
-				// hfour mfour　の計算 (fft)
-
-				gfour[i][j][k] = (mfour[i][j][k] + delt*hfour[i][j][k])/(1+(i*i+j*j)*Astar*delt);
-				g[i][j][k] = gfour[i][j][k]; //ifft
-				gstarfour[i][j][k] = (mstarfour[i][j][k] + delt*hfour[i][j][k])/(1+(i*i+j*j)*Astar*delt);
-				gstar[i][j][k] = gstarfour[i][j][k]; //ifft
+				h[i][j][k] = Hanis[i][j][k] + Hms[i][j][k] + Hexternal[i][j][k] + Helastic[i][j][k];
 			}
 		}
 	}
+
+	// hfour mfour　の計算 (fft)
+	memcpy(fourier_input, h, sizeof(h));
+	fft3d();
+	memcpy(hfour, fourier_output, sizeof(h));
+	memcpy(hfour_i, fourier_output_i, sizeof(h));
+
+	for(i=0;i<=ndm;i++){
+		for(j=0;j<=ndm;j++){
+			for(k=0;k<3;k++){
+				gfour[i][j][k] = (mfour[i][j][k] + delt*hfour[i][j][k])/(1+((i - nd/2)*(i - nd/2)+(j - nd/2)*(j - nd/2))*Astar*delt);
+				gfour_i[i][j][k] = (mfour_i[i][j][k] + delt*hfour_i[i][j][k])/(1+((i - nd/2)*(i - nd/2)+(j - nd/2)*(j - nd/2))*Astar*delt);
+			}
+		}
+	}
+	
+	memcpy(fourier_output, gfour, sizeof(gfour));
+	memcpy(fourier_output_i, gfour_i, sizeof(gfour));
+	ifft3d();
+	memcpy(g, fourier_input, sizeof(gfour));
+
+	for(i=0;i<=ndm;i++){
+		for(j=0;j<=ndm;j++){
+			for(k=0;k<3;k++){
+				gstarfour[i][j][k] = (mstarfour[i][j][k] + delt*hfour[i][j][k])/(1+((i - nd/2)*(i - nd/2)+(j - nd/2)*(j - nd/2))*Astar*delt);
+				gstarfour_i[i][j][k] = (mstarfour_i[i][j][k] + delt*hfour_i[i][j][k])/(1+((i - nd/2)*(i - nd/2)+(j - nd/2)*(j - nd/2))*Astar*delt);
+			}
+		}
+	}
+
+	memcpy(fourier_output, gstarfour, sizeof(gstarfour));
+	memcpy(fourier_output_i, gstarfour_i, sizeof(gstarfour));
+	ifft3d();
+	memcpy(gstar, fourier_input, sizeof(gstarfour));
 
 	for(i=0;i<=ndm;i++){
 		for(j=0;j<=ndm;j++){
@@ -158,8 +218,6 @@ int main(void){
 	}
 
 	//*********************************  STEP 2  ******************************************************
-
-
 
 	for(i=0;i<=ndm;i++){
 		for(j=0;j<=ndm;j++){
@@ -330,6 +388,160 @@ void rcfft()
 		}
 	}
 
+}
+
+
+int DCexchange2D( fftw_complex *data, int cols, int rows, int depth )
+{
+	int i,j,k;
+	int p1,p2,p3;    // point position
+	int c2,r2,d2;    // temporary for cols/2,rows/2
+	double re,im; // temporary
+
+	if( data==NULL )       return false;
+	if( (rows<0 || cols<0) || depth<0) return false;
+ 
+	c2 = cols/2;
+	r2 = rows/2;
+    d2 = depth/2;
+ 
+	for( k=0; k<depth; k++ ){
+		for( j=0; j<r2; j++ ){
+            for ( i=0; i<cols; i++ ){
+                // exchange p1( i, j ) <-> p2( (cols/2+i)%cols, rows/2+j )
+                p1 = j*cols + i + k*rows*cols;
+                p2 = (r2+j)*cols + (c2+i)%cols + k*rows*cols;
+                re = data[p1][0];
+                im = data[p1][1];
+                data[p1][0] = data[p2][0];
+                data[p1][1] = data[p2][1];
+                data[p2][0] = re;
+                data[p2][1] = im;
+            }
+		}
+	}
+
+	for( k=0; k<d2; k++ ){
+		for( j=0; j<rows; j++ ){
+            for ( i=0; i<cols; i++ ){
+                // exchange p1( i, j ) <-> p2( (cols/2+i)%cols, rows/2+j )
+                p1 = j*cols + i + k*rows*cols;
+                p2 = j*cols + i + (d2+k)*rows*cols;
+                re = data[p1][0];
+                im = data[p1][1];
+                data[p1][0] = data[p2][0];
+                data[p1][1] = data[p2][1];
+                data[p2][0] = re;
+                data[p2][1] = im;
+            }
+		}
+	}
+
+	return true;
+}
+
+int fft3d(void){
+
+	fftw_complex *in  = NULL;
+	fftw_complex *out = NULL;
+	fftw_plan p       = NULL;
+	int i,j,k,idx;
+ 
+	size_t mem_size = sizeof(fftw_complex) * SIZE;
+	in  = (fftw_complex*)fftw_malloc( mem_size );
+	out = (fftw_complex*)fftw_malloc( mem_size );
+ 
+	if( !in || !out ){
+		fprintf( stderr, "failed to allocate %d[byte] memory(-.-)\n", (int)mem_size );
+		return false;
+	}
+ 
+	// !! row-major alignment is recommended, but here, column-major.
+	p = fftw_plan_dft_3d( SIZEY, SIZEX, SIZEZ, in, out, FFTW_FORWARD, FFTW_ESTIMATE );
+	ip = fftw_plan_dft_3d( SIZEY, SIZEX, SIZEZ, in, out, FFTW_BACKWARD, FFTW_ESTIMATE );
+ 
+	// input data creation
+	//printf("----- INPUT -----\n");
+	for( k=0; k<SIZEZ; k++ ){
+        for( j=0; j<SIZEY; j++ ){
+            for( i=0; i<SIZEX; i++ ){
+                idx = SIZEZ*k+SIZEX*j+i; // column-major alignment
+                in[idx][0] = fourier_input[i][j];
+                in[idx][1] = 0;
+            }
+        }
+    }
+ 
+	fftw_execute(p);
+    DCexchange2D(out, SIZEX, SIZEY, SIZEZ);
+ 
+	// output is DC exchanged and scaled.
+	double scale = 1. / SIZE;
+	//printf("\n----- RESULT -----\n");
+	for( j=0; j<SIZEY; j++ ){
+		for( i=0; i<SIZEX; i++ ){
+			idx = SIZEX*j+i;
+			//printf("%d %d %lf %lf\n", i, j, out[idx][0]*scale, out[idx][1]*scale );
+		}
+	}
+ 
+	if( p   ) fftw_destroy_plan(p);
+	if( in  ) fftw_free(in);
+	if( out ) fftw_free(out);
+
+    return true;
+}
+
+
+int ifft3d(void){
+
+	fftw_complex *in  = NULL;
+	fftw_complex *out = NULL;
+	fftw_plan p       = NULL;
+	int i,j,k,idx;
+ 
+	size_t mem_size = sizeof(fftw_complex) * SIZE;
+	in  = (fftw_complex*)fftw_malloc( mem_size );
+	out = (fftw_complex*)fftw_malloc( mem_size );
+ 
+	if( !in || !out ){
+		fprintf( stderr, "failed to allocate %d[byte] memory(-.-)\n", (int)mem_size );
+		return false;
+	}
+ 
+	// !! row-major alignment is recommended, but here, column-major.
+	ip = fftw_plan_dft_3d( SIZEY, SIZEX, SIZEZ, in, out, FFTW_BACKWARD, FFTW_ESTIMATE );
+ 
+	// input data creation
+	//printf("----- INPUT -----\n");
+	for( k=0; k<SIZEZ; k++ ){
+        for( j=0; j<SIZEY; j++ ){
+            for( i=0; i<SIZEX; i++ ){
+                idx = SIZEZ*k+SIZEX*j+i; // column-major alignment
+                in[idx][0] = 1 + 2*sin(2*M_PI*i/SIZEX) + sin(4*M_PI*j/SIZEY);
+                in[idx][1] = 0;
+            }
+        }
+    }
+ 
+	fftw_execute(p);
+    DCexchange2D(out, SIZEX, SIZEY, SIZEZ);
+ 
+	// output is DC exchanged and scaled.
+	double scale = 1. / SIZE;
+	//printf("\n----- RESULT -----\n");
+	for( j=0; j<SIZEY; j++ ){
+		for( i=0; i<SIZEX; i++ ){
+			idx = SIZEX*j+i;
+			printf("%d %d %lf %lf\n", i, j, out[idx][0]*scale, out[idx][1]*scale );
+		}
+	}
+ 
+	if( p   ) fftw_destroy_plan(p);
+	if( in  ) fftw_free(in);
+	if( out ) fftw_free(out);
+
+    return true;
 }
 
 void laplacian(int i, int j, int k){
