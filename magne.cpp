@@ -28,7 +28,7 @@ using namespace std;
 	double rr=8.3145;			//ガス定数
 	double alpha=0.5;
 	double time1;					//計算カウント数(時間に比例)
-	double time1max;
+	double time1max = 1000;
 
 	double filter[3][3][3];
 
@@ -36,7 +36,7 @@ using namespace std;
   	double K1 = 2E+4, K2 = -4.5E+4;
   	double ram100 = 2.64E-4, ram111 = 0;
   	double c11 = 1.96E+11, c12 = 1.56E+11, c44 = 1.23E+11;
-	double A;
+	double A = 0.0625;
   	double Astar = 0.0625;
 	double delt = 0.1;
 	double mu0;
@@ -73,14 +73,9 @@ using namespace std;
 	double Hexternal[ND][ND][3];
 	double Helastic[ND][ND][3];
 
-	double qs;					//フ−リエ変換(qs:-1)とフ−リエ逆変換(qs:1)の区別
-	double xi[ND][ND], xr[ND][ND], xif[ND], xrf[ND];//フ−リエ変換の実部・虚部配列
-	double s[ND],c[ND];	//sinとcosのテーブル
-	int ik[ND];					//ビット反転テーブル
-
-	double fourier_output[ND][ND][3];
-	double fourier_output_i[ND][ND][3];
-	double fourier_input[ND][ND][3];
+	double fourier_output[ND][ND];
+	double fourier_output_i[ND][ND];
+	double fourier_input[ND][ND];
 
 	double filter_output[ND][ND];
 
@@ -91,6 +86,9 @@ using namespace std;
 	void rcfft();				//２次元高速フーリエ変換
 	int DCexchange2D();
 	int fft3d();
+	int ifft3d();
+	int convolution3D(int switch_num);
+	void grad_fai();
 
 int main(void){
 
@@ -98,7 +96,7 @@ int main(void){
 	int j;
 	int k;
 
-	double mlength;		//step3 計算用
+	double mlength;
 
 	for(i=0;i<=ndm;i++){
 		for(j=0;j<=ndm;j++){
@@ -113,7 +111,6 @@ int main(void){
 	}
 
 	//*** sinおよびcosテ−ブル、ビット反転テーブル、および初期場の設定 ***************
-	table();		//sinおよびcosテ−ブルとビット反転テーブルの設定
 	ini000();		//初期場の設定
 
 
@@ -126,22 +123,20 @@ int main(void){
 	//if((((int)(time1) % 100)==0)) {datsave();} 		//一定繰返しカウント毎にデータを保存
 
 
-	/*
-	for(i=0;i<=ndm;i++){
-		for(j=0;j<=ndm;j++){
-			//Eanis += K1*( pow(m[i][j][0], 2.0) * pow(m[i][j][1], 2.0) + pow(m[i][j][0], 2.0) * pow(m[i][j][2], 2.0) + pow(m[i][j][1], 2.0) * pow(m[i][j][2], 2.0)) + K2*( pow(m[i][j][0], 2.0) * pow(m[i][j][1], 2.0) * pow(m[i][j][2], 2.0));
-			//Eexch += A * ;
-			//Ems = -0.5 * mu0 * Ms * ;
-
+	for(k=0;k<3;k++){
+		for(i=0;i<=ndm;i++){
+			for(j=0;j<=ndm;j++){
+				fourier_input[i][j] = m[i][j][k];
+			}
+		}
+		fft3d();
+		for(i=0;i<=ndm;i++){
+			for(j=0;j<=ndm;j++){
+				mfour[i][j][k] = fourier_output[i][j];
+				mfour_i[i][j][k] = fourier_output_i[i][j];
+			}
 		}
 	}
-	*/
-
-	memcpy(fourier_input, m, sizeof(m));
-	fft3d();
-	memcpy(mfour, fourier_output, sizeof(m));
-	memcpy(mfour_i, fourier_output_i, sizeof(m));
-
 
 	for(i=0;i<=ndm;i++){
 		for(j=0;j<=ndm;j++){
@@ -150,24 +145,24 @@ int main(void){
 		}
 	}
 
+	cout << "faifour  :  " << faifour[100][100] << endl;
+
 	for(i=0;i<=ndm;i++){
 		for(j=0;j<=ndm;j++){
-			fourier_output[i][j][0] = faifour[i][j];
-			fourier_output[i][j][1] = faifour[i][j];
-			fourier_output[i][j][2] = faifour[i][j];
-			fourier_output_i[i][j][0] = faifour_i[i][j];
-			fourier_output_i[i][j][1] = faifour_i[i][j];
-			fourier_output_i[i][j][2] = faifour_i[i][j];
+			fourier_output[i][j] = faifour[i][j];
+			fourier_output_i[i][j] = faifour_i[i][j];
 		}
 	}
-
 	ifft3d();
-
 	for(i=0;i<=ndm;i++){
 		for(j=0;j<=ndm;j++){
-			fai[i][j] = fourier_input[i][j][0];
+			fai[i][j] = fourier_input[i][j];
 		}
 	}
+
+	cout << "fai  :  " << fai[100][100] << endl;
+
+	grad_fai();
 
 	//*********************************  STEP 1  ******************************************************
 
@@ -180,10 +175,20 @@ int main(void){
 	}
 
 	// hfour mfour　の計算 (fft)
-	memcpy(fourier_input, h, sizeof(h));
-	fft3d();
-	memcpy(hfour, fourier_output, sizeof(h));
-	memcpy(hfour_i, fourier_output_i, sizeof(h));
+	for(k=0;k<3;k++){
+		for(i=0;i<=ndm;i++){
+			for(j=0;j<=ndm;j++){
+				fourier_input[i][j] = h[i][j][k];
+			}
+		}
+		fft3d();
+		for(i=0;i<=ndm;i++){
+			for(j=0;j<=ndm;j++){
+				hfour[i][j][k] = fourier_output[i][j];
+				hfour_i[i][j][k] = fourier_output_i[i][j];
+			}
+		}
+	}
 
 	for(i=0;i<=ndm;i++){
 		for(j=0;j<=ndm;j++){
@@ -194,58 +199,176 @@ int main(void){
 		}
 	}
 	
-	memcpy(fourier_output, gfour, sizeof(gfour));
-	memcpy(fourier_output_i, gfour_i, sizeof(gfour));
-	ifft3d();
-	memcpy(g, fourier_input, sizeof(gfour));
 
-	for(i=0;i<=ndm;i++){
-		for(j=0;j<=ndm;j++){
-			for(k=0;k<3;k++){
-				gstarfour[i][j][k] = (mstarfour[i][j][k] + delt*hfour[i][j][k])/(1+((i - nd/2)*(i - nd/2)+(j - nd/2)*(j - nd/2))*Astar*delt);
-				gstarfour_i[i][j][k] = (mstarfour_i[i][j][k] + delt*hfour_i[i][j][k])/(1+((i - nd/2)*(i - nd/2)+(j - nd/2)*(j - nd/2))*Astar*delt);
+	for(k=0;k<3;k++){
+		for(i=0;i<=ndm;i++){
+			for(j=0;j<=ndm;j++){
+				fourier_output[i][j] = gfour[i][j][k];
+				fourier_output_i[i][j] = gfour_i[i][j][k];
+			}
+		}
+		ifft3d();
+		for(i=0;i<=ndm;i++){
+			for(j=0;j<=ndm;j++){
+				g[i][j][k] = fourier_input[i][j];
 			}
 		}
 	}
 
-	memcpy(fourier_output, gstarfour, sizeof(gstarfour));
-	memcpy(fourier_output_i, gstarfour_i, sizeof(gstarfour));
-	ifft3d();
-	memcpy(gstar, fourier_input, sizeof(gstarfour));
+
+	cout << "m  :  " << m[100][100][1] << endl;
+	cout << "g  :  " << g[100][100][1] << endl;
+
+	//漸化式の書き換えが必要
 
 	for(i=0;i<=ndm;i++){
 		for(j=0;j<=ndm;j++){
 			mstar1[i][j][0] = m[i][j][0] + (g[i][j][1] * m[i][j][2] - g[i][j][2] * m[i][j][1] );
+		}
+	}
+
+	for(i=0;i<=ndm;i++){
+		for(j=0;j<=ndm;j++){
+			fourier_input[i][j] = mstar1[i][j][0];
+		}
+	}
+	fft3d();
+	for(i=0;i<=ndm;i++){
+		for(j=0;j<=ndm;j++){
+			mstarfour[i][j][0] = fourier_output[i][j];
+			mstarfour_i[i][j][0] = fourier_output_i[i][j];
+		}
+	}
+
+	for(i=0;i<=ndm;i++){
+		for(j=0;j<=ndm;j++){
+			gstarfour[i][j][0] = (mstarfour[i][j][0] + delt*hfour[i][j][0])/(1+((i - nd/2)*(i - nd/2)+(j - nd/2)*(j - nd/2))*Astar*delt);
+			gstarfour_i[i][j][0] = (mstarfour_i[i][j][0] + delt*hfour_i[i][j][0])/(1+((i - nd/2)*(i - nd/2)+(j - nd/2)*(j - nd/2))*Astar*delt);
+		}
+	}
+
+
+	for(i=0;i<=ndm;i++){
+		for(j=0;j<=ndm;j++){
+			fourier_output[i][j] = gstarfour[i][j][0];
+			fourier_output_i[i][j] = gstarfour_i[i][j][0];
+		}
+	}
+	ifft3d();
+	for(i=0;i<=ndm;i++){
+		for(j=0;j<=ndm;j++){
+			gstar[i][j][0] = fourier_input[i][j];
+		}
+	}
+
+	for(i=0;i<=ndm;i++){
+		for(j=0;j<=ndm;j++){
 			mstar1[i][j][1] = m[i][j][1] + (g[i][j][2] * mstar1[i][j][0] - gstar[i][j][0] * m[i][j][2] );
+		}
+	}
+
+
+	for(i=0;i<=ndm;i++){
+		for(j=0;j<=ndm;j++){
+			fourier_input[i][j] = mstar1[i][j][1];
+		}
+	}
+	fft3d();
+	for(i=0;i<=ndm;i++){
+		for(j=0;j<=ndm;j++){
+			mstarfour[i][j][1] = fourier_output[i][j];
+			mstarfour_i[i][j][1] = fourier_output_i[i][j];
+		}
+	}
+
+	for(i=0;i<=ndm;i++){
+		for(j=0;j<=ndm;j++){
+			gstarfour[i][j][1] = (mstarfour[i][j][1] + delt*hfour[i][j][1])/(1+((i - nd/2)*(i - nd/2)+(j - nd/2)*(j - nd/2))*Astar*delt);
+			gstarfour_i[i][j][1] = (mstarfour_i[i][j][1] + delt*hfour_i[i][j][1])/(1+((i - nd/2)*(i - nd/2)+(j - nd/2)*(j - nd/2))*Astar*delt);
+		}
+	}
+
+	for(i=0;i<=ndm;i++){
+		for(j=0;j<=ndm;j++){
+			fourier_output[i][j] = gstarfour[i][j][1];
+			fourier_output_i[i][j] = gstarfour_i[i][j][1];
+		}
+	}
+	ifft3d();
+	for(i=0;i<=ndm;i++){
+		for(j=0;j<=ndm;j++){
+			gstar[i][j][1] = fourier_input[i][j];
+		}
+	}
+
+	for(i=0;i<=ndm;i++){
+		for(j=0;j<=ndm;j++){
 			mstar1[i][j][2] = m[i][j][2] + (gstar[i][j][0] * mstar1[i][j][1] - gstar[i][j][1] * mstar1[i][j][1] );
 		}
 	}
+
+	for(i=0;i<=ndm;i++){
+		for(j=0;j<=ndm;j++){
+			fourier_input[i][j] = mstar1[i][j][2];
+		}
+	}
+	fft3d();
+	for(i=0;i<=ndm;i++){
+		for(j=0;j<=ndm;j++){
+			mstarfour[i][j][2] = fourier_output[i][j];
+			mstarfour_i[i][j][2] = fourier_output_i[i][j];
+		}
+	}
+
+	cout << "msatr1  :   " << mstar1[100][100][1] << endl;
 
 	//*********************************  STEP 2  ******************************************************
 
 	for(i=0;i<=ndm;i++){
 		for(j=0;j<=ndm;j++){
 			for(k=0;k<3;k++){
+				mstar2four[i][j][k] = (mstarfour[i][j][k] + alpha*delt*hfour[i][j][k])/(1+((i - nd/2)*(i - nd/2)+(j - nd/2)*(j - nd/2))*Astar*alpha*delt);
+			}
+		}
+	}
 
-				// mstarfour　の計算 (fft)
-
-				mstar2four[i][j][k] = (mstarfour[i][j][k] + alpha*delt*hfour[i][j][k])/(1+(i*i+j*j)*Astar*alpha*delt);
-				mstar2[i][j][k] = mstar2four[i][j][k];	//fft
+	for(k=0;k<3;k++){
+		for(i=0;i<=ndm;i++){
+			for(j=0;j<=ndm;j++){
+				fourier_output[i][j] = mstar2four[i][j][k];
+				fourier_output_i[i][j] = mstar2four_i[i][j][k];
+			}
+		}
+		ifft3d();
+		for(i=0;i<=ndm;i++){
+			for(j=0;j<=ndm;j++){
+				mstar2[i][j][k] = fourier_input[i][j];
 			}
 		}
 	}
 
 	//*********************************  STEP 3  ******************************************************
 
-
 	for(i=0;i<=ndm;i++){
 		for(j=0;j<=ndm;j++){
-			mlength = sqrt( pow(mstar2[i][j][0], 2.0) + pow(mstar2[i][j][1], 2.0) + pow(mstar2[i][j][2], 2.0));
+			mlength = sqrt( mstar2[i][j][0] * mstar2[i][j][0] + mstar2[i][j][1] * mstar2[i][j][1] + mstar2[i][j][2] * mstar2[i][j][2] );
 			for(k=0;k<3;k++){
 				m[i][j][k] = mstar2[i][j][k] / mlength;
 			}
 		}
 	}
+
+
+	for(i=0;i<=ndm;i++){
+		for(j=0;j<=ndm;j++){
+			mlength = sqrt( m[i][j][0] * m[i][j][0] + m[i][j][1] * m[i][j][1] + m[i][j][2] * m[i][j][2] );
+			for(k=0;k<3;k++){
+				m[i][j][k] = m[i][j][k] / mlength;
+			}
+		}
+	}
+
+	cout << m[100][100][1] << endl;
 
 	time1=time1+1.0;								//計算カウント数の加算
 	if(time1<time1max){goto start;}	//最大カウント数に到達したかどうかの判断
@@ -269,7 +392,7 @@ void ini000()
 			for(k=0;k<3;k++){
 				m[i][j][k] = rand();
 			}
-			mlength = sqrt( pow(m[i][j][0], 2.0) + pow(m[i][j][1], 2.0) + pow(m[i][j][2], 2.0));
+			mlength = sqrt( m[i][j][0] * m[i][j][0] + m[i][j][1] * m[i][j][1] + m[i][j][2] * m[i][j][2] );
 			for(k=0;k<3;k++){
 				m[i][j][k] = m[i][j][k] / mlength;
 			}
@@ -303,95 +426,20 @@ void graph_s1()
 			ii=i; jj=j; if(i==nd){ii=0;} if(j==nd){jj=0;}//周期的境界条件
 
 			col_R=m[i][j][0];//場の色をRGBにて設定
-			col_G=m[i][j][0];
-			col_B=m[i][j][0];
+			col_G=m[i][j][1];
+			col_B=m[i][j][2];
 			//col_RG=col_R+col_G;  if(col_RG>1.){col_RG=1.;}  col_B=1.-col_RG;
 			if(col_R>=0.999){col_R=1.;} if(col_R<=0.001){col_R=0.;}//RGBの変域補正
 			if(col_G>=0.999){col_G=1.;} if(col_G<=0.001){col_G=0.;}
 			if(col_B>=0.999){col_B=1.;} if(col_B<=0.001){col_B=0.;}
-			col_R *= 255;
-			col_G *= 255;
-			col_B *= 255;
+			col_R *= 200;
+			col_G *= 200;
+			col_B *= 200;
 
 			chann.at<cv::Vec3b>(ii,jj) = cv::Vec3b(int(col_B), int(col_G), int(col_R));
 		}
 	}
-	cv::imwrite("test" + std::to_string(time1) + ".png", chann);
-}
-
-
-//******* Sin, Cos のテーブルおよびビット反転テーブルの設定 ***************
-void table()
-{
-	int it, it1, it2, mc, mn;
-	double q;
-
-	q=2.0*PI/nd;
-	for(it=0;it<=nd2-1;it++){ c[it]=cos(q*it); s[it]=sin(q*it); }//Sin, Cos のテーブル
-
-	ik[0]=0; mn=nd2; mc=1;
-	for(it1=1;it1<=ig;it1++){
-		for(it2=0;it2<=mc-1;it2++){
-			ik[it2+mc]=ik[it2]+mn;				//ビット反転テーブル
-		}
-		mn=mn/2; mc=2*mc;
-	}
-}
-
-//********** １次元高速フーリエ変換 **************************************
-void fft()
-{
-	int ix, ka, kb, l2, lf, mf, n2, nf;
-	double tj, tr;
-
-	l2=1;
-	for(lf=1;lf<=ig;lf++){
-		n2=nd2/l2;
-		for(mf=1;mf<=l2;mf++){
-			for(nf=0;nf<=n2-1;nf++){
-				ix=nf*l2;
-				ka=nf+2*n2*(mf-1);
-				kb=ka+n2;
-				tr=xrf[ka]-xrf[kb];  					tj=xif[ka]-xif[kb];
-				xrf[ka]=xrf[ka]+xrf[kb]; 			xif[ka]=xif[ka]+xif[kb];
-				xrf[kb]=tr*c[ix]-tj*qs*s[ix];	xif[kb]=tj*c[ix]+tr*qs*s[ix];
-			}
-		}
-		l2=l2*2;
-	}
-
-}
-
-//************ ２次元高速フーリエ変換 ***********************************
-void rcfft()
-{
-	int i, ic, ir, j;
-
-	for(ir=0;ir<=ndm;ir++){
-		for(ic=0;ic<=ndm;ic++){
-			xrf[ic]=xr[ir][ic];	xif[ic]=xi[ir][ic];
-		}
-	fft();
-		for(ic=0;ic<=ndm;ic++){
-			xr[ir][ic]=xrf[ik[ic]];	xi[ir][ic]=xif[ik[ic]];
-		}
-	}
-	for(ic=0;ic<=ndm;ic++){
-		for(ir=0;ir<=ndm;ir++){
-			xrf[ir]=xr[ir][ic];	xif[ir]=xi[ir][ic];
-		}
-	fft();
-		for(ir=0;ir<=ndm;ir++){
-			xr[ir][ic]=xrf[ik[ir]];	xi[ir][ic]=xif[ik[ir]];
-		}
-	}
-	if(qs>0.){return;}
-	for(i=0;i<=ndm;i++){
-		for(j=0;j<=ndm;j++){
-			xr[i][j]=xr[i][j]/nd/nd;	xi[i][j]=xi[i][j]/nd/nd;
-		}
-	}
-
+	cv::imwrite("test_LLG" + std::to_string(time1) + ".png", chann);
 }
 
 
@@ -462,7 +510,6 @@ int fft3d(void){
  
 	// !! row-major alignment is recommended, but here, column-major.
 	p = fftw_plan_dft_3d( SIZEY, SIZEX, SIZEZ, in, out, FFTW_FORWARD, FFTW_ESTIMATE );
-	ip = fftw_plan_dft_3d( SIZEY, SIZEX, SIZEZ, in, out, FFTW_BACKWARD, FFTW_ESTIMATE );
  
 	// input data creation
 	//printf("----- INPUT -----\n");
@@ -485,7 +532,9 @@ int fft3d(void){
 	for( j=0; j<SIZEY; j++ ){
 		for( i=0; i<SIZEX; i++ ){
 			idx = SIZEX*j+i;
-			//printf("%d %d %lf %lf\n", i, j, out[idx][0]*scale, out[idx][1]*scale );
+			//printf("fft :  %d %d %lf %lf\n", i, j, out[idx][0]*scale, out[idx][1]*scale );
+			fourier_output[i][j] = out[idx][0] * scale;
+			fourier_output_i[i][j] = out[idx][1] * scale;
 		}
 	}
  
@@ -499,22 +548,22 @@ int fft3d(void){
 
 int ifft3d(void){
 
-	fftw_complex *in  = NULL;
-	fftw_complex *out = NULL;
-	fftw_plan p       = NULL;
+	fftw_complex *in2  = NULL;
+	fftw_complex *out2 = NULL;
+	fftw_plan ip       = NULL;
 	int i,j,k,idx;
  
 	size_t mem_size = sizeof(fftw_complex) * SIZE;
-	in  = (fftw_complex*)fftw_malloc( mem_size );
-	out = (fftw_complex*)fftw_malloc( mem_size );
+	in2  = (fftw_complex*)fftw_malloc( mem_size );
+	out2 = (fftw_complex*)fftw_malloc( mem_size );
  
-	if( !in || !out ){
+	if( !in2 || !out2 ){
 		fprintf( stderr, "failed to allocate %d[byte] memory(-.-)\n", (int)mem_size );
 		return false;
 	}
  
 	// !! row-major alignment is recommended, but here, column-major.
-	ip = fftw_plan_dft_3d( SIZEY, SIZEX, SIZEZ, in, out, FFTW_BACKWARD, FFTW_ESTIMATE );
+	ip = fftw_plan_dft_3d( SIZEY, SIZEX, SIZEZ, in2, out2, FFTW_BACKWARD, FFTW_ESTIMATE );
  
 	// input data creation
 	//printf("----- INPUT -----\n");
@@ -522,14 +571,16 @@ int ifft3d(void){
         for( j=0; j<SIZEY; j++ ){
             for( i=0; i<SIZEX; i++ ){
                 idx = SIZEZ*k+SIZEX*j+i; // column-major alignment
-                in[idx][0] = 1 + 2*sin(2*M_PI*i/SIZEX) + sin(4*M_PI*j/SIZEY);
-                in[idx][1] = 0;
+                in2[idx][0] = fourier_output[i][j];
+                in2[idx][1] = fourier_output_i[i][j];
             }
         }
     }
+	cout << "in  :  " << in2[10000][0] << endl;
+	cout << "in_i  :  " << in2[10000][1] << endl;
  
-	fftw_execute(p);
-    DCexchange2D(out, SIZEX, SIZEY, SIZEZ);
+	fftw_execute(ip);
+    //DCexchange2D(out2, SIZEX, SIZEY, SIZEZ);
  
 	// output is DC exchanged and scaled.
 	double scale = 1. / SIZE;
@@ -537,20 +588,66 @@ int ifft3d(void){
 	for( j=0; j<SIZEY; j++ ){
 		for( i=0; i<SIZEX; i++ ){
 			idx = SIZEX*j+i;
-			printf("%d %d %lf %lf\n", i, j, out[idx][0]*scale, out[idx][1]*scale );
+
+			//printf("ifft :  %d %d %lf %lf\n", i, j, out2[idx][0]*scale, out2[idx][1]*scale );
+			fourier_input[i][j] = out2[idx][0] * scale;
 		}
 	}
+	cout << "out  :  " << out2[10000][0] << endl;
  
-	if( p   ) fftw_destroy_plan(p);
-	if( in  ) fftw_free(in);
-	if( out ) fftw_free(out);
+	if( ip   ) fftw_destroy_plan(ip);
+	if( in2  ) fftw_free(in2);
+	if( out2 ) fftw_free(out2);
 
     return true;
 }
 
-int convolution3D(){
-}
+int convolution3D(int switch_num){
+	int i, j, k, ii, jj, kk;
+	double switch_cal[3][3][3];
 
+	switch (switch_num){
+	case 0:
+		for(i=0;i<=ndm;i++){
+			for(j=0;j<=ndm;j++){
+				for(k=0;k<SIZEZ;k++){
+
+					for(ii=0;ii<3;ii++){
+						for(jj=0;jj<3;jj++){
+							for(kk=0;kk<3;kk++){
+								if(i+ii-1 > ndm || i+ii-1 < 0){
+									continue;
+								}else if(j+jj-1 > ndm || j+jj-1 < 0){
+									continue;
+								}else if(k+kk-1 > SIZEZ-1 || k+kk-1 < 0){
+									continue;
+								}else {
+									switch_cal[ii][jj][kk] = fai[i + ii-1][j + jj-1] * filter[ii][jj][kk];
+								}
+								//filter[ii][jj][kk] = 0;
+							}
+						}
+					}
+
+					filter_output[i][j] = 0;
+					for(ii=0;ii<3;ii++){
+						for(jj=0;jj<3;jj++){
+							for(kk=0;kk<3;kk++){
+								filter_output[i][j] += switch_cal[ii][jj][kk];
+							}
+						}
+					}
+
+				}
+			}
+		}
+		break;
+	
+	default:
+		break;
+	}
+}
+/*
 void laplacian(){
 	int i, j, k;
 
@@ -572,7 +669,7 @@ void laplacian(){
 
 	convolution3D();
 }
-
+*/
 void grad_fai(){
 	int i, j, k;
 
