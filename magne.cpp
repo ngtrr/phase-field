@@ -30,6 +30,8 @@ using namespace std;
 	double time1;					//計算カウント数(時間に比例)
 	double time1max;
 
+	double filter[3][3][3];
+
 	double Ms = 1.432E+6;
   	double K1 = 2E+4, K2 = -4.5E+4;
   	double ram100 = 2.64E-4, ram111 = 0;
@@ -79,6 +81,8 @@ using namespace std;
 	double fourier_output[ND][ND][3];
 	double fourier_output_i[ND][ND][3];
 	double fourier_input[ND][ND][3];
+
+	double filter_output[ND][ND];
 
 	void ini000();			//初期場の設定サブル−チン
 	void graph_s1();		//組織描画サブル−チン
@@ -544,11 +548,80 @@ int ifft3d(void){
     return true;
 }
 
-void laplacian(int i, int j, int k){
-
+int convolution3D(){
 }
 
-void grad(int i, int j, int k){
+void laplacian(){
+	int i, j, k;
 
+	for(i=0;i<3;i++){
+		for(j=0;j<3;j++){
+			for(k=0;k<3;k++){
+				filter[i][j][k] = 0;
+			}
+		}
+	}
+
+	filter[0][1][1] = 1;
+	filter[1][0][1] = 1;
+	filter[1][1][0] = 1;
+	filter[1][1][1] = -6;
+	filter[1][1][2] = 1;
+	filter[1][2][1] = 1;
+	filter[2][1][1] = 1;
+
+	convolution3D();
+}
+
+void grad_fai(){
+	int i, j, k;
+
+	for(i=0;i<3;i++){
+		for(j=0;j<3;j++){
+			for(k=0;k<3;k++){
+				filter[i][j][k] = 0;
+			}
+		}
+	}
+	filter[0][1][1] = 0.5;
+	filter[2][1][1] = -0.5;
+	convolution3D(0);
+	for(i=0;i<=ndm;i++){
+		for(j=0;j<=ndm;j++){
+			Hms[i][j][0] = filter_output[i][j];
+		}
+	}
+
+	for(i=0;i<3;i++){
+		for(j=0;j<3;j++){
+			for(k=0;k<3;k++){
+				filter[i][j][k] = 0;
+			}
+		}
+	}
+	filter[1][0][1] = 0.5;
+	filter[1][2][1] = -0.5;
+	convolution3D(0);
+	for(i=0;i<=ndm;i++){
+		for(j=0;j<=ndm;j++){
+			Hms[i][j][1] = filter_output[i][j];
+		}
+	}
+
+	for(i=0;i<3;i++){
+		for(j=0;j<3;j++){
+			for(k=0;k<3;k++){
+				filter[i][j][k] = 0;
+			}
+		}
+	}
+	filter[1][1][0] = 0.5;
+	filter[1][1][2] = -0.5;
+	convolution3D(0);
+	for(i=0;i<=ndm;i++){
+		for(j=0;j<=ndm;j++){
+			Hms[i][j][2] = filter_output[i][j];
+		}
+	}
 }
 
