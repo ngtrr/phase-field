@@ -28,7 +28,7 @@ using namespace std;
 	double rr=8.3145;			//ガス定数
 	double alpha=0.5;
 	double time1;					//計算カウント数(時間に比例)
-	double time1max = 1000;
+	double time1max = 100000000;
 
 	double filter[3][3][3];
 
@@ -97,6 +97,7 @@ int main(void){
 	int k;
 
 	double mlength;
+	srand(time(NULL));
 
 	for(i=0;i<=ndm;i++){
 		for(j=0;j<=ndm;j++){
@@ -448,7 +449,7 @@ void graph_s1()
 			chann.at<cv::Vec3b>(ii,jj) = cv::Vec3b(int(col_B), int(col_G), int(col_R));
 		}
 	}
-	cv::imwrite("test_LLG" + std::to_string(time1) + ".png", chann);
+	cv::imwrite("test_LLG_2_" + std::to_string(time1) + ".png", chann);
 }
 
 
