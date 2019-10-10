@@ -28,7 +28,7 @@ using namespace std;
 	double rr=8.3145;			//ガス定数
 	double alpha=0.5;
 	double time1;					//計算カウント数(時間に比例)
-	double time1max = 1000;
+	double time1max = 100000;
 
 	double filter[3][3][3];
 
@@ -98,6 +98,8 @@ int main(void){
 
 	double mlength;
 
+	srand(time(NULL));
+
 	for(i=0;i<=ndm;i++){
 		for(j=0;j<=ndm;j++){
 			for(k=0;k<3;k++){
@@ -119,7 +121,7 @@ int main(void){
 
 	//if(time1<=100.){Nstep=10;} else{Nstep=200;}		//データ保存する時間間隔の変更
 	//if((((int)(time1) % Nstep)==0)) {datsave();} 	//一定繰返しカウント毎に組織データを保存
-	if((((int)(time1) % 10)==0)) {graph_s1();} 		//一定繰返しカウント毎に組織を表示
+	if((((int)(time1) % 1000)==0)) {graph_s1();} 		//一定繰返しカウント毎に組織を表示
 	//if((((int)(time1) % 100)==0)) {datsave();} 		//一定繰返しカウント毎にデータを保存
 
 
