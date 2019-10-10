@@ -134,18 +134,27 @@ int main(void){
 			for(j=0;j<=ndm;j++){
 				mfour[i][j][k] = fourier_output[i][j];
 				mfour_i[i][j][k] = fourier_output_i[i][j];
+				if (isinf(mfour[i][j][k]) == 1){
+					cout << "mfour        " << i << " : " << j << "   -    " << dec << mfour[i][j][k] << endl;
+				}
+
+				//cout << "mfour_i        " << i << " : " << j << "   -    " << mfour_i[i][j] << endl;
 			}
 		}
 	}
 
 	for(i=0;i<=ndm;i++){
 		for(j=0;j<=ndm;j++){
-			faifour[i][j] = Ms*(mfour_i[i][j][0]*(i - nd/2) + mfour_i[i][j][1]*(j - nd/2) + mfour_i[i][j][2]*0 )/((i - nd/2) + (j - nd/2) + 0);
-			faifour_i[i][j] = -1*Ms*(mfour[i][j][0]*(i - nd/2) + mfour[i][j][1]*(j - nd/2) + mfour[i][j][2]*0 )/((i - nd/2) + (j - nd/2) + 0);
+			faifour[i][j] = Ms*(mfour_i[i][j][0]*(i - nd/2 + 0.5) + mfour_i[i][j][1]*(j - nd/2 + 0.5) + mfour_i[i][j][2]*0 )/((i - nd/2 + 0.5)*(i - nd/2 + 0.5) + (j - nd/2 + 0.5)*(j - nd/2 + 0.5) + 0);
+			faifour_i[i][j] = -1*Ms*(mfour[i][j][0]*(i - nd/2 + 0.5) + mfour[i][j][1]*(j - nd/2 + 0.5) + mfour[i][j][2]*0 )/((i - nd/2 + 0.5)*(i - nd/2 + 0.5) + (j - nd/2 + 0.5)*(j - nd/2 + 0.5) + 0);
+			if (isinf(faifour[i][j]) == 1){
+				cout << "faifour        " << i << " : " << j << "   -    " << dec << faifour[i][j] << endl;
+			}
+			//cout << "faifour        " << i << " : " << j << "   -    " << faifour[i][j] << endl;
 		}
 	}
 
-	cout << "faifour  :  " << faifour[100][100] << endl;
+	//cout << "faifour  :  " << faifour[128][128] << endl;
 
 	for(i=0;i<=ndm;i++){
 		for(j=0;j<=ndm;j++){
@@ -160,7 +169,7 @@ int main(void){
 		}
 	}
 
-	cout << "fai  :  " << fai[100][100] << endl;
+	//cout << "fai  :  " << fai[100][100] << endl;
 
 	grad_fai();
 
@@ -193,8 +202,8 @@ int main(void){
 	for(i=0;i<=ndm;i++){
 		for(j=0;j<=ndm;j++){
 			for(k=0;k<3;k++){
-				gfour[i][j][k] = (mfour[i][j][k] + delt*hfour[i][j][k])/(1+((i - nd/2)*(i - nd/2)+(j - nd/2)*(j - nd/2))*Astar*delt);
-				gfour_i[i][j][k] = (mfour_i[i][j][k] + delt*hfour_i[i][j][k])/(1+((i - nd/2)*(i - nd/2)+(j - nd/2)*(j - nd/2))*Astar*delt);
+				gfour[i][j][k] = (mfour[i][j][k] + delt*hfour[i][j][k])/(1+((i - nd/2 + 0.5)*(i - nd/2 + 0.5)+(j - nd/2 + 0.5)*(j - nd/2 + 0.5))*Astar*delt);
+				gfour_i[i][j][k] = (mfour_i[i][j][k] + delt*hfour_i[i][j][k])/(1+((i - nd/2 + 0.5)*(i - nd/2 + 0.5)+(j - nd/2 + 0.5)*(j - nd/2 + 0.5))*Astar*delt);
 			}
 		}
 	}
@@ -216,8 +225,8 @@ int main(void){
 	}
 
 
-	cout << "m  :  " << m[100][100][1] << endl;
-	cout << "g  :  " << g[100][100][1] << endl;
+	//cout << "m  :  " << m[100][100][1] << endl;
+	//cout << "g  :  " << g[100][100][1] << endl;
 
 	//漸化式の書き換えが必要
 
@@ -242,8 +251,8 @@ int main(void){
 
 	for(i=0;i<=ndm;i++){
 		for(j=0;j<=ndm;j++){
-			gstarfour[i][j][0] = (mstarfour[i][j][0] + delt*hfour[i][j][0])/(1+((i - nd/2)*(i - nd/2)+(j - nd/2)*(j - nd/2))*Astar*delt);
-			gstarfour_i[i][j][0] = (mstarfour_i[i][j][0] + delt*hfour_i[i][j][0])/(1+((i - nd/2)*(i - nd/2)+(j - nd/2)*(j - nd/2))*Astar*delt);
+			gstarfour[i][j][0] = (mstarfour[i][j][0] + delt*hfour[i][j][0])/(1+((i - nd/2 + 0.5)*(i - nd/2 + 0.5)+(j - nd/2 + 0.5)*(j - nd/2 + 0.5))*Astar*delt);
+			gstarfour_i[i][j][0] = (mstarfour_i[i][j][0] + delt*hfour_i[i][j][0])/(1+((i - nd/2 + 0.5)*(i - nd/2 + 0.5)+(j - nd/2 + 0.5)*(j - nd/2 + 0.5))*Astar*delt);
 		}
 	}
 
@@ -283,8 +292,8 @@ int main(void){
 
 	for(i=0;i<=ndm;i++){
 		for(j=0;j<=ndm;j++){
-			gstarfour[i][j][1] = (mstarfour[i][j][1] + delt*hfour[i][j][1])/(1+((i - nd/2)*(i - nd/2)+(j - nd/2)*(j - nd/2))*Astar*delt);
-			gstarfour_i[i][j][1] = (mstarfour_i[i][j][1] + delt*hfour_i[i][j][1])/(1+((i - nd/2)*(i - nd/2)+(j - nd/2)*(j - nd/2))*Astar*delt);
+			gstarfour[i][j][1] = (mstarfour[i][j][1] + delt*hfour[i][j][1])/(1+((i - nd/2 + 0.5)*(i - nd/2 + 0.5)+(j - nd/2 + 0.5)*(j - nd/2 + 0.5))*Astar*delt);
+			gstarfour_i[i][j][1] = (mstarfour_i[i][j][1] + delt*hfour_i[i][j][1])/(1+((i - nd/2 + 0.5)*(i - nd/2 + 0.5)+(j - nd/2 + 0.5)*(j - nd/2 + 0.5))*Astar*delt);
 		}
 	}
 
@@ -320,14 +329,14 @@ int main(void){
 		}
 	}
 
-	cout << "msatr1  :   " << mstar1[100][100][1] << endl;
+	//cout << "msatr1  :   " << mstar1[100][100][1] << endl;
 
 	//*********************************  STEP 2  ******************************************************
 
 	for(i=0;i<=ndm;i++){
 		for(j=0;j<=ndm;j++){
 			for(k=0;k<3;k++){
-				mstar2four[i][j][k] = (mstarfour[i][j][k] + alpha*delt*hfour[i][j][k])/(1+((i - nd/2)*(i - nd/2)+(j - nd/2)*(j - nd/2))*Astar*alpha*delt);
+				mstar2four[i][j][k] = (mstarfour[i][j][k] + alpha*delt*hfour[i][j][k])/(1+((i - nd/2 + 0.5)*(i - nd/2 + 0.5)+(j - nd/2 + 0.5)*(j - nd/2 + 0.5))*Astar*alpha*delt);
 			}
 		}
 	}
@@ -368,7 +377,7 @@ int main(void){
 		}
 	}
 
-	cout << m[100][100][1] << endl;
+	//cout << m[100][100][1] << endl;
 
 	time1=time1+1.0;								//計算カウント数の加算
 	if(time1<time1max){goto start;}	//最大カウント数に到達したかどうかの判断
@@ -412,7 +421,7 @@ void graph_s1()
 	//gcls(); //画面クリア
 	xmin=0.; xmax=1.; ymin=0.; ymax=1.;//描画領域（規格化されている）
 
-	printf("time %f\n",time1);//計算カウント数の表示
+	//printf("time %f\n",time1);//計算カウント数の表示
 	dia0=1.0/nd;
 	rad0=dia0/2.0;   						irad0=(ixmax-ixmin)/(xmax-xmin)*rad0+1;
 	//差分ブロックの半分の長さ	//スクリーン座標系に変換（+1は整数化時の切捨て補正）
@@ -426,8 +435,8 @@ void graph_s1()
 			ii=i; jj=j; if(i==nd){ii=0;} if(j==nd){jj=0;}//周期的境界条件
 
 			col_R=m[i][j][0];//場の色をRGBにて設定
-			col_G=m[i][j][1];
-			col_B=m[i][j][2];
+			col_G=m[i][j][0];
+			col_B=m[i][j][0];
 			//col_RG=col_R+col_G;  if(col_RG>1.){col_RG=1.;}  col_B=1.-col_RG;
 			if(col_R>=0.999){col_R=1.;} if(col_R<=0.001){col_R=0.;}//RGBの変域補正
 			if(col_G>=0.999){col_G=1.;} if(col_G<=0.001){col_G=0.;}
@@ -576,8 +585,8 @@ int ifft3d(void){
             }
         }
     }
-	cout << "in  :  " << in2[10000][0] << endl;
-	cout << "in_i  :  " << in2[10000][1] << endl;
+	//cout << "in  :  " << fourier_output[100][100] << endl;
+	//cout << "in_i  :  " << in2[10000][1] << endl;
  
 	fftw_execute(ip);
     //DCexchange2D(out2, SIZEX, SIZEY, SIZEZ);
@@ -593,7 +602,7 @@ int ifft3d(void){
 			fourier_input[i][j] = out2[idx][0] * scale;
 		}
 	}
-	cout << "out  :  " << out2[10000][0] << endl;
+	//cout << "out  :  " << out2[10000][0] << endl;
  
 	if( ip   ) fftw_destroy_plan(ip);
 	if( in2  ) fftw_free(in2);
