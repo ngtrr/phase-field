@@ -26,20 +26,21 @@ using namespace std;
 	int ig=IG;						//2^ig=ND
 	double PI=3.14159;		//円周率
 	double rr=8.3145;			//ガス定数
-	double alpha=0.5;
+	double alpha=0.01;
 	double time1;					//計算カウント数(時間に比例)
-	double time1max = 100000000;
+	double time1max = 100000;
 
 	double filter[3][3][3];
 
-	double Ms = 1.432E+6;
-  	double K1 = 2E+4, K2 = -4.5E+4;
+	double Ms = 8.0E+5;
+  	double K1 = 0, K2 = 0;
   	double ram100 = 2.64E-4, ram111 = 0;
   	double c11 = 1.96E+11, c12 = 1.56E+11, c44 = 1.23E+11;
-	double A = 0.0625;
-  	double Astar = 0.0625;
+	double A = 1.3E-11;
+  	double Astar;
 	double delt = 0.1;
-	double mu0;
+	double mu0 = 1.0;
+	double ld = 9.875E-07;
 
 	double fai[ND][ND];
 	double faifour[ND][ND];
@@ -97,7 +98,10 @@ int main(void){
 	int k;
 
 	double mlength;
+
 	srand(time(NULL));
+
+	Astar = (2 * A)/(mu0 * Ms * Ms * ld * ld);
 
 	for(i=0;i<=ndm;i++){
 		for(j=0;j<=ndm;j++){
@@ -120,7 +124,7 @@ int main(void){
 
 	//if(time1<=100.){Nstep=10;} else{Nstep=200;}		//データ保存する時間間隔の変更
 	//if((((int)(time1) % Nstep)==0)) {datsave();} 	//一定繰返しカウント毎に組織データを保存
-	if((((int)(time1) % 10)==0)) {graph_s1();} 		//一定繰返しカウント毎に組織を表示
+	if((((int)(time1) % 1000)==0)) {graph_s1();} 		//一定繰返しカウント毎に組織を表示
 	//if((((int)(time1) % 100)==0)) {datsave();} 		//一定繰返しカウント毎にデータを保存
 
 
@@ -436,8 +440,8 @@ void graph_s1()
 			ii=i; jj=j; if(i==nd){ii=0;} if(j==nd){jj=0;}//周期的境界条件
 
 			col_R=m[i][j][0];//場の色をRGBにて設定
-			col_G=m[i][j][0];
-			col_B=m[i][j][0];
+			col_G=m[i][j][1];
+			col_B=m[i][j][2];
 			//col_RG=col_R+col_G;  if(col_RG>1.){col_RG=1.;}  col_B=1.-col_RG;
 			if(col_R>=0.999){col_R=1.;} if(col_R<=0.001){col_R=0.;}//RGBの変域補正
 			if(col_G>=0.999){col_G=1.;} if(col_G<=0.001){col_G=0.;}
@@ -449,7 +453,7 @@ void graph_s1()
 			chann.at<cv::Vec3b>(ii,jj) = cv::Vec3b(int(col_B), int(col_G), int(col_R));
 		}
 	}
-	cv::imwrite("test_LLG_2_" + std::to_string(time1) + ".png", chann);
+	cv::imwrite("LLG_permalloy_" + std::to_string(time1) + ".png", chann);
 }
 
 
