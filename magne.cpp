@@ -13,8 +13,8 @@ using namespace std;
 
 #define DRND(x) ((double)(x)/RAND_MAX*rand())//乱数の関数設定
 
-#define ND 256			//差分計算における計算領域一辺の分割数(高速フーリエ変換を用いるため２のべき乗)
-#define IG 8				//2^IG=ND
+#define ND 64			//差分計算における計算領域一辺の分割数(高速フーリエ変換を用いるため２のべき乗)
+#define IG 6				//2^IG=ND
 #define INXY 400		//描画window１辺のピクセルサイズ(正方形の描画領域)
 #define SIZEX (ND)
 #define SIZEY (ND)
@@ -124,7 +124,7 @@ int main(void){
 
 	//if(time1<=100.){Nstep=10;} else{Nstep=200;}		//データ保存する時間間隔の変更
 	//if((((int)(time1) % Nstep)==0)) {datsave();} 	//一定繰返しカウント毎に組織データを保存
-	if((((int)(time1) % 1000)==0)) {graph_s1();} 		//一定繰返しカウント毎に組織を表示
+	if((((int)(time1) % 10)==0)) {graph_s1();} 		//一定繰返しカウント毎に組織を表示
 	//if((((int)(time1) % 100)==0)) {datsave();} 		//一定繰返しカウント毎にデータを保存
 
 
@@ -150,8 +150,8 @@ int main(void){
 
 	for(i=0;i<=ndm;i++){
 		for(j=0;j<=ndm;j++){
-			faifour[i][j] = Ms*(mfour_i[i][j][0]*(i - nd/2 + 0.5) + mfour_i[i][j][1]*(j - nd/2 + 0.5) + mfour_i[i][j][2]*0 )/((i - nd/2 + 0.5)*(i - nd/2 + 0.5) + (j - nd/2 + 0.5)*(j - nd/2 + 0.5) + 0);
-			faifour_i[i][j] = -1*Ms*(mfour[i][j][0]*(i - nd/2 + 0.5) + mfour[i][j][1]*(j - nd/2 + 0.5) + mfour[i][j][2]*0 )/((i - nd/2 + 0.5)*(i - nd/2 + 0.5) + (j - nd/2 + 0.5)*(j - nd/2 + 0.5) + 0);
+			faifour[i][j] = Ms*(mfour_i[i][j][0]*(i - nd/2 + 0.5 * 2) + mfour_i[i][j][1]*(j - nd/2 + 0.5 * 2) + mfour_i[i][j][2]*0 )/((i - nd/2 + 0.5 * 2)*(i - nd/2 + 0.5 * 2) + (j - nd/2 + 0.5 * 2)*(j - nd/2 + 0.5 * 2) + 0);
+			faifour_i[i][j] = -1*Ms*(mfour[i][j][0]*(i - nd/2 + 0.5 * 2) + mfour[i][j][1]*(j - nd/2 + 0.5 * 2) + mfour[i][j][2]*0 )/((i - nd/2 + 0.5 * 2)*(i - nd/2 + 0.5 * 2) + (j - nd/2 + 0.5 * 2)*(j - nd/2 + 0.5 * 2) + 0);
 			if (isinf(faifour[i][j]) == 1){
 				cout << "faifour        " << i << " : " << j << "   -    " << dec << faifour[i][j] << endl;
 			}
@@ -207,8 +207,8 @@ int main(void){
 	for(i=0;i<=ndm;i++){
 		for(j=0;j<=ndm;j++){
 			for(k=0;k<3;k++){
-				gfour[i][j][k] = (mfour[i][j][k] + delt*hfour[i][j][k])/(1+((i - nd/2 + 0.5)*(i - nd/2 + 0.5)+(j - nd/2 + 0.5)*(j - nd/2 + 0.5))*Astar*delt);
-				gfour_i[i][j][k] = (mfour_i[i][j][k] + delt*hfour_i[i][j][k])/(1+((i - nd/2 + 0.5)*(i - nd/2 + 0.5)+(j - nd/2 + 0.5)*(j - nd/2 + 0.5))*Astar*delt);
+				gfour[i][j][k] = (mfour[i][j][k] + delt*hfour[i][j][k])/(1+((i - nd/2 + 0.5 * 2)*(i - nd/2 + 0.5 * 2)+(j - nd/2 + 0.5 * 2)*(j - nd/2 + 0.5 * 2))*Astar*delt);
+				gfour_i[i][j][k] = (mfour_i[i][j][k] + delt*hfour_i[i][j][k])/(1+((i - nd/2 + 0.5 * 2)*(i - nd/2 + 0.5 * 2)+(j - nd/2 + 0.5 * 2)*(j - nd/2 + 0.5 * 2))*Astar*delt);
 			}
 		}
 	}
@@ -256,8 +256,8 @@ int main(void){
 
 	for(i=0;i<=ndm;i++){
 		for(j=0;j<=ndm;j++){
-			gstarfour[i][j][0] = (mstarfour[i][j][0] + delt*hfour[i][j][0])/(1+((i - nd/2 + 0.5)*(i - nd/2 + 0.5)+(j - nd/2 + 0.5)*(j - nd/2 + 0.5))*Astar*delt);
-			gstarfour_i[i][j][0] = (mstarfour_i[i][j][0] + delt*hfour_i[i][j][0])/(1+((i - nd/2 + 0.5)*(i - nd/2 + 0.5)+(j - nd/2 + 0.5)*(j - nd/2 + 0.5))*Astar*delt);
+			gstarfour[i][j][0] = (mstarfour[i][j][0] + delt*hfour[i][j][0])/(1+((i - nd/2 + 0.5 * 2)*(i - nd/2 + 0.5 * 2)+(j - nd/2 + 0.5 * 2)*(j - nd/2 + 0.5 * 2))*Astar*delt);
+			gstarfour_i[i][j][0] = (mstarfour_i[i][j][0] + delt*hfour_i[i][j][0])/(1+((i - nd/2 + 0.5 * 2)*(i - nd/2 + 0.5 * 2)+(j - nd/2 + 0.5 * 2)*(j - nd/2 + 0.5 * 2))*Astar*delt);
 		}
 	}
 
@@ -297,8 +297,8 @@ int main(void){
 
 	for(i=0;i<=ndm;i++){
 		for(j=0;j<=ndm;j++){
-			gstarfour[i][j][1] = (mstarfour[i][j][1] + delt*hfour[i][j][1])/(1+((i - nd/2 + 0.5)*(i - nd/2 + 0.5)+(j - nd/2 + 0.5)*(j - nd/2 + 0.5))*Astar*delt);
-			gstarfour_i[i][j][1] = (mstarfour_i[i][j][1] + delt*hfour_i[i][j][1])/(1+((i - nd/2 + 0.5)*(i - nd/2 + 0.5)+(j - nd/2 + 0.5)*(j - nd/2 + 0.5))*Astar*delt);
+			gstarfour[i][j][1] = (mstarfour[i][j][1] + delt*hfour[i][j][1])/(1+((i - nd/2 + 0.5 * 2)*(i - nd/2 + 0.5 * 2)+(j - nd/2 + 0.5 * 2)*(j - nd/2 + 0.5 * 2))*Astar*delt);
+			gstarfour_i[i][j][1] = (mstarfour_i[i][j][1] + delt*hfour_i[i][j][1])/(1+((i - nd/2 + 0.5 * 2)*(i - nd/2 + 0.5 * 2)+(j - nd/2 + 0.5 * 2)*(j - nd/2 + 0.5 * 2))*Astar*delt);
 		}
 	}
 
@@ -341,7 +341,7 @@ int main(void){
 	for(i=0;i<=ndm;i++){
 		for(j=0;j<=ndm;j++){
 			for(k=0;k<3;k++){
-				mstar2four[i][j][k] = (mstarfour[i][j][k] + alpha*delt*hfour[i][j][k])/(1+((i - nd/2 + 0.5)*(i - nd/2 + 0.5)+(j - nd/2 + 0.5)*(j - nd/2 + 0.5))*Astar*alpha*delt);
+				mstar2four[i][j][k] = (mstarfour[i][j][k] + alpha*delt*hfour[i][j][k])/(1+((i - nd/2 + 0.5 * 2)*(i - nd/2 + 0.5 * 2)+(j - nd/2 + 0.5 * 2)*(j - nd/2 + 0.5 * 2))*Astar*alpha*delt);
 			}
 		}
 	}
@@ -434,7 +434,7 @@ void graph_s1()
 	dia0=1.0/nd;
 	rad0=dia0/2.0;   						irad0=(ixmax-ixmin)/(xmax-xmin)*rad0+1;
 	//差分ブロックの半分の長さ	//スクリーン座標系に変換（+1は整数化時の切捨て補正）
-	cv::Mat chann(cv::Size(256, 256), CV_8UC3, cv::Scalar(255, 255, 255));
+	cv::Mat chann(cv::Size(nd, nd), CV_8UC3, cv::Scalar(255, 255, 255));
 
 	for(i=0;i<=nd;i++){
 		for(j=0;j<=nd;j++){
@@ -556,8 +556,8 @@ int fft3d(void){
 		for( i=0; i<SIZEX; i++ ){
 			idx = SIZEX*j+i;
 			//printf("fft :  %d %d %lf %lf\n", i, j, out[idx][0]*scale, out[idx][1]*scale );
-			fourier_output[i][j] = out[idx][0] * scale;
-			fourier_output_i[i][j] = out[idx][1] * scale;
+			fourier_output[i][j] = out[idx][0];
+			fourier_output_i[i][j] = out[idx][1];
 		}
 	}
  
@@ -602,8 +602,8 @@ int ifft3d(void){
 	//cout << "in  :  " << fourier_output[100][100] << endl;
 	//cout << "in_i  :  " << in2[10000][1] << endl;
  
+	DCexchange2D(in2, SIZEX, SIZEY, SIZEZ);
 	fftw_execute(ip);
-    //DCexchange2D(out2, SIZEX, SIZEY, SIZEZ);
  
 	// output is DC exchanged and scaled.
 	double scale = 1. / SIZE;
