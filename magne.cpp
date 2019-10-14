@@ -150,8 +150,13 @@ int main(void){
 
 	for(i=0;i<=ndm;i++){
 		for(j=0;j<=ndm;j++){
-			faifour[i][j] = Ms*(mfour_i[i][j][0]*(i - nd/2 + 0.5 * 2) + mfour_i[i][j][1]*(j - nd/2 + 0.5 * 2) + mfour_i[i][j][2]*0 )/((i - nd/2 + 0.5 * 2)*(i - nd/2 + 0.5 * 2) + (j - nd/2 + 0.5 * 2)*(j - nd/2 + 0.5 * 2) + 0);
-			faifour_i[i][j] = -1*Ms*(mfour[i][j][0]*(i - nd/2 + 0.5 * 2) + mfour[i][j][1]*(j - nd/2 + 0.5 * 2) + mfour[i][j][2]*0 )/((i - nd/2 + 0.5 * 2)*(i - nd/2 + 0.5 * 2) + (j - nd/2 + 0.5 * 2)*(j - nd/2 + 0.5 * 2) + 0);
+				if((i - nd/2 + 0.5 * 2)*(i - nd/2 + 0.5 * 2)+(j - nd/2 + 0.5 * 2)*(j - nd/2 + 0.5 * 2) == 0){
+					faifour[i][j][k] = 0;
+					faifour_i[i][j][k] = 0;
+				}else{
+					faifour[i][j] = Ms*(mfour_i[i][j][0]*(i - nd/2 + 0.5 * 2) + mfour_i[i][j][1]*(j - nd/2 + 0.5 * 2) + mfour_i[i][j][2]*0 )/((i - nd/2 + 0.5 * 2)*(i - nd/2 + 0.5 * 2) + (j - nd/2 + 0.5 * 2)*(j - nd/2 + 0.5 * 2) + 0);
+					faifour_i[i][j] = -1*Ms*(mfour[i][j][0]*(i - nd/2 + 0.5 * 2) + mfour[i][j][1]*(j - nd/2 + 0.5 * 2) + mfour[i][j][2]*0 )/((i - nd/2 + 0.5 * 2)*(i - nd/2 + 0.5 * 2) + (j - nd/2 + 0.5 * 2)*(j - nd/2 + 0.5 * 2) + 0);
+				}
 			if (isinf(faifour[i][j]) == 1){
 				cout << "faifour        " << i << " : " << j << "   -    " << dec << faifour[i][j] << endl;
 			}
