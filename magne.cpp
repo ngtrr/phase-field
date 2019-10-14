@@ -32,7 +32,7 @@ using namespace std;
 
 	double filter[3][3][3];
 
-	double Ms = 8.0E+5;
+	double Ms = 8.60E+5;
   	double K1 = 0, K2 = 0;
   	double ram100 = 2.64E-4, ram111 = 0;
   	double c11 = 1.96E+11, c12 = 1.56E+11, c44 = 1.23E+11;
@@ -40,7 +40,7 @@ using namespace std;
   	double Astar;
 	double delt = 0.1;
 	double mu0 = 1.0;
-	double ld = 9.875E-07;
+	double ld = 1.0E-06;
 
 	double fai[ND][ND];
 	double faifour[ND][ND];
@@ -376,8 +376,10 @@ int main(void){
 	for(i=0;i<=ndm;i++){
 		for(j=0;j<=ndm;j++){
 			mlength = sqrt( m[i][j][0] * m[i][j][0] + m[i][j][1] * m[i][j][1] + m[i][j][2] * m[i][j][2] );
-			for(k=0;k<3;k++){
-				m[i][j][k] = m[i][j][k] / mlength;
+			if(mlength>1.0){
+				for(k=0;k<3;k++){
+					m[i][j][k] = m[i][j][k] / mlength;
+				}
 			}
 		}
 	}
@@ -407,8 +409,10 @@ void ini000()
 				m[i][j][k] = rand();
 			}
 			mlength = sqrt( m[i][j][0] * m[i][j][0] + m[i][j][1] * m[i][j][1] + m[i][j][2] * m[i][j][2] );
-			for(k=0;k<3;k++){
-				m[i][j][k] = m[i][j][k] / mlength;
+			if(mlength>1.0){
+				for(k=0;k<3;k++){
+					m[i][j][k] = m[i][j][k] / mlength;
+				}
 			}
 		}
 	}
@@ -426,7 +430,7 @@ void graph_s1()
 	//gcls(); //画面クリア
 	xmin=0.; xmax=1.; ymin=0.; ymax=1.;//描画領域（規格化されている）
 
-	//printf("time %f\n",time1);//計算カウント数の表示
+	printf("time %f\n",time1);//計算カウント数の表示
 	dia0=1.0/nd;
 	rad0=dia0/2.0;   						irad0=(ixmax-ixmin)/(xmax-xmin)*rad0+1;
 	//差分ブロックの半分の長さ	//スクリーン座標系に変換（+1は整数化時の切捨て補正）
@@ -440,20 +444,25 @@ void graph_s1()
 			ii=i; jj=j; if(i==nd){ii=0;} if(j==nd){jj=0;}//周期的境界条件
 
 			col_R=m[i][j][0];//場の色をRGBにて設定
-			col_G=m[i][j][1];
-			col_B=m[i][j][2];
+			col_G=m[i][j][0];
+			col_B=m[i][j][0];
+			//cout << "img  :  " << col_R << " : " << col_G << " : " << col_B << endl;
 			//col_RG=col_R+col_G;  if(col_RG>1.){col_RG=1.;}  col_B=1.-col_RG;
-			if(col_R>=0.999){col_R=1.;} if(col_R<=0.001){col_R=0.;}//RGBの変域補正
-			if(col_G>=0.999){col_G=1.;} if(col_G<=0.001){col_G=0.;}
-			if(col_B>=0.999){col_B=1.;} if(col_B<=0.001){col_B=0.;}
-			col_R *= 200;
-			col_G *= 200;
-			col_B *= 200;
+			//if(col_R>=0.999){col_R=1.;} if(col_R<=0.001){col_R=0.;}//RGBの変域補正
+			//if(col_G>=0.999){col_G=1.;} if(col_G<=0.001){col_G=0.;}
+			//if(col_B>=0.999){col_B=1.;} if(col_B<=0.001){col_B=0.;}
+			col_R *= 100;
+			col_G *= 100;
+			col_B *= 100;
+			col_R += 128;
+			col_G += 128;
+			col_B += 128;
+			//cout << "img  :  " << col_R << " : " << col_G << " : " << col_B << endl;
 
 			chann.at<cv::Vec3b>(ii,jj) = cv::Vec3b(int(col_B), int(col_G), int(col_R));
 		}
 	}
-	cv::imwrite("LLG_permalloy_" + std::to_string(time1) + ".png", chann);
+	cv::imwrite("LLG_permalloy_" + std::to_string(int(time1)) + ".png", chann);
 }
 
 
