@@ -13,8 +13,8 @@ using namespace std;
 
 #define DRND(x) ((double)(x)/RAND_MAX*rand())//乱数の関数設定
 
-#define ND 64			//差分計算における計算領域一辺の分割数(高速フーリエ変換を用いるため２のべき乗)
-#define IG 6				//2^IG=ND
+#define ND 128			//差分計算における計算領域一辺の分割数(高速フーリエ変換を用いるため２のべき乗)
+#define IG 7				//2^IG=ND
 #define INXY 400		//描画window１辺のピクセルサイズ(正方形の描画領域)
 #define SIZEX (ND)
 #define SIZEY (ND)
@@ -38,7 +38,7 @@ using namespace std;
   	double c11 = 1.96E+11, c12 = 1.56E+11, c44 = 1.23E+11;
 	double A = 1.3E-11;
   	double Astar;
-	double delt = 0.1;
+	double delt = 1;
 	double mu0 = 1.0;
 	double ld = 1.0E-06;
 
@@ -124,7 +124,7 @@ int main(void){
 
 	//if(time1<=100.){Nstep=10;} else{Nstep=200;}		//データ保存する時間間隔の変更
 	//if((((int)(time1) % Nstep)==0)) {datsave();} 	//一定繰返しカウント毎に組織データを保存
-	if((((int)(time1) % 10)==0)) {graph_s1();} 		//一定繰返しカウント毎に組織を表示
+	if((((int)(time1) % 1000)==0)) {graph_s1();} 		//一定繰返しカウント毎に組織を表示
 	//if((((int)(time1) % 100)==0)) {datsave();} 		//一定繰返しカウント毎にデータを保存
 
 
@@ -150,12 +150,13 @@ int main(void){
 
 	for(i=0;i<=ndm;i++){
 		for(j=0;j<=ndm;j++){
-				if((i - nd/2 + 0.5 * 2)*(i - nd/2 + 0.5 * 2)+(j - nd/2 + 0.5 * 2)*(j - nd/2 + 0.5 * 2) == 0){
-					faifour[i][j][k] = 0;
-					faifour_i[i][j][k] = 0;
+				if((i - nd/2 + 0.5)*(i - nd/2 + 0.5)+(j - nd/2 + 0.5)*(j - nd/2 + 0.5) == 0){
+					faifour[i][j] = 0;
+					faifour_i[i][j] = 0;
+					cout << "faifour        " << i << " : " << j << "   -    " << dec << faifour[i][j] << endl;
 				}else{
-					faifour[i][j] = Ms*(mfour_i[i][j][0]*(i - nd/2 + 0.5 * 2) + mfour_i[i][j][1]*(j - nd/2 + 0.5 * 2) + mfour_i[i][j][2]*0 )/((i - nd/2 + 0.5 * 2)*(i - nd/2 + 0.5 * 2) + (j - nd/2 + 0.5 * 2)*(j - nd/2 + 0.5 * 2) + 0);
-					faifour_i[i][j] = -1*Ms*(mfour[i][j][0]*(i - nd/2 + 0.5 * 2) + mfour[i][j][1]*(j - nd/2 + 0.5 * 2) + mfour[i][j][2]*0 )/((i - nd/2 + 0.5 * 2)*(i - nd/2 + 0.5 * 2) + (j - nd/2 + 0.5 * 2)*(j - nd/2 + 0.5 * 2) + 0);
+					faifour[i][j] = Ms*(mfour_i[i][j][0]*(i - nd/2 + 0.5) + mfour_i[i][j][1]*(j - nd/2 + 0.5) + mfour_i[i][j][2]*0 )/((i - nd/2 + 0.5)*(i - nd/2 + 0.5) + (j - nd/2 + 0.5)*(j - nd/2 + 0.5) + 0);
+					faifour_i[i][j] = -1*Ms*(mfour[i][j][0]*(i - nd/2 + 0.5) + mfour[i][j][1]*(j - nd/2 + 0.5) + mfour[i][j][2]*0 )/((i - nd/2 + 0.5)*(i - nd/2 + 0.5) + (j - nd/2 + 0.5)*(j - nd/2 + 0.5) + 0);
 				}
 			if (isinf(faifour[i][j]) == 1){
 				cout << "faifour        " << i << " : " << j << "   -    " << dec << faifour[i][j] << endl;
@@ -561,8 +562,8 @@ int fft3d(void){
 		for( i=0; i<SIZEX; i++ ){
 			idx = SIZEX*j+i;
 			//printf("fft :  %d %d %lf %lf\n", i, j, out[idx][0]*scale, out[idx][1]*scale );
-			fourier_output[i][j] = out[idx][0];
-			fourier_output_i[i][j] = out[idx][1];
+			fourier_output[i][j] = out[idx][0] * scale;
+			fourier_output_i[i][j] = out[idx][1] * scale;
 		}
 	}
  
