@@ -13,8 +13,8 @@ using namespace std;
 
 #define DRND(x) ((double)(x)/RAND_MAX*rand())//乱数の関数設定
 
-#define ND 128			//差分計算における計算領域一辺の分割数(高速フーリエ変換を用いるため２のべき乗)
-#define IG 7				//2^IG=ND
+#define ND 256			//差分計算における計算領域一辺の分割数(高速フーリエ変換を用いるため２のべき乗)
+#define IG 8				//2^IG=ND
 #define INXY 400		//描画window１辺のピクセルサイズ(正方形の描画領域)
 #define SIZEX (ND)
 #define SIZEY (ND)
@@ -38,7 +38,7 @@ using namespace std;
   	double c11 = 1.96E+11, c12 = 1.56E+11, c44 = 1.23E+11;
 	double A = 1.3E-11;
   	double Astar;
-	double delt = 1;
+	double delt = 0.1;
 	double mu0 = 1.0;
 	double ld = 1.0E-06;
 
