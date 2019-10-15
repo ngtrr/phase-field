@@ -28,7 +28,7 @@ using namespace std;
 	double rr=8.3145;			//ガス定数
 	double alpha=0.01;
 	double time1;					//計算カウント数(時間に比例)
-	double time1max = 100000;
+	double time1max = 1000;
 
 	double filter[3][3][3];
 
@@ -99,7 +99,7 @@ int main(void){
 
 	double mlength;
 
-	srand(time(NULL));
+	//srand(time(NULL));
 
 	Astar = (2 * A)/(mu0 * Ms * Ms * ld * ld);
 
@@ -124,7 +124,7 @@ int main(void){
 
 	//if(time1<=100.){Nstep=10;} else{Nstep=200;}		//データ保存する時間間隔の変更
 	//if((((int)(time1) % Nstep)==0)) {datsave();} 	//一定繰返しカウント毎に組織データを保存
-	if((((int)(time1) % 1000)==0)) {graph_s1();} 		//一定繰返しカウント毎に組織を表示
+	if((((int)(time1) % 10)==0)) {graph_s1();graph_h();graph_mstar1();} 		//一定繰返しカウント毎に組織を表示
 	//if((((int)(time1) % 100)==0)) {datsave();} 		//一定繰返しカウント毎にデータを保存
 
 
@@ -150,13 +150,13 @@ int main(void){
 
 	for(i=0;i<=ndm;i++){
 		for(j=0;j<=ndm;j++){
-				if((i - nd/2 + 0.5)*(i - nd/2 + 0.5)+(j - nd/2 + 0.5)*(j - nd/2 + 0.5) == 0){
+				if((i - nd/2 + 0.5)*(i - nd/2 + 0.5 * 2)+(j - nd/2 + 0.5 * 2)*(j - nd/2 + 0.5 * 2) == 0){
 					faifour[i][j] = 0;
 					faifour_i[i][j] = 0;
 					cout << "faifour        " << i << " : " << j << "   -    " << dec << faifour[i][j] << endl;
 				}else{
-					faifour[i][j] = Ms*(mfour_i[i][j][0]*(i - nd/2 + 0.5) + mfour_i[i][j][1]*(j - nd/2 + 0.5) + mfour_i[i][j][2]*0 )/((i - nd/2 + 0.5)*(i - nd/2 + 0.5) + (j - nd/2 + 0.5)*(j - nd/2 + 0.5) + 0);
-					faifour_i[i][j] = -1*Ms*(mfour[i][j][0]*(i - nd/2 + 0.5) + mfour[i][j][1]*(j - nd/2 + 0.5) + mfour[i][j][2]*0 )/((i - nd/2 + 0.5)*(i - nd/2 + 0.5) + (j - nd/2 + 0.5)*(j - nd/2 + 0.5) + 0);
+					faifour[i][j] = Ms*(mfour_i[i][j][0]*(i - nd/2 + 0.5 * 2) + mfour_i[i][j][1]*(j - nd/2 + 0.5 * 2) + mfour_i[i][j][2]*0 )/((i - nd/2 + 0.5 * 2)*(i - nd/2 + 0.5 * 2) + (j - nd/2 + 0.5 * 2)*(j - nd/2 + 0.5 * 2) + 0);
+					faifour_i[i][j] = -1*Ms*(mfour[i][j][0]*(i - nd/2 + 0.5 * 2) + mfour[i][j][1]*(j - nd/2 + 0.5 * 2) + mfour[i][j][2]*0 )/((i - nd/2 + 0.5 * 2)*(i - nd/2 + 0.5 * 2) + (j - nd/2 + 0.5 * 2)*(j - nd/2 + 0.5 * 2) + 0);
 				}
 			if (isinf(faifour[i][j]) == 1){
 				cout << "faifour        " << i << " : " << j << "   -    " << dec << faifour[i][j] << endl;
@@ -450,8 +450,8 @@ void graph_s1()
 			ii=i; jj=j; if(i==nd){ii=0;} if(j==nd){jj=0;}//周期的境界条件
 
 			col_R=m[i][j][0];//場の色をRGBにて設定
-			col_G=m[i][j][0];
-			col_B=m[i][j][0];
+			col_G=m[i][j][1];
+			col_B=m[i][j][2];
 			//cout << "img  :  " << col_R << " : " << col_G << " : " << col_B << endl;
 			//col_RG=col_R+col_G;  if(col_RG>1.){col_RG=1.;}  col_B=1.-col_RG;
 			//if(col_R>=0.999){col_R=1.;} if(col_R<=0.001){col_R=0.;}//RGBの変域補正
@@ -468,7 +468,100 @@ void graph_s1()
 			chann.at<cv::Vec3b>(ii,jj) = cv::Vec3b(int(col_B), int(col_G), int(col_R));
 		}
 	}
-	cv::imwrite("LLG_permalloy_" + std::to_string(int(time1)) + ".png", chann);
+	cv::imwrite("LLG_permalloy_" + std::to_string(int(time1)) + "_m.png", chann);
+}
+
+void graph_h()
+{
+	int i, j, ii, jj;													//整数
+	double col, col_R, col_G, col_B, col_RG;	//色
+	int ixmin=0, iymin=0, igx, igy, irad0;		//スクリーン座標系の設定
+	double c, x, xmax, xmin, y, ymax, ymin, rad0, dia0;//規格化座標系の設定
+	int ixmax=INXY, iymax=INXY;								//描画Window範囲
+
+	//gcls(); //画面クリア
+	xmin=0.; xmax=1.; ymin=0.; ymax=1.;//描画領域（規格化されている）
+
+	printf("time %f\n",time1);//計算カウント数の表示
+	dia0=1.0/nd;
+	rad0=dia0/2.0;   						irad0=(ixmax-ixmin)/(xmax-xmin)*rad0+1;
+	//差分ブロックの半分の長さ	//スクリーン座標系に変換（+1は整数化時の切捨て補正）
+	cv::Mat chann(cv::Size(nd, nd), CV_8UC3, cv::Scalar(255, 255, 255));
+
+	for(i=0;i<=nd;i++){
+		for(j=0;j<=nd;j++){
+			x=rad0+dia0*i;  igx=(ixmax-ixmin)/(xmax-xmin)*(x-xmin)+ixmin;
+			y=rad0+dia0*j;  igy=(iymax-iymin)/(ymax-ymin)*(y-ymin)+iymin;
+			//座標計算			//スクリーン座標系に変換
+			ii=i; jj=j; if(i==nd){ii=0;} if(j==nd){jj=0;}//周期的境界条件
+
+			col_R=h[i][j][0];//場の色をRGBにて設定
+			col_G=h[i][j][1];
+			col_B=h[i][j][2];
+			//cout << "img  :  " << col_R << " : " << col_G << " : " << col_B << endl;
+			//col_RG=col_R+col_G;  if(col_RG>1.){col_RG=1.;}  col_B=1.-col_RG;
+			//if(col_R>=0.999){col_R=1.;} if(col_R<=0.001){col_R=0.;}//RGBの変域補正
+			//if(col_G>=0.999){col_G=1.;} if(col_G<=0.001){col_G=0.;}
+			//if(col_B>=0.999){col_B=1.;} if(col_B<=0.001){col_B=0.;}
+			col_R *= 100;
+			col_G *= 100;
+			col_B *= 100;
+			col_R += 128;
+			col_G += 128;
+			col_B += 128;
+			//cout << "img  :  " << col_R << " : " << col_G << " : " << col_B << endl;
+
+			chann.at<cv::Vec3b>(ii,jj) = cv::Vec3b(int(col_B), int(col_G), int(col_R));
+		}
+	}
+	cv::imwrite("LLG_permalloy_" + std::to_string(int(time1)) + "_h.png", chann);
+}
+
+//******* 組織の描画サブルーチン ***************************************
+void graph_mstar1()
+{
+	int i, j, ii, jj;													//整数
+	double col, col_R, col_G, col_B, col_RG;	//色
+	int ixmin=0, iymin=0, igx, igy, irad0;		//スクリーン座標系の設定
+	double c, x, xmax, xmin, y, ymax, ymin, rad0, dia0;//規格化座標系の設定
+	int ixmax=INXY, iymax=INXY;								//描画Window範囲
+
+	//gcls(); //画面クリア
+	xmin=0.; xmax=1.; ymin=0.; ymax=1.;//描画領域（規格化されている）
+
+	printf("time %f\n",time1);//計算カウント数の表示
+	dia0=1.0/nd;
+	rad0=dia0/2.0;   						irad0=(ixmax-ixmin)/(xmax-xmin)*rad0+1;
+	//差分ブロックの半分の長さ	//スクリーン座標系に変換（+1は整数化時の切捨て補正）
+	cv::Mat chann(cv::Size(nd, nd), CV_8UC3, cv::Scalar(255, 255, 255));
+
+	for(i=0;i<=nd;i++){
+		for(j=0;j<=nd;j++){
+			x=rad0+dia0*i;  igx=(ixmax-ixmin)/(xmax-xmin)*(x-xmin)+ixmin;
+			y=rad0+dia0*j;  igy=(iymax-iymin)/(ymax-ymin)*(y-ymin)+iymin;
+			//座標計算			//スクリーン座標系に変換
+			ii=i; jj=j; if(i==nd){ii=0;} if(j==nd){jj=0;}//周期的境界条件
+
+			col_R=mstar1[i][j][0];//場の色をRGBにて設定
+			col_G=mstar1[i][j][1];
+			col_B=mstar1[i][j][2];
+			//cout << "img  :  " << col_R << " : " << col_G << " : " << col_B << endl;
+			//col_RG=col_R+col_G;  if(col_RG>1.){col_RG=1.;}  col_B=1.-col_RG;
+			//if(col_R>=0.999){col_R=1.;} if(col_R<=0.001){col_R=0.;}//RGBの変域補正
+			//if(col_G>=0.999){col_G=1.;} if(col_G<=0.001){col_G=0.;}
+			//if(col_B>=0.999){col_B=1.;} if(col_B<=0.001){col_B=0.;}
+			col_R *= 100;
+			col_G *= 100;
+			col_B *= 100;
+			col_R += 128;
+			col_G += 128;
+			col_B += 128;
+			//cout << "img  :  " << col_R << " : " << col_G << " : " << col_B << endl;
+
+			chann.at<cv::Vec3b>(ii,jj) = cv::Vec3b(int(col_B), int(col_G), int(col_R));
+		}
+	}
+	cv::imwrite("LLG_permalloy_" + std::to_string(int(time1)) + "_mstar1.png", chann);
 }
 
 
