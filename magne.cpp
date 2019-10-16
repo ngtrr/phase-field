@@ -5,6 +5,7 @@
 #include <time.h> 
 #include <math.h>
 #include <iostream>
+#include <vector>
 #include <opencv2/opencv.hpp>
 #include <complex.h>
 #include <fftw3.h>
@@ -13,7 +14,7 @@ using namespace std;
 
 #define DRND(x) ((double)(x)/RAND_MAX*rand())//乱数の関数設定
 
-#define ND 64			//差分計算における計算領域一辺の分割数(高速フーリエ変換を用いるため２のべき乗)
+#define ND 256			//差分計算における計算領域一辺の分割数(高速フーリエ変換を用いるため２のべき乗)
 #define IG 8				//2^IG=ND
 #define INXY 400		//描画window１辺のピクセルサイズ(正方形の描画領域)
 #define SIZEX (ND)
@@ -28,7 +29,7 @@ using namespace std;
 	double rr=8.3145;			//ガス定数
 	double alpha=0.5;
 	double time1;					//計算カウント数(時間に比例)
-	double time1max = 100000;
+	double time1max = 10;
 
 	double filter[3][3][3];
 
@@ -133,7 +134,7 @@ int main(void){
 
 	//if(time1<=100.){Nstep=10;} else{Nstep=200;}		//データ保存する時間間隔の変更
 	//if((((int)(time1) % Nstep)==0)) {datsave();} 	//一定繰返しカウント毎に組織データを保存
-	if((((int)(time1) % 10)==0)) {graph_s1();graph_h();graph_mstar1();graph_fai();} 		//一定繰返しカウント毎に組織を表示
+	if((((int)(time1) % 1)==0)) {graph_s1();graph_fai();}//graph_h();graph_mstar1();} 		//一定繰返しカウント毎に組織を表示
 	//if((((int)(time1) % 100)==0)) {datsave();} 		//一定繰返しカウント毎にデータを保存
 
 
@@ -151,12 +152,16 @@ int main(void){
 				if (isinf(mfour[i][j][k]) == 1){
 					cout << "mfour        " << i << " : " << j << "   -    " << dec << mfour[i][j][k] << endl;
 				}
-				cout << "mfour        " << i << " : " << j << " : " << k << "   -    " << mfour[i][j][k] << endl;
-				cout << "mfour_i        " << i << " : " <<  j << " : " << k << "   -    " << mfour_i[i][j][k] << endl;
+				//cout << "mfour        " << i << " : " << j << " : " << k << "   -    " << mfour[i][j][k] << endl;
+				//cout << "mfour_i        " << i << " : " <<  j << " : " << k << "   -    " << mfour_i[i][j][k] << endl;
 			}
 		}
-		cout << "**********************************************************************************************" << endl;
+		//cout << "**********************************************************************************************" << endl;
 	}
+
+	cout << "mfour        " << mfour[10][100][0] << mfour[10][100][1] << mfour[10][100][2] << endl;
+	cout << "mfour_i        " << mfour_i[10][100][0] << mfour_i[10][100][1] << mfour_i[10][100][2] << endl;
+
 
 	for(i=0;i<=ndm;i++){
 		for(j=0;j<=ndm;j++){
@@ -421,17 +426,23 @@ void ini000()
 {
 	int i, j ,k;
 	double mlength;
+	
+	cv::Mat image = cv::imread("lena.jpg");
 
 	//srand(time(NULL)); // 乱数初期化
 
 	for(i=0;i<=ndm;i++){
 		for(j=0;j<=ndm;j++){
 			for(k=0;k<3;k++){
-				m[i][j][k] = rand();
+				//m[i][j][k] = rand();
+				cout << double(image.at<cv::Vec3b>(j,i)[k]) << endl;
+				m[i][j][k] = int(image.at<cv::Vec3b>(j,i)[k]);
+				cout << "m : " << m[i][j][k] << endl;
 			}
 			mlength = sqrt( m[i][j][0] * m[i][j][0] + m[i][j][1] * m[i][j][1] + m[i][j][2] * m[i][j][2] );
 			for(k=0;k<3;k++){
 				m[i][j][k] = m[i][j][k] / mlength;
+				cout << "m : " << m[i][j][k] << endl;
 			}
 		}
 	}
@@ -611,9 +622,9 @@ void graph_fai()
 			//if(col_R>=0.999){col_R=1.;} if(col_R<=0.001){col_R=0.;}//RGBの変域補正
 			//if(col_G>=0.999){col_G=1.;} if(col_G<=0.001){col_G=0.;}
 			//if(col_B>=0.999){col_B=1.;} if(col_B<=0.001){col_B=0.;}
-			col_R *= 1000;
-			col_G *= 1000;
-			col_B *= 1000;
+			col_R *= 100;
+			col_G *= 100;
+			col_B *= 100;
 			col_R += 128;
 			col_G += 128;
 			col_B += 128;
@@ -711,7 +722,7 @@ int fft3d(void){
 	for( j=0; j<SIZEY; j++ ){
 		for( i=0; i<SIZEX; i++ ){
 			idx = SIZEX*j+i;
-			printf("fft :  %d %d %lf %lf\n", i, j, out[idx][0]*scale, out[idx][1]*scale );
+			//printf("fft :  %d %d %lf %lf\n", i, j, out[idx][0]*scale, out[idx][1]*scale );
 			fourier_output[i][j] = out[idx][0];// * scale;
 			fourier_output_i[i][j] = out[idx][1];// * scale;
 		}
