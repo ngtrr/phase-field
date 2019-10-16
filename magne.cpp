@@ -14,7 +14,7 @@ using namespace std;
 
 #define DRND(x) ((double)(x)/RAND_MAX*rand())//乱数の関数設定
 
-#define ND 256			//差分計算における計算領域一辺の分割数(高速フーリエ変換を用いるため２のべき乗)
+#define ND 64			//差分計算における計算領域一辺の分割数(高速フーリエ変換を用いるため２のべき乗)
 #define IG 8				//2^IG=ND
 #define INXY 400		//描画window１辺のピクセルサイズ(正方形の描画領域)
 #define SIZEX (ND)
@@ -29,7 +29,7 @@ using namespace std;
 	double rr=8.3145;			//ガス定数
 	double alpha=0.5;
 	double time1;					//計算カウント数(時間に比例)
-	double time1max = 10;
+	double time1max = 10000;
 
 	double filter[3][3][3];
 
@@ -106,7 +106,7 @@ int main(void){
 	srand(time(NULL));
 
 	//Astar = (2 * A)/(mu0 * Ms * Ms * ld * ld);
-	Astar = 0.0625/4;
+	Astar = 0.0625/1;
 
 	for(i=0;i<=ndm;i++){
 		for(j=0;j<=ndm;j++){
@@ -115,7 +115,7 @@ int main(void){
 				Hms[i][j][k] = 0;//init
 				Helastic[i][j][k] = 0;//ok
 			}
-			Hexternal[i][j][0] = 0.0E+6;//ok
+			Hexternal[i][j][0] = 1.0E+2;//ok
 			Hexternal[i][j][1] = 0.0E+6;//ok
 			Hexternal[i][j][2] = 0;//ok
 
@@ -134,7 +134,7 @@ int main(void){
 
 	//if(time1<=100.){Nstep=10;} else{Nstep=200;}		//データ保存する時間間隔の変更
 	//if((((int)(time1) % Nstep)==0)) {datsave();} 	//一定繰返しカウント毎に組織データを保存
-	if((((int)(time1) % 1)==0)) {graph_s1();graph_fai();}//graph_h();graph_mstar1();} 		//一定繰返しカウント毎に組織を表示
+	if((((int)(time1) % 100)==0)) {graph_s1();}//graph_fai();graph_h();graph_mstar1();} 		//一定繰返しカウント毎に組織を表示
 	//if((((int)(time1) % 100)==0)) {datsave();} 		//一定繰返しカウント毎にデータを保存
 
 
@@ -159,8 +159,8 @@ int main(void){
 		//cout << "**********************************************************************************************" << endl;
 	}
 
-	cout << "mfour        " << mfour[10][100][0] << mfour[10][100][1] << mfour[10][100][2] << endl;
-	cout << "mfour_i        " << mfour_i[10][100][0] << mfour_i[10][100][1] << mfour_i[10][100][2] << endl;
+	//cout << "mfour        " << mfour[10][100][0] << mfour[10][100][1] << mfour[10][100][2] << endl;
+	//cout << "mfour_i        " << mfour_i[10][100][0] << mfour_i[10][100][1] << mfour_i[10][100][2] << endl;
 
 
 	for(i=0;i<=ndm;i++){
@@ -365,6 +365,7 @@ int main(void){
 		for(j=0;j<=ndm;j++){
 			for(k=0;k<3;k++){
 				mstar2four[i][j][k] = (mstarfour[i][j][k] + alpha*delt*hfour[i][j][k])/(1+((i - nd/2)*(i - nd/2)+(j - nd/2)*(j - nd/2))*Astar*alpha*delt);
+				mstar2four_i[i][j][k] = (mstarfour_i[i][j][k] + alpha*delt*hfour_i[i][j][k])/(1+((i - nd/2)*(i - nd/2)+(j - nd/2)*(j - nd/2))*Astar*alpha*delt);
 			}
 		}
 	}
@@ -427,22 +428,25 @@ void ini000()
 	int i, j ,k;
 	double mlength;
 	
-	cv::Mat image = cv::imread("lena.jpg");
+	cv::Mat_<uchar> image = cv::imread("a.jpg" ,0);
 
 	//srand(time(NULL)); // 乱数初期化
 
 	for(i=0;i<=ndm;i++){
 		for(j=0;j<=ndm;j++){
 			for(k=0;k<3;k++){
-				//m[i][j][k] = rand();
-				cout << double(image.at<cv::Vec3b>(j,i)[k]) << endl;
-				m[i][j][k] = int(image.at<cv::Vec3b>(j,i)[k]);
-				cout << "m : " << m[i][j][k] << endl;
+				m[i][j][k] = rand();
+				//cout << double(image[i][j]) << endl;
+				//m[i][j][k] = int(image[i][j]);
+				//cout << "m : " << m[i][j][k] << endl;
 			}
+			//m[i][j][0] = int(image[i][j]);
+			//m[i][j][1] = int(256-image[i][j]);
+			//m[i][j][2] = int(100-image[i][j]/2);
 			mlength = sqrt( m[i][j][0] * m[i][j][0] + m[i][j][1] * m[i][j][1] + m[i][j][2] * m[i][j][2] );
 			for(k=0;k<3;k++){
 				m[i][j][k] = m[i][j][k] / mlength;
-				cout << "m : " << m[i][j][k] << endl;
+				//cout << "m : " << m[i][j][k] << endl;
 			}
 		}
 	}
@@ -474,8 +478,8 @@ void graph_s1()
 			ii=i; jj=j; if(i==nd){ii=0;} if(j==nd){jj=0;}//周期的境界条件
 
 			col_R=m[i][j][0];//場の色をRGBにて設定
-			col_G=m[i][j][0];
-			col_B=m[i][j][0];
+			col_G=m[i][j][1];
+			col_B=m[i][j][2];
 			//cout << "img  :  " << col_R << " : " << col_G << " : " << col_B << endl;
 			//col_RG=col_R+col_G;  if(col_RG>1.){col_RG=1.;}  col_B=1.-col_RG;
 			//if(col_R>=0.999){col_R=1.;} if(col_R<=0.001){col_R=0.;}//RGBの変域補正
@@ -566,9 +570,9 @@ void graph_mstar1()
 			//座標計算			//スクリーン座標系に変換
 			ii=i; jj=j; if(i==nd){ii=0;} if(j==nd){jj=0;}//周期的境界条件
 
-			col_R=mstar1[i][j][0];//場の色をRGBにて設定
-			col_G=mstar1[i][j][1];
-			col_B=mstar1[i][j][2];
+			col_R=mstar2[i][j][0];//場の色をRGBにて設定
+			col_G=mstar2[i][j][0];
+			col_B=mstar2[i][j][0];
 			//cout << "img  :  " << col_R << " : " << col_G << " : " << col_B << endl;
 			//col_RG=col_R+col_G;  if(col_RG>1.){col_RG=1.;}  col_B=1.-col_RG;
 			//if(col_R>=0.999){col_R=1.;} if(col_R<=0.001){col_R=0.;}//RGBの変域補正
@@ -585,7 +589,7 @@ void graph_mstar1()
 			chann.at<cv::Vec3b>(ii,jj) = cv::Vec3b(int(col_B), int(col_G), int(col_R));
 		}
 	}
-	cv::imwrite("LLG_permalloy_" + std::to_string(int(time1)) + "_mstar1.png", chann);
+	cv::imwrite("LLG_permalloy_" + std::to_string(int(time1)) + "_mstar2.png", chann);
 }
 
 
@@ -622,9 +626,9 @@ void graph_fai()
 			//if(col_R>=0.999){col_R=1.;} if(col_R<=0.001){col_R=0.;}//RGBの変域補正
 			//if(col_G>=0.999){col_G=1.;} if(col_G<=0.001){col_G=0.;}
 			//if(col_B>=0.999){col_B=1.;} if(col_B<=0.001){col_B=0.;}
-			col_R *= 100;
-			col_G *= 100;
-			col_B *= 100;
+			col_R *= 10;
+			col_G *= 10;
+			col_B *= 10;
 			col_R += 128;
 			col_G += 128;
 			col_B += 128;
