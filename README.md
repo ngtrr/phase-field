@@ -14,11 +14,11 @@ Before installing the code you need to get **gcc** to compile and **openCV4** to
 We recommend to use **pkg-config** to link around opencv packages to compile. Please check your link before.
 
 -- 2019/10/7 --<br>
-We newly import **fftw3** for calculate dft more fast. please install by terminal before compiling.
-
+We newly import **fftw3** for calculate dft more fast. please install by terminal before compiling.<br>
 To install fftw3 in Ubuntu, type<br>
 >`$ sudo apt install libfftw3-3 libfftw3-dev libfftw3-doc`<br>
 
+<br>
 1. Make the directory for clone repository.<br>
 
 >`$ mkdir new_folder_name`<br>
