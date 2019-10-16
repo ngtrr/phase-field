@@ -13,7 +13,7 @@ using namespace std;
 
 #define DRND(x) ((double)(x)/RAND_MAX*rand())//乱数の関数設定
 
-#define ND 256			//差分計算における計算領域一辺の分割数(高速フーリエ変換を用いるため２のべき乗)
+#define ND 64			//差分計算における計算領域一辺の分割数(高速フーリエ変換を用いるため２のべき乗)
 #define IG 8				//2^IG=ND
 #define INXY 400		//描画window１辺のピクセルサイズ(正方形の描画領域)
 #define SIZEX (ND)
@@ -105,7 +105,7 @@ int main(void){
 	srand(time(NULL));
 
 	//Astar = (2 * A)/(mu0 * Ms * Ms * ld * ld);
-	Astar = 0.0625/16;
+	Astar = 0.0625/4;
 
 	for(i=0;i<=ndm;i++){
 		for(j=0;j<=ndm;j++){
@@ -114,7 +114,7 @@ int main(void){
 				Hms[i][j][k] = 0;//init
 				Helastic[i][j][k] = 0;//ok
 			}
-			Hexternal[i][j][0] = 1.0E+6;//ok
+			Hexternal[i][j][0] = 0.0E+6;//ok
 			Hexternal[i][j][1] = 0.0E+6;//ok
 			Hexternal[i][j][2] = 0;//ok
 
@@ -133,7 +133,7 @@ int main(void){
 
 	//if(time1<=100.){Nstep=10;} else{Nstep=200;}		//データ保存する時間間隔の変更
 	//if((((int)(time1) % Nstep)==0)) {datsave();} 	//一定繰返しカウント毎に組織データを保存
-	if((((int)(time1) % 100)==0)) {graph_s1();}//graph_h();graph_mstar1();graph_fai();} 		//一定繰返しカウント毎に組織を表示
+	if((((int)(time1) % 10)==0)) {graph_s1();graph_h();graph_mstar1();graph_fai();} 		//一定繰返しカウント毎に組織を表示
 	//if((((int)(time1) % 100)==0)) {datsave();} 		//一定繰返しカウント毎にデータを保存
 
 
@@ -151,21 +151,22 @@ int main(void){
 				if (isinf(mfour[i][j][k]) == 1){
 					cout << "mfour        " << i << " : " << j << "   -    " << dec << mfour[i][j][k] << endl;
 				}
-				//cout << "mfour        " << i << " : " << j << "   -    " << mfour[i][j][k] << endl;
-				//cout << "mfour_i        " << i << " : " << j << "   -    " << mfour_i[i][j][k] << endl;
+				cout << "mfour        " << i << " : " << j << " : " << k << "   -    " << mfour[i][j][k] << endl;
+				cout << "mfour_i        " << i << " : " <<  j << " : " << k << "   -    " << mfour_i[i][j][k] << endl;
 			}
 		}
+		cout << "**********************************************************************************************" << endl;
 	}
 
 	for(i=0;i<=ndm;i++){
 		for(j=0;j<=ndm;j++){
-				if((i - nd/2 + 0.5)*(i - nd/2 + 0.5 * 2)+(j - nd/2 + 0.5 * 2)*(j - nd/2 + 0.5 * 2) == 0){
+				if((i - nd/2)*(i - nd/2)+(j - nd/2)*(j - nd/2) == 0){
 					faifour[i][j] = 0;
 					faifour_i[i][j] = 0;
 					//cout << "faifour        " << i << " : " << j << "   -    " << dec << faifour[i][j] << endl;
 				}else{
-					faifour[i][j] = Ms*(mfour_i[i][j][0]*(i - nd/2 + 0.5 * 2) + mfour_i[i][j][1]*(j - nd/2 + 0.5 * 2) + mfour_i[i][j][2]*0 )/((i - nd/2 + 0.5 * 2)*(i - nd/2 + 0.5 * 2) + (j - nd/2 + 0.5 * 2)*(j - nd/2 + 0.5 * 2) + 0);
-					faifour_i[i][j] = -1*Ms*(mfour[i][j][0]*(i - nd/2 + 0.5 * 2) + mfour[i][j][1]*(j - nd/2 + 0.5 * 2) + mfour[i][j][2]*0 )/((i - nd/2 + 0.5 * 2)*(i - nd/2 + 0.5 * 2) + (j - nd/2 + 0.5 * 2)*(j - nd/2 + 0.5 * 2) + 0);
+					faifour[i][j] = Ms*(mfour_i[i][j][0]*(i - nd/2) + mfour_i[i][j][1]*(j - nd/2) + mfour_i[i][j][2]*0 )/((i - nd/2)*(i - nd/2) + (j - nd/2)*(j - nd/2) + 0);
+					faifour_i[i][j] = -1*Ms*(mfour[i][j][0]*(i - nd/2) + mfour[i][j][1]*(j - nd/2) + mfour[i][j][2]*0 )/((i - nd/2)*(i - nd/2) + (j - nd/2)*(j - nd/2) + 0);
 					//cout << "faifour        " << i << " : " << j << "   -    " << faifour[i][j] << endl;
 					//cout << "faifour_i        " << i << " : " << j << "   -    " << faifour_i[i][j] << endl;
 				}
@@ -224,8 +225,8 @@ int main(void){
 	for(i=0;i<=ndm;i++){
 		for(j=0;j<=ndm;j++){
 			for(k=0;k<3;k++){
-				gfour[i][j][k] = (mfour[i][j][k] + delt*hfour[i][j][k])/(1+((i - nd/2 + 0.5 * 2)*(i - nd/2 + 0.5 * 2)+(j - nd/2 + 0.5 * 2)*(j - nd/2 + 0.5 * 2))*Astar*delt);
-				gfour_i[i][j][k] = (mfour_i[i][j][k] + delt*hfour_i[i][j][k])/(1+((i - nd/2 + 0.5 * 2)*(i - nd/2 + 0.5 * 2)+(j - nd/2 + 0.5 * 2)*(j - nd/2 + 0.5 * 2))*Astar*delt);
+				gfour[i][j][k] = (mfour[i][j][k] + delt*hfour[i][j][k])/(1+((i - nd/2)*(i - nd/2)+(j - nd/2)*(j - nd/2))*Astar*delt);
+				gfour_i[i][j][k] = (mfour_i[i][j][k] + delt*hfour_i[i][j][k])/(1+((i - nd/2)*(i - nd/2)+(j - nd/2)*(j - nd/2))*Astar*delt);
 			}
 		}
 	}
@@ -273,8 +274,8 @@ int main(void){
 
 	for(i=0;i<=ndm;i++){
 		for(j=0;j<=ndm;j++){
-			gstarfour[i][j][0] = (mstarfour[i][j][0] + delt*hfour[i][j][0])/(1+((i - nd/2 + 0.5 * 2)*(i - nd/2 + 0.5 * 2)+(j - nd/2 + 0.5 * 2)*(j - nd/2 + 0.5 * 2))*Astar*delt);
-			gstarfour_i[i][j][0] = (mstarfour_i[i][j][0] + delt*hfour_i[i][j][0])/(1+((i - nd/2 + 0.5 * 2)*(i - nd/2 + 0.5 * 2)+(j - nd/2 + 0.5 * 2)*(j - nd/2 + 0.5 * 2))*Astar*delt);
+			gstarfour[i][j][0] = (mstarfour[i][j][0] + delt*hfour[i][j][0])/(1+((i - nd/2)*(i - nd/2)+(j - nd/2)*(j - nd/2))*Astar*delt);
+			gstarfour_i[i][j][0] = (mstarfour_i[i][j][0] + delt*hfour_i[i][j][0])/(1+((i - nd/2)*(i - nd/2)+(j - nd/2)*(j - nd/2))*Astar*delt);
 		}
 	}
 
@@ -314,8 +315,8 @@ int main(void){
 
 	for(i=0;i<=ndm;i++){
 		for(j=0;j<=ndm;j++){
-			gstarfour[i][j][1] = (mstarfour[i][j][1] + delt*hfour[i][j][1])/(1+((i - nd/2 + 0.5 * 2)*(i - nd/2 + 0.5 * 2)+(j - nd/2 + 0.5 * 2)*(j - nd/2 + 0.5 * 2))*Astar*delt);
-			gstarfour_i[i][j][1] = (mstarfour_i[i][j][1] + delt*hfour_i[i][j][1])/(1+((i - nd/2 + 0.5 * 2)*(i - nd/2 + 0.5 * 2)+(j - nd/2 + 0.5 * 2)*(j - nd/2 + 0.5 * 2))*Astar*delt);
+			gstarfour[i][j][1] = (mstarfour[i][j][1] + delt*hfour[i][j][1])/(1+((i - nd/2)*(i - nd/2)+(j - nd/2)*(j - nd/2))*Astar*delt);
+			gstarfour_i[i][j][1] = (mstarfour_i[i][j][1] + delt*hfour_i[i][j][1])/(1+((i - nd/2)*(i - nd/2)+(j - nd/2)*(j - nd/2))*Astar*delt);
 		}
 	}
 
@@ -358,7 +359,7 @@ int main(void){
 	for(i=0;i<=ndm;i++){
 		for(j=0;j<=ndm;j++){
 			for(k=0;k<3;k++){
-				mstar2four[i][j][k] = (mstarfour[i][j][k] + alpha*delt*hfour[i][j][k])/(1+((i - nd/2 + 0.5 * 2)*(i - nd/2 + 0.5 * 2)+(j - nd/2 + 0.5 * 2)*(j - nd/2 + 0.5 * 2))*Astar*alpha*delt);
+				mstar2four[i][j][k] = (mstarfour[i][j][k] + alpha*delt*hfour[i][j][k])/(1+((i - nd/2)*(i - nd/2)+(j - nd/2)*(j - nd/2))*Astar*alpha*delt);
 			}
 		}
 	}
@@ -461,9 +462,9 @@ void graph_s1()
 			//座標計算			//スクリーン座標系に変換
 			ii=i; jj=j; if(i==nd){ii=0;} if(j==nd){jj=0;}//周期的境界条件
 
-			col_R=m[i][j][2];//場の色をRGBにて設定
-			col_G=m[i][j][2];
-			col_B=m[i][j][2];
+			col_R=m[i][j][0];//場の色をRGBにて設定
+			col_G=m[i][j][0];
+			col_B=m[i][j][0];
 			//cout << "img  :  " << col_R << " : " << col_G << " : " << col_B << endl;
 			//col_RG=col_R+col_G;  if(col_RG>1.){col_RG=1.;}  col_B=1.-col_RG;
 			//if(col_R>=0.999){col_R=1.;} if(col_R<=0.001){col_R=0.;}//RGBの変域補正
@@ -602,17 +603,17 @@ void graph_fai()
 			//座標計算			//スクリーン座標系に変換
 			ii=i; jj=j; if(i==nd){ii=0;} if(j==nd){jj=0;}//周期的境界条件
 
-			col_R=faifour[i][j];//場の色をRGBにて設定
-			col_G=faifour[i][j];
-			col_B=faifour[i][j];
+			col_R=fai[i][j];//場の色をRGBにて設定
+			col_G=fai[i][j];
+			col_B=fai[i][j];
 			//cout << "img  :  " << col_R << " : " << col_G << " : " << col_B << endl;
 			//col_RG=col_R+col_G;  if(col_RG>1.){col_RG=1.;}  col_B=1.-col_RG;
 			//if(col_R>=0.999){col_R=1.;} if(col_R<=0.001){col_R=0.;}//RGBの変域補正
 			//if(col_G>=0.999){col_G=1.;} if(col_G<=0.001){col_G=0.;}
 			//if(col_B>=0.999){col_B=1.;} if(col_B<=0.001){col_B=0.;}
-			col_R *= 100;
-			col_G *= 100;
-			col_B *= 100;
+			col_R *= 1000;
+			col_G *= 1000;
+			col_B *= 1000;
 			col_R += 128;
 			col_G += 128;
 			col_B += 128;
@@ -621,7 +622,7 @@ void graph_fai()
 			chann.at<cv::Vec3b>(ii,jj) = cv::Vec3b(int(col_B), int(col_G), int(col_R));
 		}
 	}
-	cv::imwrite("LLG_permalloy_" + std::to_string(int(time1)) + "_faifour.png", chann);
+	cv::imwrite("LLG_permalloy_" + std::to_string(int(time1)) + "_fai.png", chann);
 }
 
 int DCexchange2D( fftw_complex *data, int cols, int rows, int depth )
@@ -710,7 +711,7 @@ int fft3d(void){
 	for( j=0; j<SIZEY; j++ ){
 		for( i=0; i<SIZEX; i++ ){
 			idx = SIZEX*j+i;
-			//printf("fft :  %d %d %lf %lf\n", i, j, out[idx][0]*scale, out[idx][1]*scale );
+			printf("fft :  %d %d %lf %lf\n", i, j, out[idx][0]*scale, out[idx][1]*scale );
 			fourier_output[i][j] = out[idx][0];// * scale;
 			fourier_output_i[i][j] = out[idx][1];// * scale;
 		}
@@ -755,7 +756,7 @@ int ifft3d(void){
 	//cout << "in  :  " << fourier_output[100][100] << endl;
 	//cout << "in_i  :  " << in2[10000][1] << endl;
  
-	//DCexchange2D(in2, SIZEX, SIZEY, SIZEZ);
+	DCexchange2D(in2, SIZEX, SIZEY, SIZEZ);
 	fftw_execute(ip);
  
 	// output is DC exchanged and scaled.
