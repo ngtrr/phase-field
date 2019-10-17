@@ -14,7 +14,7 @@ using namespace std;
 
 #define DRND(x) ((double)(x)/RAND_MAX*rand())//乱数の関数設定
 
-#define ND 64			//差分計算における計算領域一辺の分割数(高速フーリエ変換を用いるため２のべき乗)
+#define ND 256			//差分計算における計算領域一辺の分割数(高速フーリエ変換を用いるため２のべき乗)
 #define IG 8				//2^IG=ND
 #define INXY 400		//描画window１辺のピクセルサイズ(正方形の描画領域)
 #define SIZEX (ND)
@@ -27,7 +27,7 @@ using namespace std;
 	int ig=IG;						//2^ig=ND
 	double PI=3.14159;		//円周率
 	double rr=8.3145;			//ガス定数
-	double alpha=0.5;
+	double alpha=0.01;
 	double time1;					//計算カウント数(時間に比例)
 	double time1max = 10000;
 
@@ -42,6 +42,10 @@ using namespace std;
 	double delt = 0.1;
 	double mu0 = 1.0;
 	double ld = 1.0E-06;
+
+	double xf[ND];
+	double yf[ND];
+	double zf[ND];
 
 	double fai[ND][ND];
 	double faifour[ND][ND];
@@ -105,8 +109,8 @@ int main(void){
 
 	srand(time(NULL));
 
-	//Astar = (2 * A)/(mu0 * Ms * Ms * ld * ld);
-	Astar = 0.0625/1;
+	Astar = (2 * A)/(mu0 * Ms * Ms * ld * ld);
+	//Astar = 0.0625;
 
 	for(i=0;i<=ndm;i++){
 		for(j=0;j<=ndm;j++){
@@ -115,7 +119,7 @@ int main(void){
 				Hms[i][j][k] = 0;//init
 				Helastic[i][j][k] = 0;//ok
 			}
-			Hexternal[i][j][0] = 1.0E+2;//ok
+			Hexternal[i][j][0] = 0.0E+2;//ok
 			Hexternal[i][j][1] = 0.0E+6;//ok
 			Hexternal[i][j][2] = 0;//ok
 
@@ -125,12 +129,32 @@ int main(void){
 		}
 	}
 
+	for(i=0;i<=ndm;i++){
+		if(i-nd2 < 0){
+			xf[i] = i - nd2 + 1;
+			yf[i] = i - nd2 + 1;
+			zf[i] = i - nd2 + 1;
+		}else{
+			xf[i] = i - nd2;
+			yf[i] = i - nd2;
+			zf[i] = i - nd2;
+		}
+	}
+
 	//*** sinおよびcosテ−ブル、ビット反転テーブル、および初期場の設定 ***************
 	ini000();		//初期場の設定
 
 
 	//**** シミュレーションスタート ******************************
 	start: ;
+
+	for(i=0;i<=ndm;i++){
+		for(j=0;j<=ndm;j++){
+			Hanis[i][j][0] = K1*(2 * m[i][j][0] * m[i][j][1] * m[i][j][1] + 2 * m[i][j][0] * m[i][j][2] * m[i][j][2]) + 2*K2 * m[i][j][0] * m[i][j][1] * m[i][j][1] * m[i][j][2] * m[i][j][2];//ok
+			Hanis[i][j][1] = K1*(2 * m[i][j][1] * m[i][j][2] * m[i][j][2] + 2 * m[i][j][1] * m[i][j][0] * m[i][j][0]) + 2*K2 * m[i][j][1] * m[i][j][2] * m[i][j][2] * m[i][j][0] * m[i][j][0];//ok
+			Hanis[i][j][2] = K1*(2 * m[i][j][2] * m[i][j][0] * m[i][j][0] + 2 * m[i][j][2] * m[i][j][1] * m[i][j][1]) + 2*K2 * m[i][j][2] * m[i][j][0] * m[i][j][0] * m[i][j][1] * m[i][j][1];//ok
+		}
+	}
 
 	//if(time1<=100.){Nstep=10;} else{Nstep=200;}		//データ保存する時間間隔の変更
 	//if((((int)(time1) % Nstep)==0)) {datsave();} 	//一定繰返しカウント毎に組織データを保存
@@ -165,15 +189,24 @@ int main(void){
 
 	for(i=0;i<=ndm;i++){
 		for(j=0;j<=ndm;j++){
-				if((i - nd/2)*(i - nd/2)+(j - nd/2)*(j - nd/2) == 0){
+				//cout << "faifour        " << i << " : " << j << "   -    " << dec << faifour[i][j] << endl;
+				if(xf[i]*xf[i] + yf[j]*yf[j] == 0){
 					faifour[i][j] = 0;
 					faifour_i[i][j] = 0;
-					//cout << "faifour        " << i << " : " << j << "   -    " << dec << faifour[i][j] << endl;
 				}else{
-					faifour[i][j] = Ms*(mfour_i[i][j][0]*(i - nd/2) + mfour_i[i][j][1]*(j - nd/2) + mfour_i[i][j][2]*0 )/((i - nd/2)*(i - nd/2) + (j - nd/2)*(j - nd/2) + 0);
-					faifour_i[i][j] = -1*Ms*(mfour[i][j][0]*(i - nd/2) + mfour[i][j][1]*(j - nd/2) + mfour[i][j][2]*0 )/((i - nd/2)*(i - nd/2) + (j - nd/2)*(j - nd/2) + 0);
-					//cout << "faifour        " << i << " : " << j << "   -    " << faifour[i][j] << endl;
-					//cout << "faifour_i        " << i << " : " << j << "   -    " << faifour_i[i][j] << endl;
+					if(i - nd2 > 0 && j - nd2 > 0){
+						faifour[i][j] = Ms*(mfour_i[i][j][0]*(i - nd/2) + mfour_i[i][j][1]*(j - nd/2) + mfour_i[i][j][2]*0 )/((i - nd/2)*(i - nd/2) + (j - nd/2)*(j - nd/2) + 0);
+						faifour_i[i][j] = -1*Ms*(mfour[i][j][0]*(i - nd/2) + mfour[i][j][1]*(j - nd/2) + mfour[i][j][2]*0 )/((i - nd/2)*(i - nd/2) + (j - nd/2)*(j - nd/2) + 0);
+					}else if(i - nd2 < 0 && j - nd2 > 0){
+						faifour[i][j] = Ms*(mfour_i[i][j][0]*(i - nd/2 - 1) + mfour_i[i][j][1]*(j - nd/2 - 1) + mfour_i[i][j][2]*0 )/((i - nd/2 - 1)*(i - nd/2 - 1) + (j - nd/2 - 1)*(j - nd/2 - 1) + 0);
+						faifour_i[i][j] = -1*Ms*(mfour[i][j][0]*(i - nd/2 - 1) + mfour[i][j][1]*(j - nd/2 - 1) + mfour[i][j][2]*0 )/((i - nd/2 - 1)*(i - nd/2 - 1) + (j - nd/2 - 1)*(j - nd/2 - 1) + 0);
+					}else if(i - nd2 > 0 && j - nd2 < 0){
+						faifour[i][j] = Ms*(mfour_i[i][j][0]*(i - nd/2) + mfour_i[i][j][1]*(j - nd/2) + mfour_i[i][j][2]*0 )/((i - nd/2)*(i - nd/2) + (j - nd/2)*(j - nd/2) + 0);
+						faifour_i[i][j] = -1*Ms*(mfour[i][j][0]*(i - nd/2) + mfour[i][j][1]*(j - nd/2) + mfour[i][j][2]*0 )/((i - nd/2)*(i - nd/2) + (j - nd/2)*(j - nd/2) + 0);
+					}else if(i - nd2 < 0 && j - nd2 < 0){
+						faifour[i][j] = Ms*(mfour_i[i][j][0]*(i - nd/2) + mfour_i[i][j][1]*(j - nd/2) + mfour_i[i][j][2]*0 )/((i - nd/2)*(i - nd/2) + (j - nd/2)*(j - nd/2) + 0);
+						faifour_i[i][j] = -1*Ms*(mfour[i][j][0]*(i - nd/2) + mfour[i][j][1]*(j - nd/2) + mfour[i][j][2]*0 )/((i - nd/2)*(i - nd/2) + (j - nd/2)*(j - nd/2) + 0);
+					}
 				}
 			if (isinf(faifour[i][j]) == 1){
 				cout << "faifour        " << i << " : " << j << "   -    " << dec << faifour[i][j] << endl;
