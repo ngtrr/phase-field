@@ -145,6 +145,7 @@ int fft3d(void){
 	if( p   ) fftw_destroy_plan(p);
 	if( in  ) fftw_free(in);
 	if( out ) fftw_free(out);
+	if( out2 ) fftw_free(out2);
 
     return true;
 }
