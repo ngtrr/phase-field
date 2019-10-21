@@ -9,12 +9,13 @@
 #include <opencv2/opencv.hpp>
 #include <complex.h>
 #include <fftw3.h>
+#include <Eigen/LU>
 
 using namespace std;
 
 #define DRND(x) ((double)(x)/RAND_MAX*rand())//乱数の関数設定
 
-#define ND 256			//差分計算における計算領域一辺の分割数(高速フーリエ変換を用いるため２のべき乗)
+#define ND 512			//差分計算における計算領域一辺の分割数(高速フーリエ変換を用いるため２のべき乗)
 #define IG 8				//2^IG=ND
 #define SIZEX (ND)
 #define SIZEY (ND)
@@ -26,7 +27,7 @@ using namespace std;
 	int ig=IG;						//2^ig=ND
 	double alpha=0.5;
 	double time1;					//計算カウント数(時間に比例)
-	double time1max = 10000;
+	double time1max = 1000;
 
 	double filter[3][3][3];
 
@@ -88,7 +89,9 @@ using namespace std;
 	double epsilon_zerofour_i[ND][ND][3][3];
 
 	double epsilon_homo[3][3];
-	double c[6][6];
+
+	double c[3][3][3][3];
+	double s[3][3][3][3];
 	double eta[ND][ND][3][3];
 
 	double Dfour[ND][ND];
@@ -99,6 +102,8 @@ using namespace std;
 	double u[ND][ND][3];
 	double ufour[ND][ND][3];
 	double ufour_i[ND][ND][3];
+
+	double sigma_a[3][3];
 
 	void ini000();			//初期場の設定サブル−チン
 	void graph_s1();		//組織描画サブル−チン
@@ -122,7 +127,7 @@ int main(void){
 	srand(time(NULL));
 
 	//Astar = (2 * A)/(mu0 * Ms * Ms * ld * ld);
-	Astar = 0.0625 / 1;
+	Astar = 0.0625 / 4;
 
 	for(i=0;i<=ndm;i++){
 		for(j=0;j<=ndm;j++){
@@ -141,13 +146,8 @@ int main(void){
 	}
 
 	for(i=0;i<=ndm;i++){
-		if(i-nd2 < 0){
-			xf[i] = i - nd2;// + 1;
-			yf[i] = i - nd2;// + 1;
-		}else{
-			xf[i] = i - nd2;
-			yf[i] = i - nd2;
-		}
+		xf[i] = i - nd2;
+		yf[i] = i - nd2;
 	}
 
 
@@ -176,7 +176,7 @@ int main(void){
 
 	//if(time1<=100.){Nstep=10;} else{Nstep=200;}		//データ保存する時間間隔の変更
 	//if((((int)(time1) % Nstep)==0)) {datsave();} 	//一定繰返しカウント毎に組織データを保存
-	if((((int)(time1) % 100)==0)) {graph_s1();}//graph_fai();graph_h();graph_mstar1();} 		//一定繰返しカウント毎に組織を表示
+	if((((int)(time1) % 10)==0)) {graph_s1();}//graph_fai();graph_h();graph_mstar1();} 		//一定繰返しカウント毎に組織を表示
 	//if((((int)(time1) % 100)==0)) {datsave();} 		//一定繰返しカウント毎にデータを保存
 
 
@@ -260,6 +260,13 @@ int main(void){
 		}
 	}
 
+	epsilon_homo[0][0] = s[0][0] * sigma_a[0][0] + s[0][1] * (sigma_a[1][1] + sigma_a[2][2]) + 3/2 * ram100 * (m_ave[0] * m_ave[0] - 1/3);
+	epsilon_homo[1][1] = s[0][0] * sigma_a[1][1] + s[0][1] * (sigma_a[0][0] + sigma_a[2][2]) + 3/2 * ram100 * (m_ave[1] * m_ave[1] - 1/3);
+	epsilon_homo[2][2] = s[0][0] * sigma_a[2][2] + s[0][1] * (sigma_a[0][0] + sigma_a[1][1]) + 3/2 * ram100 * (m_ave[2] * m_ave[2] - 1/3);
+	epsilon_homo[0][1] = 0.5 * s[1][2][1][2] * sigma_a[0][1] + 3/2 * ram111 * m_ave[0] * m_ave[1];
+	epsilon_homo[0][2] = 0.5 * s[1][2][1][2] * sigma_a[0][2] + 3/2 * ram111 * m_ave[0] * m_ave[2];
+	epsilon_homo[1][2] = 0.5 * s[1][2][1][2] * sigma_a[1][2] + 3/2 * ram111 * m_ave[1] * m_ave[2];
+
 	for(l=0;l<3;l++){
 		for(k=0;k<3;k++){
 			for(i=0;i<=ndm;i++){
@@ -283,8 +290,8 @@ int main(void){
 		for(j=0;j<=ndm;j++){
 			for(k=0;k<3;k++){
 				for(k=0;k<3;k++){
-					ufour[i][j][k] = c[k][l] * epsilon_zerofour[i][j][k][l] * yf[j];
-					ufour_i[i][j][k] = -1 * c[k][l] * epsilon_zerofour_i[i][j][k][l] * yf[j];
+					ufour[i][j][k] = c[i][j][k][l] * epsilon_zerofour[i][j][k][l] * yf[j];
+					ufour_i[i][j][k] = -1 * c[i][j][k][l] * epsilon_zerofour_i[i][j][k][l] * yf[j];
 				}
 			}
 		}
@@ -543,11 +550,11 @@ void ini000()
 	for(i=0;i<=ndm;i++){
 		for(j=0;j<=ndm;j++){
 			for(k=0;k<3;k++){
-				//m[i][j][k] = rand();
+				m[i][j][k] = rand();
 			}
-			m[i][j][0] = int(image[i][j]);
-			m[i][j][1] = int(256-image[i][j]);
-			m[i][j][2] = int(100-image[i][j]/2);
+			//m[i][j][0] = int(image[i][j]);
+			//m[i][j][1] = int(256-image[i][j]);
+			//m[i][j][2] = int(100-image[i][j]/2);
 			mlength = sqrt( m[i][j][0] * m[i][j][0] + m[i][j][1] * m[i][j][1] + m[i][j][2] * m[i][j][2] );
 			for(k=0;k<3;k++){
 				m[i][j][k] = m[i][j][k] / mlength;
@@ -569,8 +576,8 @@ void graph_s1()
 	for(i=0;i<=ndm;i++){
 		for(j=0;j<=ndm;j++){
 			col_R=m[i][j][0];//場の色をRGBにて設定
-			col_G=m[i][j][1];
-			col_B=m[i][j][2];
+			col_G=m[i][j][0];
+			col_B=m[i][j][0];
 			col_R *= 100;
 			col_G *= 100;
 			col_B *= 100;
