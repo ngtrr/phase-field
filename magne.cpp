@@ -9,6 +9,8 @@
 #include <opencv2/opencv.hpp>
 #include <complex.h>
 #include <fftw3.h>
+#include <Eigen/Core>
+#include <Eigen/LU>
 
 using namespace std;
 
@@ -26,7 +28,7 @@ using namespace std;
 	int ig=IG;						//2^ig=ND
 	double alpha=0.5;
 	double time1;					//計算カウント数(時間に比例)
-	double time1max = 10000;
+	double time1max = 100000;
 
 	double filter[3][3][3];
 
@@ -88,7 +90,12 @@ using namespace std;
 	double epsilon_zerofour_i[ND][ND][3][3];
 
 	double epsilon_homo[3][3];
-	double c[6][6];
+
+	double epsilon_zero_grad[ND][ND][3][3][3];
+	double epsilon_homo_grad[3][3][3];
+
+	double c[3][3][3][3];
+	double s[3][3][3][3];
 	double eta[ND][ND][3][3];
 
 	double Dfour[ND][ND];
@@ -99,6 +106,8 @@ using namespace std;
 	double u[ND][ND][3];
 	double ufour[ND][ND][3];
 	double ufour_i[ND][ND][3];
+
+	double sigma_a[3][3];
 
 	void ini000();			//初期場の設定サブル−チン
 	void graph_s1();		//組織描画サブル−チン
@@ -116,13 +125,17 @@ int main(void){
 	int j;
 	int k;
 	int l;
+	int ii;
+	int jj;
+	int kk;
+	int ll;
 
 	double mlength;
 
 	srand(time(NULL));
 
 	//Astar = (2 * A)/(mu0 * Ms * Ms * ld * ld);
-	Astar = 0.0625 / 1;
+	Astar = 0.0625 / 100;
 
 	for(i=0;i<=ndm;i++){
 		for(j=0;j<=ndm;j++){
@@ -134,20 +147,15 @@ int main(void){
 			Hexternal[i][j][1] = 0;//.0E+6;//ok
 			Hexternal[i][j][2] = 0;//ok
 
-			Hanis[i][j][0] = (4 * K1)/(3 * Ms);// * 1.0E+7;//ok
-			Hanis[i][j][1] = (4 * K1)/(3 * Ms);// * 1.0E+7;//ok
-			Hanis[i][j][2] = (4 * K1)/(3 * Ms);// * 1.0E+7;//ok
+			//Hanis[i][j][0] = (4 * K1)/(3 );// * 1.0E+7;//ok
+			//Hanis[i][j][1] = (4 * K1)/(3 );// * 1.0E+7;//ok
+			//Hanis[i][j][2] = (4 * K1)/(3 );// * 1.0E+7;//ok
 		}
 	}
 
 	for(i=0;i<=ndm;i++){
-		if(i-nd2 < 0){
-			xf[i] = i - nd2;// + 1;
-			yf[i] = i - nd2;// + 1;
-		}else{
-			xf[i] = i - nd2;
-			yf[i] = i - nd2;
-		}
+		xf[i] = i - nd2;
+		yf[i] = i - nd2;
 	}
 
 
@@ -155,9 +163,9 @@ int main(void){
 	N[1] = 0.3333;
 	N[2] = 0.3333;
 
-	c[0][0] = c[1][1] = c[2][2] = c11;
-	c[3][3] = c[4][4] = c[5][5] = c44;
-	c[0][1] = c[0][2] = c[1][2] = c[1][0] = c[2][0] = c[2][1] = c12;
+	c[0][0][0][0] = c[1][1][1][1] = c[2][2][2][2] = c11;
+	c[1][2][1][2] = c[0][2][0][2] = c[0][1][0][1] = c44;
+	c[0][0][1][1] = c[0][0][2][2] = c[1][1][2][2] = c[1][1][0][0] = c[2][2][0][0] = c[2][2][1][1] = c12;
 
 	//*** sinおよびcosテ−ブル、ビット反転テーブル、および初期場の設定 ***************
 	ini000();		//初期場の設定
@@ -176,7 +184,7 @@ int main(void){
 
 	//if(time1<=100.){Nstep=10;} else{Nstep=200;}		//データ保存する時間間隔の変更
 	//if((((int)(time1) % Nstep)==0)) {datsave();} 	//一定繰返しカウント毎に組織データを保存
-	if((((int)(time1) % 100)==0)) {graph_s1();}//graph_fai();graph_h();graph_mstar1();} 		//一定繰返しカウント毎に組織を表示
+	if((((int)(time1) % 1000)==0)) {graph_s1();}//graph_fai();graph_h();graph_mstar1();} 		//一定繰返しカウント毎に組織を表示
 	//if((((int)(time1) % 100)==0)) {datsave();} 		//一定繰返しカウント毎にデータを保存
 
 
@@ -243,7 +251,7 @@ int main(void){
 			for(k=0;k<3;k++){
 				//cout << "   " << endl;
 				//cout << "Hms   " << Hms[i][j][k] << endl;
-				Hms[i][j][k] += -1 * m_ave[k] * Ms * N[k];
+				Hms[i][j][k] = -1 * m_ave[k] * Ms * N[k];
 				//cout << "Hms   " << Hms[i][j][k] << endl;
 			}
 		}
@@ -257,9 +265,62 @@ int main(void){
 			epsilon_zero[i][j][0][1] = epsilon_zero[i][j][1][0] = 3/2 * ram111 * m[i][j][0] * m[i][j][1];
 			epsilon_zero[i][j][0][2] = epsilon_zero[i][j][2][0] = 3/2 * ram111 * m[i][j][0] * m[i][j][2];
 			epsilon_zero[i][j][1][2] = epsilon_zero[i][j][2][1] = 3/2 * ram111 * m[i][j][1] * m[i][j][2];
+
+
+			epsilon_zero_grad[i][j][0][0][0] = 3/2 * ram100 * (2 * m[i][j][0]);
+			epsilon_zero_grad[i][j][0][1][0] = epsilon_zero_grad[i][j][1][0][0] = 3/2 * ram111 * m[i][j][1];
+			epsilon_zero_grad[i][j][0][2][0] = epsilon_zero_grad[i][j][2][0][0] = 3/2 * ram111 * m[i][j][2];
+
+			epsilon_zero_grad[i][j][1][1][1] = 3/2 * ram100 * (2 * m[i][j][1]);
+			epsilon_zero_grad[i][j][0][1][1] = epsilon_zero_grad[i][j][1][0][1] = 3/2 * ram111 * m[i][j][0];
+			epsilon_zero_grad[i][j][1][2][1] = epsilon_zero_grad[i][j][2][1][1] = 3/2 * ram111 * m[i][j][2];
+
+			epsilon_zero_grad[i][j][2][2][2] = 3/2 * ram100 * (2 * m[i][j][2]);
+			epsilon_zero_grad[i][j][0][2][2] = epsilon_zero_grad[i][j][2][0][2] = 3/2 * ram111 * m[i][j][0];
+			epsilon_zero_grad[i][j][1][2][2] = epsilon_zero_grad[i][j][2][1][2] = 3/2 * ram111 * m[i][j][1];
 		}
 	}
 
+	epsilon_homo[0][0] = s[0][0][0][0] * sigma_a[0][0] + s[0][0][1][1] * (sigma_a[1][1] + sigma_a[2][2]) + 3/2 * ram100 * (m_ave[0] * m_ave[0] - 1/3);
+	epsilon_homo[1][1] = s[0][0][0][0] * sigma_a[1][1] + s[0][0][1][1] * (sigma_a[0][0] + sigma_a[2][2]) + 3/2 * ram100 * (m_ave[1] * m_ave[1] - 1/3);
+	epsilon_homo[2][2] = s[0][0][0][0] * sigma_a[2][2] + s[0][0][1][1] * (sigma_a[0][0] + sigma_a[1][1]) + 3/2 * ram100 * (m_ave[2] * m_ave[2] - 1/3);
+	epsilon_homo[0][1] = 0.5 * s[1][2][1][2] * sigma_a[0][1] + 3/2 * ram111 * m_ave[0] * m_ave[1];
+	epsilon_homo[0][2] = 0.5 * s[1][2][1][2] * sigma_a[0][2] + 3/2 * ram111 * m_ave[0] * m_ave[2];
+	epsilon_homo[1][2] = 0.5 * s[1][2][1][2] * sigma_a[1][2] + 3/2 * ram111 * m_ave[1] * m_ave[2];
+
+	epsilon_homo_grad[0][0][0] = 3/2 * ram100 * (2 * m_ave[0]);
+	epsilon_homo_grad[0][1][0] = 3/2 * ram111 * m_ave[1];
+	epsilon_homo_grad[0][2][0] = 3/2 * ram111 * m_ave[2];
+
+	epsilon_homo_grad[1][1][1] = 3/2 * ram100 * (2 * m_ave[1]);
+	epsilon_homo_grad[0][1][1] = 3/2 * ram111 * m_ave[0];
+	epsilon_homo_grad[1][2][1] = 3/2 * ram111 * m_ave[2];
+
+	epsilon_homo_grad[2][2][2] = 3/2 * ram100 * (2 * m_ave[2]);
+	epsilon_homo_grad[0][2][2] = 3/2 * ram111 * m_ave[0];
+	epsilon_homo_grad[1][2][2] = 3/2 * ram111 * m_ave[1];
+
+	for(i=0;i<=ndm;i++){
+		for(j=0;j<=ndm;j++){
+			for(k=0;k<3;k++){
+				Helastic[i][j][k] = 0;
+
+				for(ii=0;ii<3;ii++){
+					for(jj=0;jj<3;jj++){
+						for(kk=0;kk<3;kk++){
+							for(ll=0;ll<3;ll++){
+								Helastic[i][j][k] += 0.5 * c[ii][jj][kk][ll] * epsilon_homo_grad[ii][jj][k] * epsilon_homo_grad[kk][ll][k] + 0.5 * c[ii][jj][kk][ll] * epsilon_zero_grad[i][j][ii][jj][k] * epsilon_zero_grad[i][j][kk][ll][k];
+							}
+						}
+					}
+				}
+
+
+			}
+		}
+	}
+
+	/*
 	for(l=0;l<3;l++){
 		for(k=0;k<3;k++){
 			for(i=0;i<=ndm;i++){
@@ -283,8 +344,8 @@ int main(void){
 		for(j=0;j<=ndm;j++){
 			for(k=0;k<3;k++){
 				for(k=0;k<3;k++){
-					ufour[i][j][k] = c[k][l] * epsilon_zerofour[i][j][k][l] * yf[j];
-					ufour_i[i][j][k] = -1 * c[k][l] * epsilon_zerofour_i[i][j][k][l] * yf[j];
+					ufour[i][j][k] = c[i][j][k][l] * epsilon_zerofour[i][j][k][l] * yf[j];
+					ufour_i[i][j][k] = -1 * c[i][j][k][l] * epsilon_zerofour_i[i][j][k][l] * yf[j];
 				}
 			}
 		}
@@ -313,7 +374,7 @@ int main(void){
 				}
 			}
 		}
-	}
+	}*/
 
 
 	//*********************************  STEP 1  ******************************************************
@@ -323,6 +384,7 @@ int main(void){
 			for(k=0;k<3;k++){
 				h[i][j][k] = (Hanis[i][j][k] + Hms[i][j][k] + Hexternal[i][j][k] + Helastic[i][j][k])/Ms;
 				//cout << "h   " << h[i][j][k] * Ms << endl;
+				//cout << "Hela   " << Helastic[i][j][k] * Ms << endl;
 			}
 		}
 	}
@@ -536,18 +598,25 @@ void ini000()
 	int i, j ,k;
 	double mlength;
 	
-	cv::Mat_<uchar> image = cv::imread("a.jpg" ,0);
+	cv::Mat_<uchar> image;
+	if(SIZEX == 256){
+		image = cv::imread("a.jpg" ,0);
+	}else if(SIZEX == 512){
+		image = cv::imread("c.jpg" ,0);
+	}else{
+		cout << "error : no image to load" << endl;
+	}
 
 	srand(time(NULL)); // 乱数初期化
 
 	for(i=0;i<=ndm;i++){
 		for(j=0;j<=ndm;j++){
 			for(k=0;k<3;k++){
-				//m[i][j][k] = rand();
+				m[i][j][k] = rand();
 			}
-			m[i][j][0] = int(image[i][j]);
-			m[i][j][1] = int(256-image[i][j]);
-			m[i][j][2] = int(100-image[i][j]/2);
+			//m[i][j][0] = int(image[i][j]);
+			//m[i][j][1] = int(256-image[i][j]);
+			//m[i][j][2] = int(100-image[i][j]/2);
 			mlength = sqrt( m[i][j][0] * m[i][j][0] + m[i][j][1] * m[i][j][1] + m[i][j][2] * m[i][j][2] );
 			for(k=0;k<3;k++){
 				m[i][j][k] = m[i][j][k] / mlength;
@@ -571,9 +640,9 @@ void graph_s1()
 			col_R=m[i][j][0];//場の色をRGBにて設定
 			col_G=m[i][j][1];
 			col_B=m[i][j][2];
-			col_R *= 100;
-			col_G *= 100;
-			col_B *= 100;
+			col_R *= 128;
+			col_G *= 128;
+			col_B *= 128;
 			col_R += 128;
 			col_G += 128;
 			col_B += 128;
