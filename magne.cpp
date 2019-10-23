@@ -9,8 +9,8 @@
 #include <opencv2/opencv.hpp>
 #include <complex.h>
 #include <fftw3.h>
-#include <Eigen/Core>
-#include <Eigen/LU>
+//#include <Eigen/Core>
+//#include <Eigen/LU>
 
 using namespace std;
 
@@ -26,9 +26,9 @@ using namespace std;
 	int nd=ND, ndm=ND-1; 	//計算領域の一辺の差分分割数(差分ブロック数)、ND-1を定義
 	int nd2=ND/2;				 	//ND/2を定義：高速フ−リエ変換で使用
 	int ig=IG;						//2^ig=ND
-	double alpha=0.5;
+	double alpha=0.1;
 	double time1;					//計算カウント数(時間に比例)
-	double time1max = 100000;
+	double time1max = 1000;
 
 	double filter[3][3][3];
 
@@ -184,7 +184,7 @@ int main(void){
 
 	//if(time1<=100.){Nstep=10;} else{Nstep=200;}		//データ保存する時間間隔の変更
 	//if((((int)(time1) % Nstep)==0)) {datsave();} 	//一定繰返しカウント毎に組織データを保存
-	if((((int)(time1) % 1000)==0)) {graph_s1();}//graph_fai();graph_h();graph_mstar1();} 		//一定繰返しカウント毎に組織を表示
+	if((((int)(time1) % 10)==0)) {graph_s1();}//graph_fai();graph_h();graph_mstar1();} 		//一定繰返しカウント毎に組織を表示
 	//if((((int)(time1) % 100)==0)) {datsave();} 		//一定繰返しカウント毎にデータを保存
 
 
