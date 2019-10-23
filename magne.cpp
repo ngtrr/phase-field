@@ -895,3 +895,55 @@ void grad_fai(){
 	}
 }
 
+
+void grad_u(){
+	int i, j, k;
+
+	for(i=0;i<3;i++){
+		for(j=0;j<3;j++){
+			for(k=0;k<3;k++){
+				filter[i][j][k] = 0;
+			}
+		}
+	}
+	filter[0][1][1] = -0.5;
+	filter[2][1][1] = 0.5;
+	convolution3D(0);
+	for(i=0;i<=ndm;i++){
+		for(j=0;j<=ndm;j++){
+			Hms[i][j][0] = filter_output[i][j];
+		}
+	}
+
+	for(i=0;i<3;i++){
+		for(j=0;j<3;j++){
+			for(k=0;k<3;k++){
+				filter[i][j][k] = 0;
+			}
+		}
+	}
+	filter[1][0][1] = -0.5;
+	filter[1][2][1] = 0.5;
+	convolution3D(0);
+	for(i=0;i<=ndm;i++){
+		for(j=0;j<=ndm;j++){
+			Hms[i][j][1] = filter_output[i][j];
+		}
+	}
+
+	for(i=0;i<3;i++){
+		for(j=0;j<3;j++){
+			for(k=0;k<3;k++){
+				filter[i][j][k] = 0;
+			}
+		}
+	}
+	filter[1][1][0] = -0.5;
+	filter[1][1][2] = 0.5;
+	convolution3D(0);
+	for(i=0;i<=ndm;i++){
+		for(j=0;j<=ndm;j++){
+			Hms[i][j][2] = filter_output[i][j];
+		}
+	}
+}
