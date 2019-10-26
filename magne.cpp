@@ -9,10 +9,11 @@
 #include <opencv2/opencv.hpp>
 #include <complex.h>
 #include <fftw3.h>
-//#include <Eigen/Core>
-//#include <Eigen/LU>
+#include <Eigen/Core>
+#include <Eigen/LU>
 
 using namespace std;
+using namespace Eigen;
 
 #define DRND(x) ((double)(x)/RAND_MAX*rand())//乱数の関数設定
 
@@ -26,7 +27,7 @@ using namespace std;
 	int nd=ND, ndm=ND-1; 	//計算領域の一辺の差分分割数(差分ブロック数)、ND-1を定義
 	int nd2=ND/2;				 	//ND/2を定義：高速フ−リエ変換で使用
 	int ig=IG;						//2^ig=ND
-	double alpha=0.1;
+	double alpha=0.5;
 	double time1;					//計算カウント数(時間に比例)
 	double time1max = 1000;
 
@@ -96,6 +97,8 @@ using namespace std;
 
 	double c[3][3][3][3];
 	double s[3][3][3][3];
+	MatrixXd c_matrix(6,6);
+	MatrixXd s_matrix(6,6);
 	double eta[ND][ND][3][3];
 
 	double Dfour[ND][ND];
@@ -135,7 +138,7 @@ int main(void){
 	srand(time(NULL));
 
 	//Astar = (2 * A)/(mu0 * Ms * Ms * ld * ld);
-	Astar = 0.0625 / 100;
+	Astar = 0.0625 / 1;
 
 	for(i=0;i<=ndm;i++){
 		for(j=0;j<=ndm;j++){
@@ -143,8 +146,8 @@ int main(void){
 				Hms[i][j][k] = 0;//init
 				Helastic[i][j][k] = 0;//ok
 			}
-			Hexternal[i][j][0] = 0;//.0E+1;//ok
-			Hexternal[i][j][1] = 0;//.0E+6;//ok
+			Hexternal[i][j][0] = -2.0E+5;//ok
+			Hexternal[i][j][1] = -2.0E+5;//ok
 			Hexternal[i][j][2] = 0;//ok
 
 			//Hanis[i][j][0] = (4 * K1)/(3 );// * 1.0E+7;//ok
@@ -382,7 +385,7 @@ int main(void){
 	for(i=0;i<=ndm;i++){
 		for(j=0;j<=ndm;j++){
 			for(k=0;k<3;k++){
-				h[i][j][k] = (Hanis[i][j][k] + Hms[i][j][k] + Hexternal[i][j][k] + Helastic[i][j][k])/Ms;
+				h[i][j][k] = (Hanis[i][j][k] + 0.5 * Hms[i][j][k] + Hexternal[i][j][k] + Helastic[i][j][k])/Ms;
 				//cout << "h   " << h[i][j][k] * Ms << endl;
 				//cout << "Hela   " << Helastic[i][j][k] * Ms << endl;
 			}
