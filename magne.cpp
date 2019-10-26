@@ -35,7 +35,7 @@ using namespace Eigen;
 
 	double Ms = 1.432E+6;
   	double K1 = 2.0E+4, K2 = -4.5E+4;
-  	double ram100 = 2.64E-4, ram111 = 0;
+  	double ram100 = 1.32E-4, ram111 = 0;
   	double c11 = 1.96E+11, c12 = 1.56E+11, c44 = 1.23E+11;
 	double A = 1.3E-11;
   	double Astar;
@@ -52,6 +52,9 @@ using namespace Eigen;
 	double faifour_i[ND][ND];
 
 	double m_ave[3];
+	double m2_ave[3];
+	double mm_ave[3];
+
 	double N[3];
 
 	double m[ND][ND][3];
@@ -138,7 +141,11 @@ int main(void){
 	srand(time(NULL));
 
 	//Astar = (2 * A)/(mu0 * Ms * Ms * ld * ld);
+<<<<<<< HEAD
 	Astar = 0.0625 / 1;
+=======
+	Astar = 0.0625;
+>>>>>>> 56dce57ca6400c4c9a8ab8ef57664ff7d78201c0
 
 	for(i=0;i<=ndm;i++){
 		for(j=0;j<=ndm;j++){
@@ -146,13 +153,19 @@ int main(void){
 				Hms[i][j][k] = 0;//init
 				Helastic[i][j][k] = 0;//ok
 			}
+<<<<<<< HEAD
 			Hexternal[i][j][0] = -2.0E+5;//ok
 			Hexternal[i][j][1] = -2.0E+5;//ok
 			Hexternal[i][j][2] = 0;//ok
+=======
+			Hexternal[i][j][0] = 0.0E+6;//ok
+			Hexternal[i][j][1] = 0.0E+6;//ok
+			Hexternal[i][j][2] = 0.0E+6;//ok
+>>>>>>> 56dce57ca6400c4c9a8ab8ef57664ff7d78201c0
 
-			//Hanis[i][j][0] = (4 * K1)/(3 );// * 1.0E+7;//ok
-			//Hanis[i][j][1] = (4 * K1)/(3 );// * 1.0E+7;//ok
-			//Hanis[i][j][2] = (4 * K1)/(3 );// * 1.0E+7;//ok
+			//Hanis[i][j][0] = 0;//(4 * K1)/(3 );// * 1.0E+7;//ok
+			//Hanis[i][j][1] = 0;//(4 * K1)/(3 );// * 1.0E+7;//ok
+			//Hanis[i][j][2] = 0;//(4 * K1)/(3 );// * 1.0E+7;//ok
 		}
 	}
 
@@ -162,9 +175,9 @@ int main(void){
 	}
 
 
-	N[0] = 0.3333;
-	N[1] = 0.3333;
-	N[2] = 0.3333;
+	N[0] = 0.333;
+	N[1] = 0.333;
+	N[2] = 0.333;
 
 	c[0][0][0][0] = c[1][1][1][1] = c[2][2][2][2] = c11;
 	c[1][2][1][2] = c[0][2][0][2] = c[0][1][0][1] = c44;
@@ -179,9 +192,9 @@ int main(void){
 
 	for(i=0;i<=ndm;i++){
 		for(j=0;j<=ndm;j++){
-			Hanis[i][j][0] = K1*(2 * m[i][j][0] * m[i][j][1] * m[i][j][1] + 2 * m[i][j][0] * m[i][j][2] * m[i][j][2]) + 2*K2 * m[i][j][0] * m[i][j][1] * m[i][j][1] * m[i][j][2] * m[i][j][2];//ok
-			Hanis[i][j][1] = K1*(2 * m[i][j][1] * m[i][j][2] * m[i][j][2] + 2 * m[i][j][1] * m[i][j][0] * m[i][j][0]) + 2*K2 * m[i][j][1] * m[i][j][2] * m[i][j][2] * m[i][j][0] * m[i][j][0];//ok
-			Hanis[i][j][2] = K1*(2 * m[i][j][2] * m[i][j][0] * m[i][j][0] + 2 * m[i][j][2] * m[i][j][1] * m[i][j][1]) + 2*K2 * m[i][j][2] * m[i][j][0] * m[i][j][0] * m[i][j][1] * m[i][j][1];//ok
+			Hanis[i][j][0] = -1/(mu0 * Ms) * (K1*(2 * m[i][j][0] * m[i][j][1] * m[i][j][1] + 2 * m[i][j][0] * m[i][j][2] * m[i][j][2]) + 2*K2 * m[i][j][0] * m[i][j][1] * m[i][j][1] * m[i][j][2] * m[i][j][2]);//ok
+			Hanis[i][j][1] = -1/(mu0 * Ms) * (K1*(2 * m[i][j][1] * m[i][j][2] * m[i][j][2] + 2 * m[i][j][1] * m[i][j][0] * m[i][j][0]) + 2*K2 * m[i][j][1] * m[i][j][2] * m[i][j][2] * m[i][j][0] * m[i][j][0]);//ok
+			Hanis[i][j][2] = -1/(mu0 * Ms) * (K1*(2 * m[i][j][2] * m[i][j][0] * m[i][j][0] + 2 * m[i][j][2] * m[i][j][1] * m[i][j][1]) + 2*K2 * m[i][j][2] * m[i][j][0] * m[i][j][0] * m[i][j][1] * m[i][j][1]);//ok
 		}
 	}
 
@@ -241,9 +254,13 @@ int main(void){
 
 	for(k=0;k<3;k++){
 		m_ave[k] = 0;
+		m2_ave[k] = 0;
+		mm_ave[k] = 0;
 		for(i=0;i<=ndm;i++){
 			for(j=0;j<=ndm;j++){
 				m_ave[k] += m[i][j][k] / SIZE;
+				m2_ave[k] += m[i][j][k] * m[i][j][k] / SIZE;
+				mm_ave[k] += m[i][j][(k + 1) % 3] * m[i][j][(k + 2) % 3] / SIZE;
 			}
 		}
 	}
@@ -284,12 +301,12 @@ int main(void){
 		}
 	}
 
-	epsilon_homo[0][0] = s[0][0][0][0] * sigma_a[0][0] + s[0][0][1][1] * (sigma_a[1][1] + sigma_a[2][2]) + 3/2 * ram100 * (m_ave[0] * m_ave[0] - 1/3);
-	epsilon_homo[1][1] = s[0][0][0][0] * sigma_a[1][1] + s[0][0][1][1] * (sigma_a[0][0] + sigma_a[2][2]) + 3/2 * ram100 * (m_ave[1] * m_ave[1] - 1/3);
-	epsilon_homo[2][2] = s[0][0][0][0] * sigma_a[2][2] + s[0][0][1][1] * (sigma_a[0][0] + sigma_a[1][1]) + 3/2 * ram100 * (m_ave[2] * m_ave[2] - 1/3);
-	epsilon_homo[0][1] = 0.5 * s[1][2][1][2] * sigma_a[0][1] + 3/2 * ram111 * m_ave[0] * m_ave[1];
-	epsilon_homo[0][2] = 0.5 * s[1][2][1][2] * sigma_a[0][2] + 3/2 * ram111 * m_ave[0] * m_ave[2];
-	epsilon_homo[1][2] = 0.5 * s[1][2][1][2] * sigma_a[1][2] + 3/2 * ram111 * m_ave[1] * m_ave[2];
+	epsilon_homo[0][0] = s[0][0][0][0] * sigma_a[0][0] + s[0][0][1][1] * (sigma_a[1][1] + sigma_a[2][2]) + 3/2 * ram100 * (m2_ave[0] - 1/3);
+	epsilon_homo[1][1] = s[0][0][0][0] * sigma_a[1][1] + s[0][0][1][1] * (sigma_a[0][0] + sigma_a[2][2]) + 3/2 * ram100 * (m2_ave[1] - 1/3);
+	epsilon_homo[2][2] = s[0][0][0][0] * sigma_a[2][2] + s[0][0][1][1] * (sigma_a[0][0] + sigma_a[1][1]) + 3/2 * ram100 * (m2_ave[2] - 1/3);
+	epsilon_homo[0][1] = 0.5 * s[1][2][1][2] * sigma_a[0][1] + 3/2 * ram111 * mm_ave[2];
+	epsilon_homo[0][2] = 0.5 * s[1][2][1][2] * sigma_a[0][2] + 3/2 * ram111 * mm_ave[1];
+	epsilon_homo[1][2] = 0.5 * s[1][2][1][2] * sigma_a[1][2] + 3/2 * ram111 * mm_ave[0];
 
 	epsilon_homo_grad[0][0][0] = 3/2 * ram100 * (2 * m_ave[0]);
 	epsilon_homo_grad[0][1][0] = 3/2 * ram111 * m_ave[1];
@@ -312,7 +329,7 @@ int main(void){
 					for(jj=0;jj<3;jj++){
 						for(kk=0;kk<3;kk++){
 							for(ll=0;ll<3;ll++){
-								Helastic[i][j][k] += 0.5 * c[ii][jj][kk][ll] * epsilon_homo_grad[ii][jj][k] * epsilon_homo_grad[kk][ll][k] + 0.5 * c[ii][jj][kk][ll] * epsilon_zero_grad[i][j][ii][jj][k] * epsilon_zero_grad[i][j][kk][ll][k];
+								Helastic[i][j][k] += -1/ (mu0 * Ms) * (0.5 * c[ii][jj][kk][ll] * epsilon_homo_grad[ii][jj][k] * epsilon_homo_grad[kk][ll][k] + 0.5 * c[ii][jj][kk][ll] * epsilon_zero_grad[i][j][ii][jj][k] * epsilon_zero_grad[i][j][kk][ll][k]);
 							}
 						}
 					}
@@ -385,12 +402,19 @@ int main(void){
 	for(i=0;i<=ndm;i++){
 		for(j=0;j<=ndm;j++){
 			for(k=0;k<3;k++){
+<<<<<<< HEAD
 				h[i][j][k] = (Hanis[i][j][k] + 0.5 * Hms[i][j][k] + Hexternal[i][j][k] + Helastic[i][j][k])/Ms;
+=======
+				h[i][j][k] = (Hanis[i][j][k]  + Hms[i][j][k] + Hexternal[i][j][k] + Helastic[i][j][k])/Ms;
+>>>>>>> 56dce57ca6400c4c9a8ab8ef57664ff7d78201c0
 				//cout << "h   " << h[i][j][k] * Ms << endl;
-				//cout << "Hela   " << Helastic[i][j][k] * Ms << endl;
+				//cout << "Hel   " << Helastic[i][j][k] * Ms << endl;
 			}
 		}
 	}
+
+	cout << "m  :   " << m[100][100][0]  << " : " << m[100][100][1]  << " : " << m[100][100][2] << endl;
+	cout << "h  :   " << h[100][100][0]  << " : " << h[100][100][1]  << " : " << h[100][100][2] << endl;
 
 	// hfour mfour　の計算 (fft)
 	for(k=0;k<3;k++){
@@ -536,7 +560,6 @@ int main(void){
 		}
 	}
 
-	//cout << "msatr1  :   " << mstar1[100][100][1] << endl;
 
 	//*********************************  STEP 2  ******************************************************
 
@@ -585,6 +608,7 @@ int main(void){
 		}
 	}
 
+	//cout << "m  :   " << m[100][100][0]  << m[100][100][1]  << m[100][100][2] << endl;
 
 	time1=time1+1.0;								//計算カウント数の加算
 	if(time1<time1max){goto start;}	//最大カウント数に到達したかどうかの判断
@@ -605,7 +629,7 @@ void ini000()
 	if(SIZEX == 256){
 		image = cv::imread("a.jpg" ,0);
 	}else if(SIZEX == 512){
-		image = cv::imread("c.jpg" ,0);
+		image = cv::imread("b.jpg" ,0);
 	}else{
 		cout << "error : no image to load" << endl;
 	}
@@ -617,9 +641,9 @@ void ini000()
 			for(k=0;k<3;k++){
 				m[i][j][k] = rand();
 			}
-			//m[i][j][0] = int(image[i][j]);
-			//m[i][j][1] = int(256-image[i][j]);
-			//m[i][j][2] = int(100-image[i][j]/2);
+			m[i][j][0] = int(image[i][j]);
+			m[i][j][1] = int(256-image[i][j]);
+			m[i][j][2] = int(100-image[i][j]/2);
 			mlength = sqrt( m[i][j][0] * m[i][j][0] + m[i][j][1] * m[i][j][1] + m[i][j][2] * m[i][j][2] );
 			for(k=0;k<3;k++){
 				m[i][j][k] = m[i][j][k] / mlength;
@@ -643,14 +667,14 @@ void graph_s1()
 			col_R=m[i][j][0];//場の色をRGBにて設定
 			col_G=m[i][j][1];
 			col_B=m[i][j][2];
-			col_R *= 128;
-			col_G *= 128;
-			col_B *= 128;
-			col_R += 128;
-			col_G += 128;
-			col_B += 128;
+			col_R *= 255;
+			col_G *= 255;
+			col_B *= 255;
+			//col_R += 128;
+			//col_G += 128;
+			//col_B += 128;
 
-			chann.at<cv::Vec3b>(i,j) = cv::Vec3b(int(col_B), int(col_G), int(col_R));
+			chann.at<cv::Vec3b>(i,j) = cv::Vec3b(abs(int(col_B)), abs(int(col_G)), abs(int(col_R)));
 		}
 	}
 	cv::imwrite("LLG_permalloy_" + std::to_string(int(time1)) + "_m.png", chann);
@@ -817,14 +841,6 @@ int convolution3D(int switch_num){
 		for(i=0;i<=ndm;i++){
 			for(j=0;j<=ndm;j++){
 				for(k=0;k<SIZEZ;k++){
-
-					for(ii=0;ii<3;ii++){
-						for(jj=0;jj<3;jj++){
-							for(kk=0;kk<3;kk++){
-								switch_cal[ii][jj][kk] = 0;
-							}
-						}
-					}
 
 					for(ii=0;ii<3;ii++){
 						for(jj=0;jj<3;jj++){
