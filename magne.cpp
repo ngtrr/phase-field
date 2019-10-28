@@ -29,7 +29,7 @@ using namespace Eigen;
 	int ig=IG;						//2^ig=ND
 	double alpha=0.5;
 	double time1;					//計算カウント数(時間に比例)
-	double time1max = 1000;
+	double time1max = 10000;
 
 	double filter[3][3][3];
 
@@ -141,11 +141,7 @@ int main(void){
 	srand(time(NULL));
 
 	//Astar = (2 * A)/(mu0 * Ms * Ms * ld * ld);
-<<<<<<< HEAD
-	Astar = 0.0625 / 1;
-=======
 	Astar = 0.0625;
->>>>>>> 56dce57ca6400c4c9a8ab8ef57664ff7d78201c0
 
 	for(i=0;i<=ndm;i++){
 		for(j=0;j<=ndm;j++){
@@ -153,15 +149,9 @@ int main(void){
 				Hms[i][j][k] = 0;//init
 				Helastic[i][j][k] = 0;//ok
 			}
-<<<<<<< HEAD
-			Hexternal[i][j][0] = -2.0E+5;//ok
-			Hexternal[i][j][1] = -2.0E+5;//ok
-			Hexternal[i][j][2] = 0;//ok
-=======
 			Hexternal[i][j][0] = 0.0E+6;//ok
 			Hexternal[i][j][1] = 0.0E+6;//ok
 			Hexternal[i][j][2] = 0.0E+6;//ok
->>>>>>> 56dce57ca6400c4c9a8ab8ef57664ff7d78201c0
 
 			//Hanis[i][j][0] = 0;//(4 * K1)/(3 );// * 1.0E+7;//ok
 			//Hanis[i][j][1] = 0;//(4 * K1)/(3 );// * 1.0E+7;//ok
@@ -200,7 +190,7 @@ int main(void){
 
 	//if(time1<=100.){Nstep=10;} else{Nstep=200;}		//データ保存する時間間隔の変更
 	//if((((int)(time1) % Nstep)==0)) {datsave();} 	//一定繰返しカウント毎に組織データを保存
-	if((((int)(time1) % 10)==0)) {graph_s1();}//graph_fai();graph_h();graph_mstar1();} 		//一定繰返しカウント毎に組織を表示
+	if((((int)(time1) % 100)==0)) {graph_s1();}//graph_fai();graph_h();graph_mstar1();} 		//一定繰返しカウント毎に組織を表示
 	//if((((int)(time1) % 100)==0)) {datsave();} 		//一定繰返しカウント毎にデータを保存
 
 
@@ -402,19 +392,15 @@ int main(void){
 	for(i=0;i<=ndm;i++){
 		for(j=0;j<=ndm;j++){
 			for(k=0;k<3;k++){
-<<<<<<< HEAD
-				h[i][j][k] = (Hanis[i][j][k] + 0.5 * Hms[i][j][k] + Hexternal[i][j][k] + Helastic[i][j][k])/Ms;
-=======
 				h[i][j][k] = (Hanis[i][j][k]  + Hms[i][j][k] + Hexternal[i][j][k] + Helastic[i][j][k])/Ms;
->>>>>>> 56dce57ca6400c4c9a8ab8ef57664ff7d78201c0
 				//cout << "h   " << h[i][j][k] * Ms << endl;
 				//cout << "Hel   " << Helastic[i][j][k] * Ms << endl;
 			}
 		}
 	}
 
-	cout << "m  :   " << m[100][100][0]  << " : " << m[100][100][1]  << " : " << m[100][100][2] << endl;
-	cout << "h  :   " << h[100][100][0]  << " : " << h[100][100][1]  << " : " << h[100][100][2] << endl;
+	//cout << "m  :   " << m[100][100][0]  << " : " << m[100][100][1]  << " : " << m[100][100][2] << endl;
+	//cout << "h  :   " << h[100][100][0]  << " : " << h[100][100][1]  << " : " << h[100][100][2] << endl;
 
 	// hfour mfour　の計算 (fft)
 	for(k=0;k<3;k++){
@@ -543,7 +529,7 @@ int main(void){
 
 	for(i=0;i<=ndm;i++){
 		for(j=0;j<=ndm;j++){
-			mstar1[i][j][2] = m[i][j][2] + (gstar[i][j][0] * mstar1[i][j][1] - gstar[i][j][1] * mstar1[i][j][1] );
+			mstar1[i][j][2] = m[i][j][2] + (gstar[i][j][0] * mstar1[i][j][1] - gstar[i][j][1] * mstar1[i][j][0] );
 		}
 	}
 
@@ -641,9 +627,9 @@ void ini000()
 			for(k=0;k<3;k++){
 				m[i][j][k] = rand();
 			}
-			m[i][j][0] = int(image[i][j]);
-			m[i][j][1] = int(256-image[i][j]);
-			m[i][j][2] = int(100-image[i][j]/2);
+			//m[i][j][0] = int(image[i][j]);
+			//m[i][j][1] = int(256-image[i][j]);
+			//m[i][j][2] = int(100-image[i][j]/2);
 			mlength = sqrt( m[i][j][0] * m[i][j][0] + m[i][j][1] * m[i][j][1] + m[i][j][2] * m[i][j][2] );
 			for(k=0;k<3;k++){
 				m[i][j][k] = m[i][j][k] / mlength;
