@@ -17,7 +17,7 @@ using namespace Eigen;
 
 #define DRND(x) ((double)(x)/RAND_MAX*rand())//乱数の関数設定
 
-#define ND 256			//差分計算における計算領域一辺の分割数(高速フーリエ変換を用いるため２のべき乗)
+#define ND 512			//差分計算における計算領域一辺の分割数(高速フーリエ変換を用いるため２のべき乗)
 #define IG 8				//2^IG=ND
 #define SIZEX (ND)
 #define SIZEY (ND)
@@ -29,7 +29,7 @@ using namespace Eigen;
 	int ig=IG;						//2^ig=ND
 	double alpha=0.5;
 	double time1;					//計算カウント数(時間に比例)
-	double time1max = 10000;
+	double time1max = 100000;
 
 	double filter[3][3][3];
 
@@ -95,14 +95,14 @@ using namespace Eigen;
 
 	double epsilon_homo[3][3];
 
+	double eta[ND][ND][3][3];
+
 	double epsilon_zero_grad[ND][ND][3][3][3];
 	double epsilon_homo_grad[3][3][3];
+	double eta_grad[ND][ND][3][3][3];
 
 	double c[3][3][3][3];
 	double s[3][3][3][3];
-	MatrixXd c_matrix(6,6);
-	MatrixXd s_matrix(6,6);
-	double eta[ND][ND][3][3];
 
 	double Dfour[ND][ND];
 	double Dfour_i[ND][ND];
@@ -112,6 +112,7 @@ using namespace Eigen;
 	double u[ND][ND][3];
 	double ufour[ND][ND][3];
 	double ufour_i[ND][ND][3];
+	double u_grad[ND][ND][3][3];
 
 	double sigma_a[3][3];
 
@@ -124,6 +125,8 @@ using namespace Eigen;
 	int ifft3d();
 	int convolution3D(int switch_num);
 	void grad_fai();
+	void grad_u();
+	int four_axis(int k,int i,int j);
 
 int main(void){
 
@@ -141,7 +144,7 @@ int main(void){
 	srand(time(NULL));
 
 	//Astar = (2 * A)/(mu0 * Ms * Ms * ld * ld);
-	Astar = 0.0625;
+	Astar = 0.0625 /4;
 
 	for(i=0;i<=ndm;i++){
 		for(j=0;j<=ndm;j++){
@@ -173,6 +176,7 @@ int main(void){
 	c[1][2][1][2] = c[0][2][0][2] = c[0][1][0][1] = c44;
 	c[0][0][1][1] = c[0][0][2][2] = c[1][1][2][2] = c[1][1][0][0] = c[2][2][0][0] = c[2][2][1][1] = c12;
 
+
 	//*** sinおよびcosテ−ブル、ビット反転テーブル、および初期場の設定 ***************
 	ini000();		//初期場の設定
 
@@ -190,7 +194,7 @@ int main(void){
 
 	//if(time1<=100.){Nstep=10;} else{Nstep=200;}		//データ保存する時間間隔の変更
 	//if((((int)(time1) % Nstep)==0)) {datsave();} 	//一定繰返しカウント毎に組織データを保存
-	if((((int)(time1) % 100)==0)) {graph_s1();}//graph_fai();graph_h();graph_mstar1();} 		//一定繰返しカウント毎に組織を表示
+	if((((int)(time1) % 1000)==0)) {graph_s1();}//graph_fai();graph_h();graph_mstar1();} 		//一定繰返しカウント毎に組織を表示
 	//if((((int)(time1) % 100)==0)) {datsave();} 		//一定繰返しカウント毎にデータを保存
 
 
@@ -266,6 +270,8 @@ int main(void){
 			}
 		}
 	}
+	
+
 
 	for(i=0;i<=ndm;i++){
 		for(j=0;j<=ndm;j++){
@@ -291,46 +297,7 @@ int main(void){
 		}
 	}
 
-	epsilon_homo[0][0] = s[0][0][0][0] * sigma_a[0][0] + s[0][0][1][1] * (sigma_a[1][1] + sigma_a[2][2]) + 3/2 * ram100 * (m2_ave[0] - 1/3);
-	epsilon_homo[1][1] = s[0][0][0][0] * sigma_a[1][1] + s[0][0][1][1] * (sigma_a[0][0] + sigma_a[2][2]) + 3/2 * ram100 * (m2_ave[1] - 1/3);
-	epsilon_homo[2][2] = s[0][0][0][0] * sigma_a[2][2] + s[0][0][1][1] * (sigma_a[0][0] + sigma_a[1][1]) + 3/2 * ram100 * (m2_ave[2] - 1/3);
-	epsilon_homo[0][1] = 0.5 * s[1][2][1][2] * sigma_a[0][1] + 3/2 * ram111 * mm_ave[2];
-	epsilon_homo[0][2] = 0.5 * s[1][2][1][2] * sigma_a[0][2] + 3/2 * ram111 * mm_ave[1];
-	epsilon_homo[1][2] = 0.5 * s[1][2][1][2] * sigma_a[1][2] + 3/2 * ram111 * mm_ave[0];
 
-	epsilon_homo_grad[0][0][0] = 3/2 * ram100 * (2 * m_ave[0]);
-	epsilon_homo_grad[0][1][0] = 3/2 * ram111 * m_ave[1];
-	epsilon_homo_grad[0][2][0] = 3/2 * ram111 * m_ave[2];
-
-	epsilon_homo_grad[1][1][1] = 3/2 * ram100 * (2 * m_ave[1]);
-	epsilon_homo_grad[0][1][1] = 3/2 * ram111 * m_ave[0];
-	epsilon_homo_grad[1][2][1] = 3/2 * ram111 * m_ave[2];
-
-	epsilon_homo_grad[2][2][2] = 3/2 * ram100 * (2 * m_ave[2]);
-	epsilon_homo_grad[0][2][2] = 3/2 * ram111 * m_ave[0];
-	epsilon_homo_grad[1][2][2] = 3/2 * ram111 * m_ave[1];
-
-	for(i=0;i<=ndm;i++){
-		for(j=0;j<=ndm;j++){
-			for(k=0;k<3;k++){
-				Helastic[i][j][k] = 0;
-
-				for(ii=0;ii<3;ii++){
-					for(jj=0;jj<3;jj++){
-						for(kk=0;kk<3;kk++){
-							for(ll=0;ll<3;ll++){
-								Helastic[i][j][k] += -1/ (mu0 * Ms) * (0.5 * c[ii][jj][kk][ll] * epsilon_homo_grad[ii][jj][k] * epsilon_homo_grad[kk][ll][k] + 0.5 * c[ii][jj][kk][ll] * epsilon_zero_grad[i][j][ii][jj][k] * epsilon_zero_grad[i][j][kk][ll][k]);
-							}
-						}
-					}
-				}
-
-
-			}
-		}
-	}
-
-	/*
 	for(l=0;l<3;l++){
 		for(k=0;k<3;k++){
 			for(i=0;i<=ndm;i++){
@@ -349,13 +316,26 @@ int main(void){
 	}
 
 
+
 	//変更必要
 	for(i=0;i<=ndm;i++){
 		for(j=0;j<=ndm;j++){
-			for(k=0;k<3;k++){
-				for(k=0;k<3;k++){
-					ufour[i][j][k] = c[i][j][k][l] * epsilon_zerofour[i][j][k][l] * yf[j];
-					ufour_i[i][j][k] = -1 * c[i][j][k][l] * epsilon_zerofour_i[i][j][k][l] * yf[j];
+			for(kk=0;kk<3;kk++){
+				ufour[i][j][kk] = 0;
+				ufour_i[i][j][kk] = 0;
+				for(jj=0;jj<3;jj++){
+					for(ii=0;ii<3;ii++){
+						for(ll=0;ll<3;ll++){
+							if(c[ii][jj][kk][ll] * four_axis(jj, i, j) * four_axis(ll, i, j) == 0 ){
+								ufour[i][j][kk] += 0;
+								ufour_i[i][j][kk] += 0;
+							}else{
+								ufour[i][j][kk] += 1 / (c[ii][jj][kk][ll] * four_axis(jj, i, j) * four_axis(ll, i, j)) * four_axis(jj, i, j) * c[ii][jj][kk][ll] * epsilon_zerofour_i[i][j][kk][ll];
+								ufour_i[i][j][kk] += -1 / (c[ii][jj][kk][ll] * four_axis(jj, i, j) * four_axis(ll, i, j)) * four_axis(jj, i, j) * c[ii][jj][kk][ll] * epsilon_zerofour[i][j][kk][ll];
+								//cout << "ufour  : "<< ufour[i][j][kk] << ufour_i[i][j][kk] << endl;
+							}
+						}
+					}
 				}
 			}
 		}
@@ -376,16 +356,37 @@ int main(void){
 		}
 	}
 
+	grad_u();
+
 	for(l=0;l<3;l++){
 		for(k=0;k<3;k++){
 			for(i=0;i<=ndm;i++){
 				for(j=0;j<=ndm;j++){
-					eta[i][j][k][l] = 0.5 * (u[i][j][k] + u[i][j][l]);
+					eta[i][j][k][l] = 0.5 * (u_grad[i][j][k][l] + u_grad[i][j][l][k]);
 				}
 			}
 		}
-	}*/
+	}
 
+	for(i=0;i<=ndm;i++){
+		for(j=0;j<=ndm;j++){
+			for(k=0;k<3;k++){
+				Helastic[i][j][k] = 0;
+
+				for(ii=0;ii<3;ii++){
+					for(jj=0;jj<3;jj++){
+						for(kk=0;kk<3;kk++){
+							for(ll=0;ll<3;ll++){
+								Helastic[i][j][k] += -1/ (mu0 * Ms) * (c[ii][jj][kk][ll] * (eta[i][j][ii][jj] - epsilon_zero[i][j][ii][jj]) * epsilon_zero_grad[i][j][ii][jj][k]);
+							}
+						}
+					}
+				}
+
+
+			}
+		}
+	}
 
 	//*********************************  STEP 1  ******************************************************
 
@@ -644,7 +645,7 @@ void graph_s1()
 	int i, j;													//整数
 	double col_R, col_G, col_B;	//色
 
-	printf("time %f\n",time1);//計算カウント数の表示
+	printf("time %i\n",time1);//計算カウント数の表示
 	//差分ブロックの半分の長さ	//スクリーン座標系に変換（+1は整数化時の切捨て補正）
 	cv::Mat chann(cv::Size(nd, nd), CV_8UC3, cv::Scalar(255, 255, 255));
 
@@ -889,6 +890,202 @@ int convolution3D(int switch_num){
 		}
 		break;
 	
+	case 1:
+		for(i=0;i<=ndm;i++){
+			for(j=0;j<=ndm;j++){
+				for(k=0;k<SIZEZ;k++){
+
+					for(ii=0;ii<3;ii++){
+						for(jj=0;jj<3;jj++){
+							for(kk=0;kk<3;kk++){
+								if(i+ii-1 > ndm){
+									if(jj == 1 && kk == 1){
+										switch_cal[ii][jj][kk] = u[0][j + jj-1][0] * filter[ii][jj][kk];
+									}else{
+										switch_cal[ii][jj][kk] = 0;
+									}
+								}else if(i+ii-1 < 0){
+									if(jj == 1 && kk == 1){
+										switch_cal[ii][jj][kk] = u[ndm][j + jj-1][0] * filter[ii][jj][kk];
+									}else{
+										switch_cal[ii][jj][kk] = 0;
+									}
+								}else if(j+jj-1 > ndm){
+									if(ii == 1 && kk == 1){
+										switch_cal[ii][jj][kk] = u[i + ii-1][0][0] * filter[ii][jj][kk];
+									}else{
+										switch_cal[ii][jj][kk] = 0;
+									}
+								}else if(j+jj-1 < 0){
+									if(ii == 1 && kk == 1){
+										switch_cal[ii][jj][kk] = u[i + ii-1][ndm][0] * filter[ii][jj][kk];
+									}else{
+										switch_cal[ii][jj][kk] = 0;
+									}
+								}else if(k+kk-1 > SIZEZ-1){
+									if(ii == 1 && jj == 1){
+										switch_cal[ii][jj][kk] = u[i + ii-1][j + jj-1][0] * filter[ii][jj][kk];
+									}else{
+										switch_cal[ii][jj][kk] = 0;
+									}
+								}else if(k+kk-1 < 0){
+									if(ii == 1 && jj == 1){
+										switch_cal[ii][jj][kk] = u[i + ii-1][j + jj-1][0] * filter[ii][jj][kk];
+									}else{
+										switch_cal[ii][jj][kk] = 0;
+									}
+								}else {
+									switch_cal[ii][jj][kk] = u[i + ii-1][j + jj-1][0] * filter[ii][jj][kk];
+								}
+								//filter[ii][jj][kk] = 0;
+							}
+						}
+					}
+
+					filter_output[i][j] = 0;
+					for(ii=0;ii<3;ii++){
+						for(jj=0;jj<3;jj++){
+							for(kk=0;kk<3;kk++){
+								filter_output[i][j] += switch_cal[ii][jj][kk];
+							}
+						}
+					}
+
+				}
+			}
+		}
+		break;
+
+	case 2:
+		for(i=0;i<=ndm;i++){
+			for(j=0;j<=ndm;j++){
+				for(k=0;k<SIZEZ;k++){
+
+					for(ii=0;ii<3;ii++){
+						for(jj=0;jj<3;jj++){
+							for(kk=0;kk<3;kk++){
+								if(i+ii-1 > ndm){
+									if(jj == 1 && kk == 1){
+										switch_cal[ii][jj][kk] = u[0][j + jj-1][1] * filter[ii][jj][kk];
+									}else{
+										switch_cal[ii][jj][kk] = 0;
+									}
+								}else if(i+ii-1 < 0){
+									if(jj == 1 && kk == 1){
+										switch_cal[ii][jj][kk] = u[ndm][j + jj-1][1] * filter[ii][jj][kk];
+									}else{
+										switch_cal[ii][jj][kk] = 0;
+									}
+								}else if(j+jj-1 > ndm){
+									if(ii == 1 && kk == 1){
+										switch_cal[ii][jj][kk] = u[i + ii-1][0][1] * filter[ii][jj][kk];
+									}else{
+										switch_cal[ii][jj][kk] = 0;
+									}
+								}else if(j+jj-1 < 0){
+									if(ii == 1 && kk == 1){
+										switch_cal[ii][jj][kk] = u[i + ii-1][ndm][1] * filter[ii][jj][kk];
+									}else{
+										switch_cal[ii][jj][kk] = 0;
+									}
+								}else if(k+kk-1 > SIZEZ-1){
+									if(ii == 1 && jj == 1){
+										switch_cal[ii][jj][kk] = u[i + ii-1][j + jj-1][1] * filter[ii][jj][kk];
+									}else{
+										switch_cal[ii][jj][kk] = 0;
+									}
+								}else if(k+kk-1 < 0){
+									if(ii == 1 && jj == 1){
+										switch_cal[ii][jj][kk] = u[i + ii-1][j + jj-1][1] * filter[ii][jj][kk];
+									}else{
+										switch_cal[ii][jj][kk] = 0;
+									}
+								}else {
+									switch_cal[ii][jj][kk] = u[i + ii-1][j + jj-1][1] * filter[ii][jj][kk];
+								}
+								//filter[ii][jj][kk] = 0;
+							}
+						}
+					}
+
+					filter_output[i][j] = 0;
+					for(ii=0;ii<3;ii++){
+						for(jj=0;jj<3;jj++){
+							for(kk=0;kk<3;kk++){
+								filter_output[i][j] += switch_cal[ii][jj][kk];
+							}
+						}
+					}
+
+				}
+			}
+		}
+		break;
+	case 3:
+		for(i=0;i<=ndm;i++){
+			for(j=0;j<=ndm;j++){
+				for(k=0;k<SIZEZ;k++){
+
+					for(ii=0;ii<3;ii++){
+						for(jj=0;jj<3;jj++){
+							for(kk=0;kk<3;kk++){
+								if(i+ii-1 > ndm){
+									if(jj == 1 && kk == 1){
+										switch_cal[ii][jj][kk] = u[0][j + jj-1][2] * filter[ii][jj][kk];
+									}else{
+										switch_cal[ii][jj][kk] = 0;
+									}
+								}else if(i+ii-1 < 0){
+									if(jj == 1 && kk == 1){
+										switch_cal[ii][jj][kk] = u[ndm][j + jj-1][2] * filter[ii][jj][kk];
+									}else{
+										switch_cal[ii][jj][kk] = 0;
+									}
+								}else if(j+jj-1 > ndm){
+									if(ii == 1 && kk == 1){
+										switch_cal[ii][jj][kk] = u[i + ii-1][0][2] * filter[ii][jj][kk];
+									}else{
+										switch_cal[ii][jj][kk] = 0;
+									}
+								}else if(j+jj-1 < 0){
+									if(ii == 1 && kk == 1){
+										switch_cal[ii][jj][kk] = u[i + ii-1][ndm][2] * filter[ii][jj][kk];
+									}else{
+										switch_cal[ii][jj][kk] = 0;
+									}
+								}else if(k+kk-1 > SIZEZ-1){
+									if(ii == 1 && jj == 1){
+										switch_cal[ii][jj][kk] = u[i + ii-1][j + jj-1][2] * filter[ii][jj][kk];
+									}else{
+										switch_cal[ii][jj][kk] = 0;
+									}
+								}else if(k+kk-1 < 0){
+									if(ii == 1 && jj == 1){
+										switch_cal[ii][jj][kk] = u[i + ii-1][j + jj-1][2] * filter[ii][jj][kk];
+									}else{
+										switch_cal[ii][jj][kk] = 0;
+									}
+								}else {
+									switch_cal[ii][jj][kk] = u[i + ii-1][j + jj-1][2] * filter[ii][jj][kk];
+								}
+								//filter[ii][jj][kk] = 0;
+							}
+						}
+					}
+
+					filter_output[i][j] = 0;
+					for(ii=0;ii<3;ii++){
+						for(jj=0;jj<3;jj++){
+							for(kk=0;kk<3;kk++){
+								filter_output[i][j] += switch_cal[ii][jj][kk];
+							}
+						}
+					}
+
+				}
+			}
+		}
+		break;
 	default:
 		break;
 	}
@@ -982,10 +1179,10 @@ void grad_u(){
 	}
 	filter[0][1][1] = -0.5;
 	filter[2][1][1] = 0.5;
-	convolution3D(0);
+	convolution3D(1);
 	for(i=0;i<=ndm;i++){
 		for(j=0;j<=ndm;j++){
-			Hms[i][j][0] = filter_output[i][j];
+			u_grad[i][j][0][k] = filter_output[i][j];
 		}
 	}
 
@@ -998,10 +1195,10 @@ void grad_u(){
 	}
 	filter[1][0][1] = -0.5;
 	filter[1][2][1] = 0.5;
-	convolution3D(0);
+	convolution3D(2);
 	for(i=0;i<=ndm;i++){
 		for(j=0;j<=ndm;j++){
-			Hms[i][j][1] = filter_output[i][j];
+			u_grad[i][j][1][k] = filter_output[i][j];
 		}
 	}
 
@@ -1014,10 +1211,23 @@ void grad_u(){
 	}
 	filter[1][1][0] = -0.5;
 	filter[1][1][2] = 0.5;
-	convolution3D(0);
+	convolution3D(3);
 	for(i=0;i<=ndm;i++){
 		for(j=0;j<=ndm;j++){
-			Hms[i][j][2] = filter_output[i][j];
+			u_grad[i][j][2][k] = filter_output[i][j];
 		}
 	}
+}
+
+int four_axis(int k,int i,int j){
+	if(k == 0){
+		return xf[i];
+	}else if(k == 1){
+		return yf[j];
+	}else if(k == 2){
+		return 0;
+	}else{
+		return 0;
+	}
+	return 0;
 }
