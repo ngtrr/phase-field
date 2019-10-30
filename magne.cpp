@@ -17,7 +17,7 @@ using namespace Eigen;
 
 #define DRND(x) ((double)(x)/RAND_MAX*rand())//乱数の関数設定
 
-#define ND 512			//差分計算における計算領域一辺の分割数(高速フーリエ変換を用いるため２のべき乗)
+#define ND 256			//差分計算における計算領域一辺の分割数(高速フーリエ変換を用いるため２のべき乗)
 #define IG 8				//2^IG=ND
 #define SIZEX (ND)
 #define SIZEY (ND)
@@ -148,17 +148,9 @@ int main(void){
 
 	for(i=0;i<=ndm;i++){
 		for(j=0;j<=ndm;j++){
-			for(k=0;k<3;k++){
-				Hms[i][j][k] = 0;//init
-				Helastic[i][j][k] = 0;//ok
-			}
 			Hexternal[i][j][0] = 0.0E+6;//ok
 			Hexternal[i][j][1] = 0.0E+6;//ok
 			Hexternal[i][j][2] = 0.0E+6;//ok
-
-			//Hanis[i][j][0] = 0;//(4 * K1)/(3 );// * 1.0E+7;//ok
-			//Hanis[i][j][1] = 0;//(4 * K1)/(3 );// * 1.0E+7;//ok
-			//Hanis[i][j][2] = 0;//(4 * K1)/(3 );// * 1.0E+7;//ok
 		}
 	}
 
@@ -177,7 +169,7 @@ int main(void){
 	c[0][0][1][1] = c[0][0][2][2] = c[1][1][2][2] = c[1][1][0][0] = c[2][2][0][0] = c[2][2][1][1] = c12;
 
 
-	//*** sinおよびcosテ−ブル、ビット反転テーブル、および初期場の設定 ***************
+	//*** 初期場の設定 ***************
 	ini000();		//初期場の設定
 
 
@@ -194,7 +186,7 @@ int main(void){
 
 	//if(time1<=100.){Nstep=10;} else{Nstep=200;}		//データ保存する時間間隔の変更
 	//if((((int)(time1) % Nstep)==0)) {datsave();} 	//一定繰返しカウント毎に組織データを保存
-	if((((int)(time1) % 1000)==0)) {graph_s1();}//graph_fai();graph_h();graph_mstar1();} 		//一定繰返しカウント毎に組織を表示
+	if((((int)(time1) % 10)==0)) {graph_s1();}//graph_fai();graph_h();graph_mstar1();} 		//一定繰返しカウント毎に組織を表示
 	//if((((int)(time1) % 100)==0)) {datsave();} 		//一定繰返しカウント毎にデータを保存
 
 
@@ -263,10 +255,7 @@ int main(void){
 	for(i=0;i<=ndm;i++){
 		for(j=0;j<=ndm;j++){
 			for(k=0;k<3;k++){
-				//cout << "   " << endl;
-				//cout << "Hms   " << Hms[i][j][k] << endl;
 				Hms[i][j][k] = -1 * m_ave[k] * Ms * N[k];
-				//cout << "Hms   " << Hms[i][j][k] << endl;
 			}
 		}
 	}
@@ -317,7 +306,6 @@ int main(void){
 
 
 
-	//変更必要
 	for(i=0;i<=ndm;i++){
 		for(j=0;j<=ndm;j++){
 			for(kk=0;kk<3;kk++){
@@ -400,8 +388,6 @@ int main(void){
 		}
 	}
 
-	//cout << "m  :   " << m[100][100][0]  << " : " << m[100][100][1]  << " : " << m[100][100][2] << endl;
-	//cout << "h  :   " << h[100][100][0]  << " : " << h[100][100][1]  << " : " << h[100][100][2] << endl;
 
 	// hfour mfour　の計算 (fft)
 	for(k=0;k<3;k++){
@@ -444,9 +430,6 @@ int main(void){
 		}
 	}
 
-
-
-	//漸化式の書き換えが必要
 
 	for(i=0;i<=ndm;i++){
 		for(j=0;j<=ndm;j++){
@@ -595,8 +578,6 @@ int main(void){
 		}
 	}
 
-	//cout << "m  :   " << m[100][100][0]  << m[100][100][1]  << m[100][100][2] << endl;
-
 	time1=time1+1.0;								//計算カウント数の加算
 	if(time1<time1max){goto start;}	//最大カウント数に到達したかどうかの判断
 
@@ -616,7 +597,7 @@ void ini000()
 	if(SIZEX == 256){
 		image = cv::imread("a.jpg" ,0);
 	}else if(SIZEX == 512){
-		image = cv::imread("b.jpg" ,0);
+		image = cv::imread("c.jpg" ,0);
 	}else{
 		cout << "error : no image to load" << endl;
 	}
@@ -645,7 +626,7 @@ void graph_s1()
 	int i, j;													//整数
 	double col_R, col_G, col_B;	//色
 
-	printf("time %i\n",time1);//計算カウント数の表示
+	printf("time %d\n",int(time1));//計算カウント数の表示
 	//差分ブロックの半分の長さ	//スクリーン座標系に変換（+1は整数化時の切捨て補正）
 	cv::Mat chann(cv::Size(nd, nd), CV_8UC3, cv::Scalar(255, 255, 255));
 
@@ -735,7 +716,6 @@ int fft3d(void){
 	p = fftw_plan_dft_2d( SIZEY, SIZEX, in, out, FFTW_FORWARD, FFTW_ESTIMATE );
  
 	// input data creation
-	//printf("----- INPUT -----\n");
         for( j=0; j<SIZEY; j++ ){
             for( i=0; i<SIZEX; i++ ){
                 idx = SIZEX*j+i; // column-major alignment
@@ -749,7 +729,6 @@ int fft3d(void){
  
 	// output is DC exchanged and scaled.
 	double scale = 1. / SIZE;
-	//printf("\n----- RESULT -----\n");
 	for( j=0; j<SIZEY; j++ ){
 		for( i=0; i<SIZEX; i++ ){
 			idx = SIZEX*j+i;
@@ -787,7 +766,6 @@ int ifft3d(void){
 	ip = fftw_plan_dft_2d( SIZEY, SIZEX, in2, out2, FFTW_BACKWARD, FFTW_ESTIMATE );
  
 	// input data creation
-	//printf("----- INPUT -----\n");
         for( j=0; j<SIZEY; j++ ){
             for( i=0; i<SIZEX; i++ ){
                 idx = SIZEX*j+i; // column-major alignment
@@ -801,7 +779,6 @@ int ifft3d(void){
  
 	// output is DC exchanged and scaled.
 	double scale = 1. / SIZE;
-	//printf("\n----- RESULT -----\n");
 	for( j=0; j<SIZEY; j++ ){
 		for( i=0; i<SIZEX; i++ ){
 			idx = SIZEX*j+i;
@@ -810,7 +787,6 @@ int ifft3d(void){
 			fourier_input[i][j] = out2[idx][0] * scale;
 		}
 	}
-	//cout << "out  :  " << out2[10000][0] << endl;
  
 	if( ip   ) fftw_destroy_plan(ip);
 	if( in2  ) fftw_free(in2);
