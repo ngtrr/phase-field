@@ -149,7 +149,7 @@ int main(void){
 	for(i=0;i<=ndm;i++){
 		for(j=0;j<=ndm;j++){
 			Hexternal[i][j][0] = 0.0E+6;//ok
-			Hexternal[i][j][1] = 0.0E+6;//ok
+			Hexternal[i][j][1] = 0.0E+4;//ok
 			Hexternal[i][j][2] = 0.0E+6;//ok
 		}
 	}
@@ -635,14 +635,14 @@ void graph_s1()
 			col_R=m[i][j][0];//場の色をRGBにて設定
 			col_G=m[i][j][1];
 			col_B=m[i][j][2];
-			col_R *= 255;
-			col_G *= 255;
-			col_B *= 255;
-			//col_R += 128;
-			//col_G += 128;
-			//col_B += 128;
+			col_R *= 100;
+			col_G *= 100;
+			col_B *= 100;
+			col_R += 128;
+			col_G += 128;
+			col_B += 128;
 
-			chann.at<cv::Vec3b>(i,j) = cv::Vec3b(abs(int(col_B)), abs(int(col_G)), abs(int(col_R)));
+			chann.at<cv::Vec3b>(i,j) = cv::Vec3b(int(col_B), int(col_G), int(col_R));
 		}
 	}
 	cv::imwrite("LLG_permalloy_" + std::to_string(int(time1)) + "_m.png", chann);
