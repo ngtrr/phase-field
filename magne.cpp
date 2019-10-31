@@ -103,6 +103,8 @@ using namespace Eigen;
 
 	double c[3][3][3][3];
 	double s[3][3][3][3];
+	MatrixXd c_matrix(6,6);
+	MatrixXd s_matrix(6,6);
 
 	double Dfour[ND][ND][SIZEZ];
 	double Dfour_i[ND][ND][SIZEZ];
@@ -161,8 +163,8 @@ int main(void){
 		xf[i] = i - nd2;
 		yf[i] = i - nd2;
 	}
-	for(i=0;i<SIZEZ;i++){
-		zf[i] = i - SIZEZ/2;
+	for(k=0;k<SIZEZ;k++){
+		zf[k] = k - SIZEZ/2;
 	}
 
 
@@ -194,7 +196,7 @@ int main(void){
 
 	//if(time1<=100.){Nstep=10;} else{Nstep=200;}		//データ保存する時間間隔の変更
 	//if((((int)(time1) % Nstep)==0)) {datsave();} 	//一定繰返しカウント毎に組織データを保存
-	if((((int)(time1) % 100 )==0)) {graph_s1();}//graph_fai();graph_h();graph_mstar1();} 		//一定繰返しカウント毎に組織を表示
+	if((((int)(time1) % 10 )==0)) {graph_s1();}//graph_fai();graph_h();graph_mstar1();} 		//一定繰返しカウント毎に組織を表示
 	//if((((int)(time1) % 100)==0)) {datsave();} 		//一定繰返しカウント毎にデータを保存
 
 
@@ -311,6 +313,13 @@ int main(void){
 	}
 
 
+	epsilon_homo[0][0] = s[0][0][0][0] * sigma_a[0][0] + s[0][0][1][1] * (sigma_a[1][1] + sigma_a[2][2]) + 3/2 * ram100 * (m2_ave[0] - 1/3);
+	epsilon_homo[1][1] = s[0][0][0][0] * sigma_a[1][1] + s[0][0][1][1] * (sigma_a[0][0] + sigma_a[2][2]) + 3/2 * ram100 * (m2_ave[1] - 1/3);
+	epsilon_homo[2][2] = s[0][0][0][0] * sigma_a[2][2] + s[0][0][1][1] * (sigma_a[0][0] + sigma_a[1][1]) + 3/2 * ram100 * (m2_ave[2] - 1/3);
+	epsilon_homo[0][1] = epsilon_homo[1][0] = 1/2 * s[0][1][0][1] * sigma_a[0][1] + 3/2 * ram111 * mm_ave[2];
+	epsilon_homo[1][2] = epsilon_homo[2][1] = 1/2 * s[0][1][0][1] * sigma_a[1][2] + 3/2 * ram111 * mm_ave[0];
+	epsilon_homo[2][0] = epsilon_homo[0][2] = 1/2 * s[0][1][0][1] * sigma_a[2][0] + 3/2 * ram111 * mm_ave[1];
+
 	for(l=0;l<3;l++){
 		for(v=0;v<3;v++){
 			for(i=0;i<=ndm;i++){
@@ -403,7 +412,7 @@ int main(void){
 						for(jj=0;jj<3;jj++){
 							for(kk=0;kk<3;kk++){
 								for(ll=0;ll<3;ll++){
-									Helastic[i][j][k][v] += -1/ (mu0 * Ms) * (c[ii][jj][kk][ll] * (eta[i][j][k][ii][jj] - epsilon_zero[i][j][k][ii][jj]) * epsilon_zero_grad[i][j][k][ii][jj][k]);
+									Helastic[i][j][k][v] += -1/ (mu0 * Ms) * (c[ii][jj][kk][ll] * (eta[i][j][k][ii][jj] + epsilon_homo[ii][jj] - epsilon_zero[i][j][k][ii][jj]) * epsilon_zero_grad[i][j][k][ii][jj][k]);
 								}
 							}
 						}
@@ -658,7 +667,7 @@ int main(void){
 	}
 
 
-	for(i=0;i<=ndm;i++){
+	/*for(i=0;i<=ndm;i++){
 		for(j=0;j<=ndm;j++){
 			for(k=0;k<SIZEZ;k++){
 				mlength = sqrt( m[i][j][k][0] * m[i][j][k][0] + m[i][j][k][1] * m[i][j][k][1] + m[i][j][k][2] * m[i][j][k][2] );
@@ -667,7 +676,7 @@ int main(void){
 				}
 			}
 		}
-	}
+	}*/
 
 	time1=time1+1.0;								//計算カウント数の加算
 	if(time1<time1max){goto start;}	//最大カウント数に到達したかどうかの判断
@@ -738,8 +747,41 @@ void graph_s1()
 			chann.at<cv::Vec3b>(i,j) = cv::Vec3b(abs(int(col_B)), abs(int(col_G)), abs(int(col_R)));
 		}
 	}
-	cv::imwrite("LLG_permalloy_" + std::to_string(int(time1)) + "_m.png", chann);
+	cv::imwrite("LLG_permalloy_" + std::to_string(int(time1)) + "_m_xy.png", chann);
 
+	for(i=0;i<=ndm;i++){
+		for(j=0;j<=ndm;j++){
+			col_R=m[0][j][i][0];//場の色をRGBにて設定
+			col_G=m[0][j][i][1];
+			col_B=m[0][j][i][2];
+			col_R *= 255;
+			col_G *= 255;
+			col_B *= 255;
+			//col_R += 128;
+			//col_G += 128;
+			//col_B += 128;
+
+			chann.at<cv::Vec3b>(i,j) = cv::Vec3b(abs(int(col_B)), abs(int(col_G)), abs(int(col_R)));
+		}
+	}
+	cv::imwrite("LLG_permalloy_" + std::to_string(int(time1)) + "_m_zy.png", chann);
+
+	for(i=0;i<=ndm;i++){
+		for(j=0;j<=ndm;j++){
+			col_R=m[i][0][j][0];//場の色をRGBにて設定
+			col_G=m[i][0][j][1];
+			col_B=m[i][0][j][2];
+			col_R *= 255;
+			col_G *= 255;
+			col_B *= 255;
+			//col_R += 128;
+			//col_G += 128;
+			//col_B += 128;
+
+			chann.at<cv::Vec3b>(i,j) = cv::Vec3b(abs(int(col_B)), abs(int(col_G)), abs(int(col_R)));
+		}
+	}
+	cv::imwrite("LLG_permalloy_" + std::to_string(int(time1)) + "_m_xz.png", chann);
 
 	for(i=0;i<=ndm;i++){
 		for(j=0;j<=ndm;j++){
