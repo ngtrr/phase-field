@@ -17,11 +17,11 @@ using namespace Eigen;
 
 #define DRND(x) ((double)(x)/RAND_MAX*rand())//乱数の関数設定
 
-#define ND 256			//差分計算における計算領域一辺の分割数(高速フーリエ変換を用いるため２のべき乗)
+#define ND 64			//差分計算における計算領域一辺の分割数(高速フーリエ変換を用いるため２のべき乗)
 #define IG 8				//2^IG=ND
 #define SIZEX (ND)
 #define SIZEY (ND)
-#define SIZEZ 8
+#define SIZEZ 64
 #define SIZE (SIZEX*SIZEY*SIZEZ)
 
 	int nd=ND, ndm=ND-1; 	//計算領域の一辺の差分分割数(差分ブロック数)、ND-1を定義
@@ -161,6 +161,9 @@ int main(void){
 		xf[i] = i - nd2;
 		yf[i] = i - nd2;
 	}
+	for(k=0;k<SIZEZ;k++){
+		zf[k] = k - SIZEZ/2;
+	}
 
 
 	N[0] = 0.333;
@@ -191,7 +194,7 @@ int main(void){
 
 	//if(time1<=100.){Nstep=10;} else{Nstep=200;}		//データ保存する時間間隔の変更
 	//if((((int)(time1) % Nstep)==0)) {datsave();} 	//一定繰返しカウント毎に組織データを保存
-	if((((int)(time1) % 100 )==0)) {graph_s1();}//graph_fai();graph_h();graph_mstar1();} 		//一定繰返しカウント毎に組織を表示
+	if((((int)(time1) % 10 )==0)) {graph_s1();}//graph_fai();graph_h();graph_mstar1();} 		//一定繰返しカウント毎に組織を表示
 	//if((((int)(time1) % 100)==0)) {datsave();} 		//一定繰返しカウント毎にデータを保存
 
 
@@ -655,7 +658,7 @@ int main(void){
 	}
 
 
-	for(i=0;i<=ndm;i++){
+	/*for(i=0;i<=ndm;i++){
 		for(j=0;j<=ndm;j++){
 			for(k=0;k<SIZEZ;k++){
 				mlength = sqrt( m[i][j][k][0] * m[i][j][k][0] + m[i][j][k][1] * m[i][j][k][1] + m[i][j][k][2] * m[i][j][k][2] );
@@ -664,7 +667,7 @@ int main(void){
 				}
 			}
 		}
-	}
+	}*/
 
 	time1=time1+1.0;								//計算カウント数の加算
 	if(time1<time1max){goto start;}	//最大カウント数に到達したかどうかの判断
@@ -735,8 +738,41 @@ void graph_s1()
 			chann.at<cv::Vec3b>(i,j) = cv::Vec3b(abs(int(col_B)), abs(int(col_G)), abs(int(col_R)));
 		}
 	}
-	cv::imwrite("LLG_permalloy_" + std::to_string(int(time1)) + "_m.png", chann);
+	cv::imwrite("LLG_permalloy_" + std::to_string(int(time1)) + "_m_xy.png", chann);
 
+	for(i=0;i<=ndm;i++){
+		for(j=0;j<=ndm;j++){
+			col_R=m[0][j][i][0];//場の色をRGBにて設定
+			col_G=m[0][j][i][1];
+			col_B=m[0][j][i][2];
+			col_R *= 255;
+			col_G *= 255;
+			col_B *= 255;
+			//col_R += 128;
+			//col_G += 128;
+			//col_B += 128;
+
+			chann.at<cv::Vec3b>(i,j) = cv::Vec3b(abs(int(col_B)), abs(int(col_G)), abs(int(col_R)));
+		}
+	}
+	cv::imwrite("LLG_permalloy_" + std::to_string(int(time1)) + "_m_zy.png", chann);
+
+	for(i=0;i<=ndm;i++){
+		for(j=0;j<=ndm;j++){
+			col_R=m[i][0][j][0];//場の色をRGBにて設定
+			col_G=m[i][0][j][1];
+			col_B=m[i][0][j][2];
+			col_R *= 255;
+			col_G *= 255;
+			col_B *= 255;
+			//col_R += 128;
+			//col_G += 128;
+			//col_B += 128;
+
+			chann.at<cv::Vec3b>(i,j) = cv::Vec3b(abs(int(col_B)), abs(int(col_G)), abs(int(col_R)));
+		}
+	}
+	cv::imwrite("LLG_permalloy_" + std::to_string(int(time1)) + "_m_xz.png", chann);
 
 	for(i=0;i<=ndm;i++){
 		for(j=0;j<=ndm;j++){
