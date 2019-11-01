@@ -17,11 +17,11 @@ using namespace Eigen;
 
 #define DRND(x) ((double)(x)/RAND_MAX*rand())//乱数の関数設定
 
-#define ND 64			//差分計算における計算領域一辺の分割数(高速フーリエ変換を用いるため２のべき乗)
+#define ND 256			//差分計算における計算領域一辺の分割数(高速フーリエ変換を用いるため２のべき乗)
 #define IG 8				//2^IG=ND
 #define SIZEX (ND)
 #define SIZEY (ND)
-#define SIZEZ 64
+#define SIZEZ (ND)
 #define SIZE (SIZEX*SIZEY*SIZEZ)
 
 	int nd=ND, ndm=ND-1; 	//計算領域の一辺の差分分割数(差分ブロック数)、ND-1を定義
@@ -194,7 +194,7 @@ int main(void){
 
 	//if(time1<=100.){Nstep=10;} else{Nstep=200;}		//データ保存する時間間隔の変更
 	//if((((int)(time1) % Nstep)==0)) {datsave();} 	//一定繰返しカウント毎に組織データを保存
-	if((((int)(time1) % 10 )==0)) {graph_s1();}//graph_fai();graph_h();graph_mstar1();} 		//一定繰返しカウント毎に組織を表示
+	if((((int)(time1) % 100 )==0)) {graph_s1();}//graph_fai();graph_h();graph_mstar1();} 		//一定繰返しカウント毎に組織を表示
 	//if((((int)(time1) % 100)==0)) {datsave();} 		//一定繰返しカウント毎にデータを保存
 
 
