@@ -103,6 +103,8 @@ using namespace Eigen;
 
 	double c[3][3][3][3];
 	double s[3][3][3][3];
+	MatrixXd c_matrix(6,6);
+	MatrixXd s_matrix(6,6);
 
 	double Dfour[ND][ND][SIZEZ];
 	double Dfour_i[ND][ND][SIZEZ];
@@ -153,6 +155,18 @@ int main(void){
 				Hexternal[i][j][k][0] = 0.0E+3;//ok
 				Hexternal[i][j][k][1] = 0.0E+6;//ok
 				Hexternal[i][j][k][2] = 0.0E+6;//ok
+
+
+				sigma_a[0][0] = 0;
+				sigma_a[1][1] = 0;
+				sigma_a[2][2] = 0;
+
+				sigma_a[0][1] = 0;
+				sigma_a[0][2] = 0;
+				sigma_a[1][0] = 0;
+				sigma_a[1][2] = 0;
+				sigma_a[2][0] = 0;
+				sigma_a[2][1] = 0;
 			}
 		}
 	}
@@ -174,6 +188,15 @@ int main(void){
 	c[1][2][1][2] = c[0][2][0][2] = c[0][1][0][1] = c44;
 	c[0][0][1][1] = c[0][0][2][2] = c[1][1][2][2] = c[1][1][0][0] = c[2][2][0][0] = c[2][2][1][1] = c12;
 
+	c_matrix(0,0) = c_matrix(1,1) = c_matrix(2,2) = c11;
+	c_matrix(3,3) = c_matrix(4,4) = c_matrix(5,5) = c44;
+	c_matrix(0,1) = c_matrix(0,2) = c_matrix(1,2) = c_matrix(1,0) = c_matrix(2,0) = c_matrix(2,1) = c12;
+
+	s_matrix = c_matrix.inverse();
+
+	s[0][0][0][0] = s[1][1][1][1] = s[2][2][2][2] = s_matrix(0,0);
+	s[1][2][1][2] = s[0][2][0][2] = s[0][1][0][1] = s_matrix(3,3);
+	s[0][0][1][1] = s[0][0][2][2] = s[1][1][2][2] = s[1][1][0][0] = s[2][2][0][0] = s[2][2][1][1] = s_matrix(0,1);
 
 	//*** 初期場の設定 ***************
 	ini000();		//初期場の設定
@@ -311,6 +334,13 @@ int main(void){
 	}
 
 
+	epsilon_homo[0][0] = s[0][0][0][0] * sigma_a[0][0] + s[0][0][1][1] * (sigma_a[1][1] + sigma_a[2][2]) + 3/2 * ram100 * (m2_ave[0] - 1/3);
+	epsilon_homo[1][1] = s[0][0][0][0] * sigma_a[1][1] + s[0][0][1][1] * (sigma_a[0][0] + sigma_a[2][2]) + 3/2 * ram100 * (m2_ave[1] - 1/3);
+	epsilon_homo[2][2] = s[0][0][0][0] * sigma_a[2][2] + s[0][0][1][1] * (sigma_a[0][0] + sigma_a[1][1]) + 3/2 * ram100 * (m2_ave[2] - 1/3);
+	epsilon_homo[0][1] = epsilon_homo[1][0] = 1/2 * s[0][1][0][1] * sigma_a[0][1] + 3/2 * ram111 * mm_ave[2];
+	epsilon_homo[1][2] = epsilon_homo[2][1] = 1/2 * s[0][1][0][1] * sigma_a[1][2] + 3/2 * ram111 * mm_ave[0];
+	epsilon_homo[2][0] = epsilon_homo[0][2] = 1/2 * s[0][1][0][1] * sigma_a[2][0] + 3/2 * ram111 * mm_ave[1];
+
 	for(l=0;l<3;l++){
 		for(v=0;v<3;v++){
 			for(i=0;i<=ndm;i++){
@@ -403,7 +433,7 @@ int main(void){
 						for(jj=0;jj<3;jj++){
 							for(kk=0;kk<3;kk++){
 								for(ll=0;ll<3;ll++){
-									Helastic[i][j][k][v] += -1/ (mu0 * Ms) * (c[ii][jj][kk][ll] * (eta[i][j][k][ii][jj] - epsilon_zero[i][j][k][ii][jj]) * epsilon_zero_grad[i][j][k][ii][jj][k]);
+									Helastic[i][j][k][v] += -1/ (mu0 * Ms) * (c[ii][jj][kk][ll] * (eta[i][j][k][ii][jj] + epsilon_homo[ii][jj] - epsilon_zero[i][j][k][ii][jj]) * epsilon_zero_grad[i][j][k][ii][jj][k]);
 								}
 							}
 						}
