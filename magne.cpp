@@ -17,7 +17,7 @@ using namespace Eigen;
 
 #define DRND(x) ((double)(x)/RAND_MAX*rand())//乱数の関数設定
 
-#define ND 256			//差分計算における計算領域一辺の分割数(高速フーリエ変換を用いるため２のべき乗)
+#define ND 64			//差分計算における計算領域一辺の分割数(高速フーリエ変換を用いるため２のべき乗)
 #define IG 8				//2^IG=ND
 #define SIZEX (ND)
 #define SIZEY (ND)
@@ -147,7 +147,7 @@ int main(void){
 	srand(time(NULL));
 
 	//Astar = (2 * A)/(mu0 * Ms * Ms * ld * ld);
-	Astar = 0.0625;
+	Astar = 0.0625/16;
 
 	for(i=0;i<=ndm;i++){
 		for(j=0;j<=ndm;j++){
@@ -758,19 +758,19 @@ void graph_s1()
 			col_R=m[i][j][0][0];//場の色をRGBにて設定
 			col_G=m[i][j][0][1];
 			col_B=m[i][j][0][2];
-			col_R *= 255;
-			col_G *= 255;
-			col_B *= 255;
-			//col_R += 128;
-			//col_G += 128;
-			//col_B += 128;
+			col_R *= 100;
+			col_G *= 100;
+			col_B *= 100;
+			col_R += 128;
+			col_G += 128;
+			col_B += 128;
 
 			chann.at<cv::Vec3b>(i,j) = cv::Vec3b(abs(int(col_B)), abs(int(col_G)), abs(int(col_R)));
 		}
 	}
 	cv::imwrite("LLG_permalloy_" + std::to_string(int(time1)) + "_m_xy.png", chann);
 
-	for(i=0;i<=ndm;i++){
+	/*for(i=0;i<=ndm;i++){
 		for(j=0;j<=ndm;j++){
 			col_R=m[0][j][i][0];//場の色をRGBにて設定
 			col_G=m[0][j][i][1];
@@ -802,19 +802,19 @@ void graph_s1()
 			chann.at<cv::Vec3b>(i,j) = cv::Vec3b(abs(int(col_B)), abs(int(col_G)), abs(int(col_R)));
 		}
 	}
-	cv::imwrite("LLG_permalloy_" + std::to_string(int(time1)) + "_m_xz.png", chann);
+	cv::imwrite("LLG_permalloy_" + std::to_string(int(time1)) + "_m_xz.png", chann);*/
 
 	for(i=0;i<=ndm;i++){
 		for(j=0;j<=ndm;j++){
 			col_R=u[i][j][0][0];//場の色をRGBにて設定
 			col_G=u[i][j][0][1];
 			col_B=u[i][j][0][2];
-			col_R *= 20000000;
-			col_G *= 20000000;
-			col_B *= 20000000;
-			//col_R += 128;
-			//col_G += 128;
-			//col_B += 128;
+			col_R *= 100000;
+			col_G *= 100000;
+			col_B *= 100000;
+			col_R += 128;
+			col_G += 128;
+			col_B += 128;
 
 			chann.at<cv::Vec3b>(i,j) = cv::Vec3b(abs(int(col_B)), abs(int(col_G)), abs(int(col_R)));
 		}
