@@ -18,6 +18,9 @@ We newly import **fftw3** for calculate dft more fast. please install by termina
 To install fftw3 in Ubuntu, type<br>
 >`$ sudo apt install libfftw3-3 libfftw3-dev libfftw3-doc`<br>
 
+-- 2019/10/26 --<br>
+Importing **Eigen** for calculate the elastic stiffness tensor. please install by terminal before compiling.<br>
+
 <br>
 1. Make the directory for clone repository.<br>
 
@@ -38,3 +41,5 @@ To install fftw3 in Ubuntu, type<br>
 - [ ] **magne.cpp**   -   main script.<br>
 - [x] **martensite.cpp**  -   phase-field simulation about martensite transition using openCV.<br>
 - [x] **command.txt**   -   how to compile the code.<br>
+- [x] **a.jpg b.jpg c.jpg**   -   images for the initial of simulation.<br>
+- [ ] **the_logic.md**   -   describes the logic of this program.<br>
