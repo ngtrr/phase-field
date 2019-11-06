@@ -5,6 +5,7 @@
 #include <time.h> 
 #include <math.h>
 #include <iostream>
+#include <fstream>
 #include <vector>
 #include <opencv2/opencv.hpp>
 #include <complex.h>
@@ -17,11 +18,11 @@ using namespace Eigen;
 
 #define DRND(x) ((double)(x)/RAND_MAX*rand())//乱数の関数設定
 
-#define ND 64			//差分計算における計算領域一辺の分割数(高速フーリエ変換を用いるため２のべき乗)
+#define ND 128			//差分計算における計算領域一辺の分割数(高速フーリエ変換を用いるため２のべき乗)
 #define IG 8				//2^IG=ND
 #define SIZEX (ND)
 #define SIZEY (ND)
-#define SIZEZ (ND)
+#define SIZEZ 128
 #define SIZE (SIZEX*SIZEY*SIZEZ)
 
 	int nd=ND, ndm=ND-1; 	//計算領域の一辺の差分分割数(差分ブロック数)、ND-1を定義
@@ -29,19 +30,19 @@ using namespace Eigen;
 	int ig=IG;						//2^ig=ND
 	double alpha=0.5;
 	double time1;					//計算カウント数(時間に比例)
-	double time1max = 10000;
+	double time1max = 100000;
 
 	double filter[3][3][3];
 
-	double Ms = 1.432E+6;
-  	double K1 = 2.0E+4, K2 = -4.5E+4;
-  	double ram100 = 1.32E-4, ram111 = 0;
-  	double c11 = 1.96E+11, c12 = 1.56E+11, c44 = 1.23E+11;
-	double A = 1.3E-11;
+	double Ms = 8.0E+5;
+  	double K1 = -6.0E+4, K2 = 0.0E+4;
+  	double ram100 = 0.0E+4, ram111 = 1.64E-3;
+  	double c11 = 1.41E+11, c12 = 6.48E+10, c44 = 4.87E+10;
+	double A = 9.0E-12;
   	double Astar;
 	double delt = 0.1;
 	double mu0 = 1.0;
-	double ld = 1.0E-06;
+	double ld = 1.0E-09;
 
 	double xf[SIZEX];
 	double yf[SIZEY];
@@ -146,8 +147,8 @@ int main(void){
 
 	srand(time(NULL));
 
-	//Astar = (2 * A)/(mu0 * Ms * Ms * ld * ld);
-	Astar = 0.0625/16;
+	Astar = (2 * A)/(mu0 * Ms * Ms * ld * ld);
+	//Astar = 0.0625;
 
 	for(i=0;i<=ndm;i++){
 		for(j=0;j<=ndm;j++){
@@ -217,7 +218,7 @@ int main(void){
 
 	//if(time1<=100.){Nstep=10;} else{Nstep=200;}		//データ保存する時間間隔の変更
 	//if((((int)(time1) % Nstep)==0)) {datsave();} 	//一定繰返しカウント毎に組織データを保存
-	if((((int)(time1) % 100 )==0)) {graph_s1();}//graph_fai();graph_h();graph_mstar1();} 		//一定繰返しカウント毎に組織を表示
+	if((((int)(time1) % 1000 )==0)) {graph_s1();}		//一定繰返しカウント毎に組織を表示
 	//if((((int)(time1) % 100)==0)) {datsave();} 		//一定繰返しカウント毎にデータを保存
 
 
@@ -362,6 +363,20 @@ int main(void){
 		}
 	}
 
+	for(i=0;i<=ndm;i++){
+		for(j=0;j<=ndm;j++){
+			for(k=0;k<SIZEZ;k++){
+				Dfour[i][j][k] = c44 * c44 * c11 * (xf[i] * xf[i] + yf[j] * yf[j] + zf[k] * zf[k]) * (xf[i] * xf[i] + yf[j] * yf[j] + zf[k] * zf[k]) * (xf[i] * xf[i] + yf[j] * yf[j] + zf[k] * zf[k]) + c44 * (c11-c12-2*c44) * (c11+c12) * (xf[i] * xf[i] + yf[j] * yf[j] + zf[k] * zf[k]) * (xf[i] * xf[i] * yf[j] * yf[j] + zf[k] * zf[k] * yf[j] * yf[j] + xf[i] * xf[i] * zf[k] * zf[k] ) + (c11 - c12 - 2*c44) * (c11 - c12 - 2*c44) * (c11+2*c12+c44) * xf[i] * xf[i] * yf[j] * yf[j] * zf[k] * zf[k];
+				Nfour[i][j][k][0][0] = c44 * c44 + c44 * (c11 - c44) * (xf[i] * xf[i] + yf[j] * yf[j] + zf[k] * zf[k]) * (yf[j] * yf[j] + zf[k] * zf[k]) + (c11-c12-2*c44) * (c11+c12) * yf[j] * yf[j] * zf[k] * zf[k];
+				Nfour[i][j][k][1][1] = c44 * c44 + c44 * (c11 - c44) * (xf[i] * xf[i] + yf[j] * yf[j] + zf[k] * zf[k]) * (xf[i] * xf[i] + zf[k] * zf[k]) + (c11-c12-2*c44) * (c11+c12) * xf[i] * xf[i] * zf[k] * zf[k];
+				Nfour[i][j][k][2][2] = c44 * c44 + c44 * (c11 - c44) * (xf[i] * xf[i] + yf[j] * yf[j] + zf[k] * zf[k]) * (yf[j] * yf[j] + xf[i] * xf[i]) + (c11-c12-2*c44) * (c11+c12) * yf[j] * yf[j] * xf[i] * xf[i];
+				Nfour[i][j][k][0][1] = Nfour[i][j][k][1][0] = -1 * (c12 + c44) * xf[i] * yf[j] * (c44 * (xf[i] * xf[i] + yf[j] * yf[j] + zf[k] * zf[k]) + (c11-c12-2*c44) * zf[k] * zf[k]);
+				Nfour[i][j][k][0][2] = Nfour[i][j][k][2][0] = -1 * (c12 + c44) * zf[k] * xf[i] * (c44 * (xf[i] * xf[i] + yf[j] * yf[j] + zf[k] * zf[k]) + (c11-c12-2*c44) * yf[j] * yf[j]);
+				Nfour[i][j][k][1][2] = Nfour[i][j][k][2][1] = -1 * (c12 + c44) * zf[k] * yf[j] * (c44 * (xf[i] * xf[i] + yf[j] * yf[j] + zf[k] * zf[k]) + (c11-c12-2*c44) * xf[i] * xf[i]);
+			}
+		}
+	}
+
 
 
 	for(i=0;i<=ndm;i++){
@@ -377,8 +392,10 @@ int main(void){
 									ufour[i][j][k][kk] += 0;
 									ufour_i[i][j][k][kk] += 0;
 								}else{
-									ufour[i][j][k][kk] += 1 / (c[ii][jj][kk][ll] * four_axis(jj, i, j, k) * four_axis(ll, i, j, k)) * four_axis(jj, i, j, k) * c[ii][jj][kk][ll] * epsilon_zerofour_i[i][j][k][kk][ll];
-									ufour_i[i][j][k][kk] += -1 / (c[ii][jj][kk][ll] * four_axis(jj, i, j, k) * four_axis(ll, i, j, k)) * four_axis(jj, i, j, k) * c[ii][jj][kk][ll] * epsilon_zerofour[i][j][k][kk][ll];
+									//ufour[i][j][k][kk] += 1 / (c[ii][jj][kk][ll] * four_axis(jj, i, j, k) * four_axis(ll, i, j, k)) * four_axis(jj, i, j, k) * c[ii][jj][kk][ll] * epsilon_zerofour_i[i][j][k][kk][ll];
+									//ufour_i[i][j][k][kk] += -1 / (c[ii][jj][kk][ll] * four_axis(jj, i, j, k) * four_axis(ll, i, j, k)) * four_axis(jj, i, j, k) * c[ii][jj][kk][ll] * epsilon_zerofour[i][j][k][kk][ll];
+									ufour[i][j][k][kk] += 1 * four_axis(jj, i, j, k) * c[ii][jj][kk][ll] * epsilon_zerofour_i[i][j][k][kk][ll] * Nfour[i][j][k][kk][jj] / Dfour[i][j][k];
+									ufour_i[i][j][k][kk] += -1 * four_axis(jj, i, j, k) * c[ii][jj][kk][ll] * epsilon_zerofour[i][j][k][kk][ll] * Nfour[i][j][k][kk][jj] / Dfour[i][j][k];
 									//cout << "ufour  : (" << i << ", " << j << ", " << kk << ") = " << ufour[i][j][k][kk] << " : " << ufour_i[i][j][k][kk] << endl;
 								}
 							}
@@ -388,6 +405,7 @@ int main(void){
 			}
 		}
 	}
+
 
 	for(v=0;v<3;v++){
 		for(i=0;i<=ndm;i++){
@@ -729,7 +747,7 @@ void ini000()
 		for(j=0;j<=ndm;j++){
 			for(k=0;k<SIZEZ;k++){
 				for(v=0;v<3;v++){
-					m[i][j][k][v] = rand();
+					m[i][j][k][v] = rand() % 201 - 100;
 				}
 				//m[i][j][0] = int(image[i][j]);
 				//m[i][j][1] = int(256-image[i][j]);
@@ -802,7 +820,7 @@ void graph_s1()
 			chann.at<cv::Vec3b>(i,j) = cv::Vec3b(abs(int(col_B)), abs(int(col_G)), abs(int(col_R)));
 		}
 	}
-	cv::imwrite("LLG_permalloy_" + std::to_string(int(time1)) + "_m_xz.png", chann);*/
+	cv::imwrite("LLG_permalloy_" + std::to_string(int(time1)) + "_m_xz.png", chann);
 
 	for(i=0;i<=ndm;i++){
 		for(j=0;j<=ndm;j++){
@@ -819,7 +837,33 @@ void graph_s1()
 			chann.at<cv::Vec3b>(i,j) = cv::Vec3b(abs(int(col_B)), abs(int(col_G)), abs(int(col_R)));
 		}
 	}
-	cv::imwrite("LLG_permalloy_" + std::to_string(int(time1)) + "_u.png", chann);
+	cv::imwrite("LLG_permalloy_" + std::to_string(int(time1)) + "_u.png", chann);*/
+
+	ofstream outputfile("check" + std::to_string(int(time1)) + ".txt");
+	outputfile << "unset arrow" << endl;
+	outputfile << "set xrange[0:" << SIZEX << "]" << endl;
+	outputfile << "set yrange[0:" << SIZEY << "]" << endl;
+	outputfile << "set zrange[0:" << SIZEZ << "]" << endl;
+	for(i=0;i<=ndm;i++){
+		for(j=0;j<=ndm;j++){
+			for(k=0;k<SIZEZ;k++){
+				if(i%(nd/16)==0 && j%(nd/16)==0 && k%(nd/16)==0){
+					col_R=m[i][j][k][0];//場の色をRGBにて設定
+					col_G=m[i][j][k][1];
+					col_B=m[i][j][k][2];
+					col_R *= 100;
+					col_G *= 100;
+					col_B *= 100;
+					col_R += 128;
+					col_G += 128;
+					col_B += 128;
+					outputfile << "set arrow from " <<  i-0.2*(nd/16)*m[i][j][k][0] << "," <<  j-0.2*(nd/16)*m[i][j][k][1] << "," <<  k-0.2*(nd/16)*m[i][j][k][2] << " to " <<  i+0.2*(nd/16)*m[i][j][k][0] << "," <<  j+0.2*(nd/16)*m[i][j][k][1] << "," <<  k+0.2*(nd/16)*m[i][j][k][2] << " filled linewidth 2 linecolor rgb \"#" << hex <<int(col_B) << int(col_G) << int(col_R) << "\"" << endl;
+				}
+			}
+		}
+	}
+	outputfile << "splot 0+0" << endl;
+	outputfile.close();
 }
 
 int DCexchange3D( fftw_complex *data, int cols, int rows, int depth )
