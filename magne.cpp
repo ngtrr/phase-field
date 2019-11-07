@@ -30,11 +30,12 @@ using namespace Eigen;
 	int ig=IG;						//2^ig=ND
 	double alpha=0.5;
 	double time1;					//計算カウント数(時間に比例)
-	double time1max = 100000;
+	double time1max = 1000;
 
 	double filter[3][3][3];
 
-	double Ms = 8.0E+5;
+	//**************************	Terfenol-D	**************************************
+	/*double Ms = 8.0E+5;
   	double K1 = -6.0E+4, K2 = 0.0E+4;
   	double ram100 = 0.0E+4, ram111 = 1.64E-3;
   	double c11 = 1.41E+11, c12 = 6.48E+10, c44 = 4.87E+10;
@@ -42,7 +43,18 @@ using namespace Eigen;
   	double Astar;
 	double delt = 0.1;
 	double mu0 = 1.0;
-	double ld = 1.0E-09;
+	double ld = 1.0E-09;*/
+
+	//**************************	Galfenol	**************************************
+	double Ms = 1.432E+6;
+  	double K1 = 2.0E+4, K2 = -4.5E+4;
+  	double ram100 = 2.64E-4, ram111 = 0.0E-3;
+  	double c11 = 1.96E+11, c12 = 1.56E+11, c44 = 1.23E+11;
+	double A = 9.0E-12;
+  	double Astar;
+	double delt = 0.1;
+	double mu0 = 1.0;
+	double ld = 1.0E-06;
 
 	double xf[SIZEX];
 	double yf[SIZEY];
@@ -147,8 +159,8 @@ int main(void){
 
 	srand(time(NULL));
 
-	Astar = (2 * A)/(mu0 * Ms * Ms * ld * ld);
-	//Astar = 0.0625;
+	//Astar = (2 * A)/(mu0 * Ms * Ms * ld * ld);
+	Astar = 0.0625;
 
 	for(i=0;i<=ndm;i++){
 		for(j=0;j<=ndm;j++){
@@ -218,7 +230,7 @@ int main(void){
 
 	//if(time1<=100.){Nstep=10;} else{Nstep=200;}		//データ保存する時間間隔の変更
 	//if((((int)(time1) % Nstep)==0)) {datsave();} 	//一定繰返しカウント毎に組織データを保存
-	if((((int)(time1) % 1000 )==0)) {graph_s1();}		//一定繰返しカウント毎に組織を表示
+	if((((int)(time1) % 10 )==0)) {graph_s1();}		//一定繰返しカウント毎に組織を表示
 	//if((((int)(time1) % 100)==0)) {datsave();} 		//一定繰返しカウント毎にデータを保存
 
 
@@ -786,7 +798,7 @@ void graph_s1()
 			chann.at<cv::Vec3b>(i,j) = cv::Vec3b(abs(int(col_B)), abs(int(col_G)), abs(int(col_R)));
 		}
 	}
-	cv::imwrite("LLG_permalloy_" + std::to_string(int(time1)) + "_m_xy.png", chann);
+	cv::imwrite("LLG_Galfenol_" + std::to_string(int(time1)) + "_m_xy.png", chann);
 
 	/*for(i=0;i<=ndm;i++){
 		for(j=0;j<=ndm;j++){
@@ -820,7 +832,7 @@ void graph_s1()
 			chann.at<cv::Vec3b>(i,j) = cv::Vec3b(abs(int(col_B)), abs(int(col_G)), abs(int(col_R)));
 		}
 	}
-	cv::imwrite("LLG_permalloy_" + std::to_string(int(time1)) + "_m_xz.png", chann);
+	cv::imwrite("LLG_permalloy_" + std::to_string(int(time1)) + "_m_xz.png", chann);*/
 
 	for(i=0;i<=ndm;i++){
 		for(j=0;j<=ndm;j++){
@@ -837,7 +849,7 @@ void graph_s1()
 			chann.at<cv::Vec3b>(i,j) = cv::Vec3b(abs(int(col_B)), abs(int(col_G)), abs(int(col_R)));
 		}
 	}
-	cv::imwrite("LLG_permalloy_" + std::to_string(int(time1)) + "_u.png", chann);*/
+	cv::imwrite("LLG_Galfenol_" + std::to_string(int(time1)) + "_u.png", chann);
 
 	ofstream outputfile("check" + std::to_string(int(time1)) + ".txt");
 	outputfile << "unset arrow" << endl;
