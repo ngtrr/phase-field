@@ -5,6 +5,7 @@
 #include <time.h> 
 #include <math.h>
 #include <iostream>
+#include <fstream>
 #include <vector>
 #include <opencv2/opencv.hpp>
 #include <complex.h>
@@ -33,6 +34,18 @@ using namespace Eigen;
 
 	double filter[3][3][3];
 
+	//**************************	Terfenol-D	**************************************
+	/*double Ms = 8.0E+5;
+  	double K1 = -6.0E+4, K2 = 0.0E+4;
+  	double ram100 = 0.0E+4, ram111 = 1.64E-3;
+  	double c11 = 1.41E+11, c12 = 6.48E+10, c44 = 4.87E+10;
+	double A = 9.0E-12;
+  	double Astar;
+	double delt = 0.1;
+	double mu0 = 1.0;
+	double ld = 1.0E-09;*/
+
+	//**************************	Galfenol	**************************************
 	double Ms = 1.432E+6;
   	double K1 = 2.0E+4, K2 = -4.5E+4;
   	double ram100 = 1.32E-4, ram111 = 0;
@@ -103,6 +116,8 @@ using namespace Eigen;
 
 	double c[3][3][3][3];
 	double s[3][3][3][3];
+	MatrixXd c_matrix(6,6);
+	MatrixXd s_matrix(6,6);
 
 	double Dfour[ND][ND];
 	double Dfour_i[ND][ND];
@@ -159,6 +174,18 @@ int main(void){
 			//Hanis[i][j][0] = 0;//(4 * K1)/(3 );// * 1.0E+7;//ok
 			//Hanis[i][j][1] = 0;//(4 * K1)/(3 );// * 1.0E+7;//ok
 			//Hanis[i][j][2] = 0;//(4 * K1)/(3 );// * 1.0E+7;//ok
+
+			sigma_a[0][0] = 0;
+			sigma_a[1][1] = 0;
+			sigma_a[2][2] = 0;
+
+			sigma_a[0][1] = 0;
+			sigma_a[0][2] = 0;
+			sigma_a[1][0] = 0;
+			sigma_a[1][2] = 0;
+			sigma_a[2][0] = 0;
+			sigma_a[2][1] = 0;
+
 		}
 	}
 
@@ -166,7 +193,6 @@ int main(void){
 		xf[i] = i - nd2;
 		yf[i] = i - nd2;
 	}
-
 
 	N[0] = 0.333;
 	N[1] = 0.333;
@@ -176,8 +202,17 @@ int main(void){
 	c[1][2][1][2] = c[0][2][0][2] = c[0][1][0][1] = c44;
 	c[0][0][1][1] = c[0][0][2][2] = c[1][1][2][2] = c[1][1][0][0] = c[2][2][0][0] = c[2][2][1][1] = c12;
 
+	c_matrix(0,0) = c_matrix(1,1) = c_matrix(2,2) = c11;
+	c_matrix(3,3) = c_matrix(4,4) = c_matrix(5,5) = c44;
+	c_matrix(0,1) = c_matrix(0,2) = c_matrix(1,2) = c_matrix(1,0) = c_matrix(2,0) = c_matrix(2,1) = c12;
 
-	//*** sinおよびcosテ−ブル、ビット反転テーブル、および初期場の設定 ***************
+	s_matrix = c_matrix.inverse();
+
+	s[0][0][0][0] = s[1][1][1][1] = s[2][2][2][2] = s_matrix(0,0);
+	s[1][2][1][2] = s[0][2][0][2] = s[0][1][0][1] = s_matrix(3,3);
+	s[0][0][1][1] = s[0][0][2][2] = s[1][1][2][2] = s[1][1][0][0] = s[2][2][0][0] = s[2][2][1][1] = s_matrix(0,1);
+
+	//*** 初期場の設定 ***************
 	ini000();		//初期場の設定
 
 
@@ -297,6 +332,12 @@ int main(void){
 		}
 	}
 
+	epsilon_homo[0][0] = s[0][0][0][0] * sigma_a[0][0] + s[0][0][1][1] * (sigma_a[1][1] + sigma_a[2][2]) + 3/2 * ram100 * (m2_ave[0] - 1/3);
+	epsilon_homo[1][1] = s[0][0][0][0] * sigma_a[1][1] + s[0][0][1][1] * (sigma_a[0][0] + sigma_a[2][2]) + 3/2 * ram100 * (m2_ave[1] - 1/3);
+	epsilon_homo[2][2] = s[0][0][0][0] * sigma_a[2][2] + s[0][0][1][1] * (sigma_a[0][0] + sigma_a[1][1]) + 3/2 * ram100 * (m2_ave[2] - 1/3);
+	epsilon_homo[0][1] = epsilon_homo[1][0] = 1/2 * s[0][1][0][1] * sigma_a[0][1] + 3/2 * ram111 * mm_ave[2];
+	epsilon_homo[1][2] = epsilon_homo[2][1] = 1/2 * s[0][1][0][1] * sigma_a[1][2] + 3/2 * ram111 * mm_ave[0];
+	epsilon_homo[2][0] = epsilon_homo[0][2] = 1/2 * s[0][1][0][1] * sigma_a[2][0] + 3/2 * ram111 * mm_ave[1];
 
 	for(l=0;l<3;l++){
 		for(k=0;k<3;k++){
@@ -317,7 +358,6 @@ int main(void){
 
 
 
-	//変更必要
 	for(i=0;i<=ndm;i++){
 		for(j=0;j<=ndm;j++){
 			for(kk=0;kk<3;kk++){
@@ -330,8 +370,10 @@ int main(void){
 								ufour[i][j][kk] += 0;
 								ufour_i[i][j][kk] += 0;
 							}else{
-								ufour[i][j][kk] += 1 / (c[ii][jj][kk][ll] * four_axis(jj, i, j) * four_axis(ll, i, j)) * four_axis(jj, i, j) * c[ii][jj][kk][ll] * epsilon_zerofour_i[i][j][kk][ll];
-								ufour_i[i][j][kk] += -1 / (c[ii][jj][kk][ll] * four_axis(jj, i, j) * four_axis(ll, i, j)) * four_axis(jj, i, j) * c[ii][jj][kk][ll] * epsilon_zerofour[i][j][kk][ll];
+								//ufour[i][j][kk] += 1 / (c[ii][jj][kk][ll] * four_axis(jj, i, j) * four_axis(ll, i, j)) * four_axis(jj, i, j) * c[ii][jj][kk][ll] * epsilon_zerofour_i[i][j][kk][ll];
+								//ufour_i[i][j][kk] += -1 / (c[ii][jj][kk][ll] * four_axis(jj, i, j) * four_axis(ll, i, j)) * four_axis(jj, i, j) * c[ii][jj][kk][ll] * epsilon_zerofour[i][j][kk][ll];
+								ufour[i][j][kk] += 1 * four_axis(jj, i, j) * c[ii][jj][kk][ll] * epsilon_zerofour_i[i][j][kk][ll] * Nfour[i][j][kk][jj] / Dfour[i][j];
+								ufour_i[i][j][kk] += -1 * four_axis(jj, i, j) * c[ii][jj][kk][ll] * epsilon_zerofour[i][j][kk][ll] * Nfour[i][j][kk][jj] / Dfour[i][j];
 								//cout << "ufour  : "<< ufour[i][j][kk] << ufour_i[i][j][kk] << endl;
 							}
 						}
@@ -445,8 +487,6 @@ int main(void){
 	}
 
 
-
-	//漸化式の書き換えが必要
 
 	for(i=0;i<=ndm;i++){
 		for(j=0;j<=ndm;j++){
@@ -626,7 +666,7 @@ void ini000()
 	for(i=0;i<=ndm;i++){
 		for(j=0;j<=ndm;j++){
 			for(k=0;k<3;k++){
-				m[i][j][k] = rand();
+				m[i][j][k] = rand() % 201 - 100;
 			}
 			m[i][j][0] = int(image[i][j]);
 			m[i][j][1] = int(256-image[i][j]);
@@ -654,17 +694,40 @@ void graph_s1()
 			col_R=m[i][j][0];//場の色をRGBにて設定
 			col_G=m[i][j][1];
 			col_B=m[i][j][2];
-			col_R *= 255;
-			col_G *= 255;
-			col_B *= 255;
-			//col_R += 128;
-			//col_G += 128;
-			//col_B += 128;
+			col_R *= 100;
+			col_G *= 100;
+			col_B *= 100;
+			col_R += 128;
+			col_G += 128;
+			col_B += 128;
 
 			chann.at<cv::Vec3b>(i,j) = cv::Vec3b(abs(int(col_B)), abs(int(col_G)), abs(int(col_R)));
 		}
 	}
-	cv::imwrite("LLG_permalloy_" + std::to_string(int(time1)) + "_m.png", chann);
+	cv::imwrite("LLG_Galfenol_" + std::to_string(int(time1)) + "_m_2d.png", chann);
+
+	ofstream outputfile("check" + std::to_string(int(time1)) + "_2d.txt");
+	outputfile << "unset arrow" << endl;
+	outputfile << "set xrange[0:" << SIZEX << "]" << endl;
+	outputfile << "set yrange[0:" << SIZEY << "]" << endl;
+	for(i=0;i<=ndm;i++){
+		for(j=0;j<=ndm;j++){
+			if(i%(nd/16)==0 && j%(nd/16)==0){
+				col_R=m[i][j][0];//場の色をRGBにて設定
+				col_G=m[i][j][1];
+				col_B=m[i][j][2];
+				col_R *= 100;
+				col_G *= 100;
+				col_B *= 100;
+				col_R += 128;
+				col_G += 128;
+				col_B += 128;
+				outputfile << "set arrow from " <<  i-0.2*(nd/16)*m[i][j][0] << "," <<  j-0.2*(nd/16)*m[i][j][1] << " to " <<  i+0.2*(nd/16)*m[i][j][0] << "," <<  j+0.2*(nd/16)*m[i][j][1] << " filled linewidth 2 linecolor rgb \"#" << hex <<int(col_B) << int(col_G) << int(col_R) << "\"" << endl;
+			}
+		}
+	}
+	outputfile << "plot 0" << endl;
+	outputfile.close();
 }
 
 int DCexchange2D( fftw_complex *data, int cols, int rows, int depth )
