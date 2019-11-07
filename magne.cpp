@@ -1,4 +1,4 @@
-//for magenetostriction model by llg equation with phase-field simulation
+//for magenetostriction model by llg equation with phase-field simulation only 2d
 
 #include <stdio.h>
 #include <stdlib.h>
