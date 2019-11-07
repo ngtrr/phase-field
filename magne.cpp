@@ -1,5 +1,10 @@
 //for magenetostriction model by llg equation with phase-field simulation only 2d
 
+/*
+plot "LLG_Galfenol_300_m_2d.png" binary filetype=png with rgbimage
+replot "check300_2d.txt" with vector lc rgb "#000000"
+*/
+
 #include <stdio.h>
 #include <stdlib.h>
 #include <time.h> 
@@ -30,7 +35,7 @@ using namespace Eigen;
 	int ig=IG;						//2^ig=ND
 	double alpha=0.5;
 	double time1;					//計算カウント数(時間に比例)
-	double time1max = 100000;
+	double time1max = 10000;
 
 	double filter[3][3][3];
 
@@ -229,7 +234,7 @@ int main(void){
 
 	//if(time1<=100.){Nstep=10;} else{Nstep=200;}		//データ保存する時間間隔の変更
 	//if((((int)(time1) % Nstep)==0)) {datsave();} 	//一定繰返しカウント毎に組織データを保存
-	if((((int)(time1) % 10)==0)) {graph_s1();}//graph_fai();graph_h();graph_mstar1();} 		//一定繰返しカウント毎に組織を表示
+	if((((int)(time1) % 100)==0)) {graph_s1();}//graph_fai();graph_h();graph_mstar1();} 		//一定繰返しカウント毎に組織を表示
 	//if((((int)(time1) % 100)==0)) {datsave();} 		//一定繰返しカウント毎にデータを保存
 
 
@@ -735,9 +740,6 @@ void graph_s1()
 	cv::imwrite("LLG_Galfenol_" + std::to_string(int(time1)) + "_u_2d.png", chann);
 
 	ofstream outputfile("check" + std::to_string(int(time1)) + "_2d.txt");
-	outputfile << "unset arrow" << endl;
-	outputfile << "set xrange[0:" << SIZEX << "]" << endl;
-	outputfile << "set yrange[0:" << SIZEY << "]" << endl;
 	for(i=0;i<=ndm;i++){
 		for(j=0;j<=ndm;j++){
 			if(i%(nd/16)==0 && j%(nd/16)==0){
@@ -750,11 +752,10 @@ void graph_s1()
 				col_R += 128;
 				col_G += 128;
 				col_B += 128;
-				outputfile << "set arrow from " <<  i-0.2*(nd/16)*m[i][j][0] << "," <<  j-0.2*(nd/16)*m[i][j][1] << " to " <<  i+0.2*(nd/16)*m[i][j][0] << "," <<  j+0.2*(nd/16)*m[i][j][1] << " filled linewidth 2 linecolor rgb \"#" << hex <<int(col_B) << int(col_G) << int(col_R) << "\"" << endl;
+				outputfile <<  j << " " << ndm-i << " " <<  0.5*(nd/16)*m[i][j][1] << " " <<  0.5*(nd/16)*m[i][j][0] << endl;
 			}
 		}
 	}
-	outputfile << "plot 0" << endl;
 	outputfile.close();
 }
 
