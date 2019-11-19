@@ -40,7 +40,7 @@ using namespace Eigen;
 	double filter[3][3][3];
 
 	//**************************	Terfenol-D	**************************************
-	/*double Ms = 8.0E+5;
+	double Ms = 8.0E+5;
   	double K1 = -6.0E+4, K2 = 0.0E+4;
   	double ram100 = 0.0E+4, ram111 = 1.64E-3;
   	double c11 = 1.41E+11, c12 = 6.48E+10, c44 = 4.87E+10;
@@ -48,10 +48,10 @@ using namespace Eigen;
   	double Astar;
 	double delt = 0.1;
 	double mu0 = 1.0;
-	double ld = 1.0E-09;*/
+	double ld = 1.0E-10;
 
 	//**************************	Galfenol	**************************************
-	double Ms = 1.432E+6;
+	/*double Ms = 1.432E+6;
   	double K1 = 2.0E+4, K2 = -4.5E+4;
   	double ram100 = 1.32E-4, ram111 = 0;
   	double c11 = 1.96E+11, c12 = 1.56E+11, c44 = 1.23E+11;
@@ -59,7 +59,7 @@ using namespace Eigen;
   	double Astar;
 	double delt = 0.1;
 	double mu0 = 1.0;
-	double ld = 1.0E-06;
+	double ld = 1.0E-06;*/
 
 	double xf[SIZEX];
 	double yf[SIZEY];
@@ -163,8 +163,9 @@ int main(void){
 
 	srand(time(NULL));
 
-	//Astar = (2 * A)/(mu0 * Ms * Ms * ld * ld);
-	Astar = 0.0625 ;
+	Astar = (2 * A)/(mu0 * Ms * Ms * ld * ld);
+	//Astar = 0.0625 ;
+	cout << "Astar : " << Astar << endl;
 
 	for(i=0;i<=ndm;i++){
 		for(j=0;j<=ndm;j++){
@@ -720,7 +721,7 @@ void graph_s1()
 			chann.at<cv::Vec3b>(i,j) = cv::Vec3b(abs(int(col_B)), abs(int(col_G)), abs(int(col_R)));
 		}
 	}
-	cv::imwrite("LLG_Galfenol_" + std::to_string(int(time1)) + "_m_2d.png", chann);
+	cv::imwrite("LLG_Terfenol_" + std::to_string(int(time1)) + "_m_2d.png", chann);
 
 	for(i=0;i<=ndm;i++){
 		for(j=0;j<=ndm;j++){
@@ -737,9 +738,9 @@ void graph_s1()
 			chann.at<cv::Vec3b>(i,j) = cv::Vec3b(abs(int(col_B)), abs(int(col_G)), abs(int(col_R)));
 		}
 	}
-	cv::imwrite("LLG_Galfenol_" + std::to_string(int(time1)) + "_u_2d.png", chann);
+	cv::imwrite("LLG_Terfenol_" + std::to_string(int(time1)) + "_u_2d.png", chann);
 
-	ofstream outputfile("check" + std::to_string(int(time1)) + "_2d.txt");
+	ofstream outputfile("check_Terfenol_" + std::to_string(int(time1)) + "_2d.txt");
 	for(i=0;i<=ndm;i++){
 		for(j=0;j<=ndm;j++){
 			if(i%(nd/16)==0 && j%(nd/16)==0){
