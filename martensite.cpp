@@ -55,7 +55,6 @@ int main(void)
 	double Z11ep, Z12ep, Z21ep, Z22ep;			//フーリエ逆変換時の係数
 	double sum11, sum22;										//s1とs2の空間積分
 	double s1ddtt, s2ddtt;									//s1とs2の時間変化量（発展方程式の左辺）
-	double el_fac;													//弾性定数の規格化定数
 
 	int   i, j, k, l, ii, jj, kk, iii, jjj;		//整数
 	int   p, q, m, n;													//整数
@@ -77,7 +76,7 @@ int main(void)
 	printf("DELT(0.2)=  ");	scanf(" %lf",&delt);		//時間きざみ入力
 	//delt=0.2;
 
-	temp=500.0;						//温度(K)
+	temp=300.0;						//温度(K)
 	al=500.0*1.0E-09;			//計算領域(m)
 	b1=al/nd;							//差分ブロックの長さ
 
@@ -96,7 +95,7 @@ int main(void)
 	atom_n=4.0;  vm0=6.02E23*a1_c*b1_c*c1_c/atom_n;	//モル体積の計算（fccを仮定）
 
 //*** s1場のアイゲン歪の設定 ***************
-	eta_s1[1][1]=0.05; eta_s1[2][2]=-0.05;
+	eta_s1[1][1]=0.043; eta_s1[2][2]=-0.043;
 	eta_s1[3][3]=0.;
 	eta_s1[1][2]=eta_s1[2][1]=eta_s1[1][3]=eta_s1[3][1]=eta_s1[2][3]=eta_s1[3][2]=0.;
 
@@ -106,11 +105,13 @@ int main(void)
 	eta_s2[3][3]=0.;
 	eta_s2[1][2]=eta_s2[2][1]=eta_s2[1][3]=eta_s2[3][1]=eta_s2[2][3]=eta_s2[3][2]=0.;
 
-//***** Niの弾性定数 ****************************
-	el_fac=1.0E+11*vm0/rr/temp;
-  c11=2.508*el_fac;
-  c44=1.235*el_fac;
-  c12=1.500*el_fac;
+//***** FePdの弾性定数 ****************************
+  c11=149.5;
+  c44=70.5;
+  c12=143.6;
+  printf("c11= %f  \n", c11);
+  printf("c12= %f  \n", c12);
+  printf("c44= %f  \n", c44);
   //c12=c11-2.0*c44;
 	lam0=c12;		mu0=c44;//cijのデーからラーメ定数を設定
 	nu0=lam0/2.0/(lam0+mu0);//ポアソン比
