@@ -54,9 +54,6 @@ using namespace Eigen;
 
 
 
-
-
-
     //*******************  FePd  ************************
 	double Ms = 6.02E+5;
   	double K1 = 2.7E+3, K2 = -6.1E+3;
@@ -69,6 +66,7 @@ using namespace Eigen;
 	double ld = 1.8E-8;
 
 
+	double G = 2;
 	double Q1 = 2.32E+11;
 	double Q2 = 0;
 	double Q3 = 0.40E+10;
@@ -119,9 +117,14 @@ using namespace Eigen;
 	double Hms[ND][ND][3];
 	double Hexternal[ND][ND][3];
 	double Helastic[ND][ND][3];
-	double Hlandau[ND][ND][3];
-	double Hgradient[ND][ND][3];
 	double Hme[ND][ND][3];
+
+	double P[ND][ND][3];
+
+	double Plandau[ND][ND][3];
+	double Pgradient[ND][ND][3];
+	double Pme[ND][ND][3];
+	double Pelastic[ND][ND][3];
 
 	double fourier_output[ND][ND];
 	double fourier_output_i[ND][ND];
@@ -173,8 +176,6 @@ using namespace Eigen;
 	double e6_grad[ND][ND][3];
 
 
-
-
 	void ini000();			//初期場の設定サブル−チン
 	void graph_s1();		//組織描画サブル−チン
 	void table();				//sinとcosのテーブルとビット反転テーブルの作成サブル−チン
@@ -194,7 +195,7 @@ using namespace Eigen;
 //******* メインプログラム ******************************************
 int main(void)
 {
-	double s1, s2;																//マルテンサイトのフェーズフィールド
+	double s1, s2;									//マルテンサイトのフェーズフィールド
 	double ep11h0[ND][ND], ep22h0[ND][ND];				//組織内の変態歪
 	double ep11qrh0[ND][ND],	ep11qih0[ND][ND];		//拘束歪変動量のフーリエ変換
 	double ep22qrh0[ND][ND],	ep22qih0[ND][ND];		//拘束歪変動量のフーリエ変換
@@ -212,7 +213,7 @@ int main(void)
 	double s1ddtt, s2ddtt;									//s1とs2の時間変化量（発展方程式の左辺）
 
 	int   i, j, k, l, ii, jj, kk, ll, iii, jjj;		//整数
-	int   p, q, m, n;													//整数
+	//int   p, q, m, n;													//整数
 	int   ip, im, jp, jm, Nstep;							//整数
 	double al, temp, delt;										//計算領域、温度、時間きざみ
 	double time1max;													//計算カウント数の最大値（計算終了カウント）
@@ -355,19 +356,43 @@ start: ;
 	if((((int)(time1) % 10)==0)) {graph_s1();} 		//一定繰返しカウント毎に組織を表示
 	//if((((int)(time1) % 100)==0)) {datsave();} 		//一定繰返しカウント毎にデータを保存
 
+//***** 化学ポテンシャル ************************
+	for(i=0;i<=ndm;i++){
+		for(j=0;j<=ndm;j++){
+			for(k=0;k<3;k++){
+				Plandau[i][j][0] = Q1 * (2*epsilon_zero[i][j][0][0] + 2*epsilon_zero[i][j][1][1] + 2*epsilon_zero[i][j][2][2])/3 + Q2 * ((2*epsilon_zero[i][j][0][0] - 2*epsilon_zero[i][j][1][1])/2 + (2*epsilon_zero[i][j][0][0] + epsilon_zero[i][j][1][1] - 2*epsilon_zero[i][j][2][2])/6) + Q3 * ();
+				Plandau[i][j][1] = Q1 * (2*epsilon_zero[i][j][0][0] + 2*epsilon_zero[i][j][1][1] + 2*epsilon_zero[i][j][2][2])/3 + Q2 * ((2*epsilon_zero[i][j][0][0] - 2*epsilon_zero[i][j][1][1])/2 + (2*epsilon_zero[i][j][1][1] + epsilon_zero[i][j][0][0] - 2*epsilon_zero[i][j][2][2])/6);
+				Plandau[i][j][2] = Q1 * (2*epsilon_zero[i][j][0][0] + 2*epsilon_zero[i][j][1][1] + 2*epsilon_zero[i][j][2][2])/3 + Q2 * (8*epsilon_zero[i][j][2][2] - 2*epsilon_zero[i][j][1][1] - 2*epsilon_zero[i][j][0][0])/6 + Q4 * (8*epsilon_zero[i][j][2][2] - 2*epsilon_zero[i][j][1][1] - 2*epsilon_zero[i][j][0][0])/6;
+			}
+		}
+	}
+
+
+
 //***** 勾配ポテンシャル ***********************
 	for(i=0;i<=ndm;i++){
 		for(j=0;j<=ndm;j++){
 			ip=i+1; im=i-1; jp=j+1; jm=j-1;
 			if(i==ndm){ip=0;}  if(i==0){im=ndm;}	//周期的境界条件
 			if(j==ndm){jp=0;}  if(j==0){jm=ndm;}
-			s1k_su[i][j]=-kappa_s1*(s1h[ip][j]+s1h[im][j]+s1h[i][jp]+s1h[i][jm]
-															-4.0*s1h[i][j]);														//式(4.6)
-			s2k_su[i][j]=-kappa_s2*(s2h[ip][j]+s2h[im][j]+s2h[i][jp]+s2h[i][jm]
-															-4.0*s2h[i][j]);
+			for(k=0;k<3;k++){
+				Pgradient[i][j][k] = -1 * G * (epsilon_zero[ip][j][k][k] + epsilon_zero[im][j][k][k] + epsilon_zero[i][jp][k][k] + epsilon_zero[i][jm][k][k] - 4.0*epsilon_zero[i][j][k][k]);
+			}
 		}
 	}
 
+
+//***** 磁気弾性ポテンシャル ***********************
+	for(i=0;i<=ndm;i++){
+		for(j=0;j<=ndm;j++){
+			for(k=0;k<3;k++){
+				Pme[i][j][k] = B * (m[i][j][k]*m[i][j][k] - 1/3);
+			}
+		}
+	}
+
+
+/*
 //**** アイゲン歪場[式(4.7)]のフ−リエ変換 ep11 ********************************
 	for(i=0;i<=ndm;i++){
 		for(j=0;j<=ndm;j++){
@@ -482,17 +507,17 @@ start: ;
 			if(s2h[i][j]>=1.0){s2h[i][j]=1.0;}  if(s2h[i][j]<=0.0){s2h[i][j]=0.0;}
 		}
 	}
+*/
 
 
-
-
-
-
-
-
-
-
-
+	for(i=0;i<=ndm;i++){
+		for(j=0;j<=ndm;j++){
+			for(k=0;k<3;k++){
+				P[i][j][k]= -1 * smob * (Plandau[i][j][k] + Pgradient[i][j][k] + Pme[i][j][k] + Pelastic[i][j][k]);
+				epsilon_zero[i][j][k][k] += ( P[i][j][k] + ds_fac*( 2.0*DRND(1.) - 1.0) )*delt;
+			}
+		}
+	}
 
 
 	for(k=0;k<3;k++){
@@ -567,32 +592,8 @@ start: ;
 			}
 		}
 	}
-	
 
 
-	for(i=0;i<=ndm;i++){
-		for(j=0;j<=ndm;j++){
-			epsilon_zero[i][j][0][0] = 3/2 * ram100 * (m[i][j][0] * m[i][j][0] - 1/3);
-			epsilon_zero[i][j][1][1] = 3/2 * ram100 * (m[i][j][1] * m[i][j][1] - 1/3);
-			epsilon_zero[i][j][2][2] = 3/2 * ram100 * (m[i][j][2] * m[i][j][2] - 1/3);
-			epsilon_zero[i][j][0][1] = epsilon_zero[i][j][1][0] = 3/2 * ram111 * m[i][j][0] * m[i][j][1];
-			epsilon_zero[i][j][0][2] = epsilon_zero[i][j][2][0] = 3/2 * ram111 * m[i][j][0] * m[i][j][2];
-			epsilon_zero[i][j][1][2] = epsilon_zero[i][j][2][1] = 3/2 * ram111 * m[i][j][1] * m[i][j][2];
-
-
-			epsilon_zero_grad[i][j][0][0][0] = 3/2 * ram100 * (2 * m[i][j][0]);
-			epsilon_zero_grad[i][j][0][1][0] = epsilon_zero_grad[i][j][1][0][0] = 3/2 * ram111 * m[i][j][1];
-			epsilon_zero_grad[i][j][0][2][0] = epsilon_zero_grad[i][j][2][0][0] = 3/2 * ram111 * m[i][j][2];
-
-			epsilon_zero_grad[i][j][1][1][1] = 3/2 * ram100 * (2 * m[i][j][1]);
-			epsilon_zero_grad[i][j][0][1][1] = epsilon_zero_grad[i][j][1][0][1] = 3/2 * ram111 * m[i][j][0];
-			epsilon_zero_grad[i][j][1][2][1] = epsilon_zero_grad[i][j][2][1][1] = 3/2 * ram111 * m[i][j][2];
-
-			epsilon_zero_grad[i][j][2][2][2] = 3/2 * ram100 * (2 * m[i][j][2]);
-			epsilon_zero_grad[i][j][0][2][2] = epsilon_zero_grad[i][j][2][0][2] = 3/2 * ram111 * m[i][j][0];
-			epsilon_zero_grad[i][j][1][2][2] = epsilon_zero_grad[i][j][2][1][2] = 3/2 * ram111 * m[i][j][1];
-		}
-	}
 
 	epsilon_homo[0][0] = s[0][0][0][0] * sigma_a[0][0] + s[0][0][1][1] * (sigma_a[1][1] + sigma_a[2][2]) + 3/2 * ram100 * (m2_ave[0] - 1/3);
 	epsilon_homo[1][1] = s[0][0][0][0] * sigma_a[1][1] + s[0][0][1][1] * (sigma_a[0][0] + sigma_a[2][2]) + 3/2 * ram100 * (m2_ave[1] - 1/3);
@@ -705,44 +706,9 @@ start: ;
 
 	for(i=0;i<=ndm;i++){
 		for(j=0;j<=ndm;j++){
-			e1[i][j] = (epsilon_zero[i][j][0][0] + epsilon_zero[i][j][1][1] + epsilon_zero[i][j][2][2]) / root3;
-			e2[i][j] = (epsilon_zero[i][j][0][0] - epsilon_zero[i][j][1][1]) / root2;
-			e3[i][j] = (2 * epsilon_zero[i][j][2][2] - epsilon_zero[i][j][1][1] - epsilon_zero[i][j][0][0]) / root6;
-			e4[i][j] = epsilon_zero[i][j][1][2];
-			e5[i][j] = epsilon_zero[i][j][0][2];
-			e6[i][j] = epsilon_zero[i][j][0][1];
-
-			e1_grad[i][j][0] = root3 * ram100 * m[i][j][0];
-			e1_grad[i][j][1] = root3 * ram100 * m[i][j][1];
-			e1_grad[i][j][2] = root3 * ram100 * m[i][j][2];
-			e2_grad[i][j][0] = 3 / root2 * ram100 * m[i][j][0];
-			e2_grad[i][j][1] = -3 / root2 * ram100 * m[i][j][1];
-			e2_grad[i][j][2] = 0;
-			e3_grad[i][j][0] = -1 * root3 / root2 * ram100 * m[i][j][0];
-			e3_grad[i][j][1] = -1 * root3 / root2 * ram100 * m[i][j][1];
-			e3_grad[i][j][2] = root6  * ram100 * m[i][j][2];
-			e4_grad[i][j][0] = epsilon_zero_grad[i][j][1][2][0];
-			e4_grad[i][j][1] = epsilon_zero_grad[i][j][1][2][1];
-			e4_grad[i][j][2] = epsilon_zero_grad[i][j][1][2][2];
-			e5_grad[i][j][0] = epsilon_zero_grad[i][j][0][2][0];
-			e5_grad[i][j][1] = epsilon_zero_grad[i][j][0][2][1];
-			e5_grad[i][j][2] = epsilon_zero_grad[i][j][0][2][2];
-			e6_grad[i][j][0] = epsilon_zero_grad[i][j][0][1][0];
-			e6_grad[i][j][1] = epsilon_zero_grad[i][j][0][1][1];
-			e6_grad[i][j][2] = epsilon_zero_grad[i][j][0][1][2];
-		}
-	}
-
-
-	for(i=0;i<=ndm;i++){
-		for(j=0;j<=ndm;j++){
-			Hlandau[i][j][0] = 2 * Q1 * e1[i][j] * e1_grad[i][j][0] + Q5 * (2 * e5[i][j] + 2 * e6[i][j]) * e5_grad[i][j][0] * e6_grad[i][j][0];
-			Hlandau[i][j][1] = 2 * Q2 * e2[i][j] * e2_grad[i][j][1] - 6 * Q3 * e3[i][j] * e2[i][j] * e2_grad[i][j][1] + 2 * Q4 * (e2[i][j] * e2[i][j] + e3[i][j] * e3[i][j]) * 2 * e2[i][j] * e2_grad[i][j][1] + Q5 * (2 * e4[i][j] + 2 * e6[i][j]) * e4_grad[i][j][1] * e6_grad[i][j][1];
-			Hlandau[i][j][2] = 2 * Q2 * e3[i][j] * e3_grad[i][j][2] + 3 * Q3 * e3[i][j] * e3[i][j] * e3_grad[i][j][2] + 2 * Q4 * (e2[i][j] * e2[i][j] + e3[i][j] * e3[i][j]) * 2 * e3[i][j] * e3_grad[i][j][2] + Q5 * (2 * e4[i][j] + 2 * e5[i][j]) * e4_grad[i][j][2] * e5_grad[i][j][2];
-
-			Hme[i][j][0] = 6 * B * ram100 * (m[i][j][0] * m[i][j][0] * m[i][j][0] - 1/3 * m[i][j][0]);
-			Hme[i][j][1] = 6 * B * ram100 * (m[i][j][1] * m[i][j][1] * m[i][j][1] - 1/3 * m[i][j][1]);
-			Hme[i][j][2] = 6 * B * ram100 * (m[i][j][2] * m[i][j][2] * m[i][j][2] - 1/3 * m[i][j][2]);
+			Hme[i][j][0] = 2 * B * epsilon_zero[i][j][0][0] * m[i][j][0];
+			Hme[i][j][1] = 2 * B * epsilon_zero[i][j][1][1] * m[i][j][1];
+			Hme[i][j][2] = 2 * B * epsilon_zero[i][j][2][2] * m[i][j][2];
 		}
 	}
 
@@ -752,7 +718,7 @@ start: ;
 	for(i=0;i<=ndm;i++){
 		for(j=0;j<=ndm;j++){
 			for(k=0;k<3;k++){
-				h[i][j][k] = (Hanis[i][j][k]  + Hms[i][j][k] + Hexternal[i][j][k] + Helastic[i][j][k] + Hlandau[i][j][k] + Hme[i][j][k])/Ms;
+				h[i][j][k] = (Hanis[i][j][k]  + Hms[i][j][k] + Hexternal[i][j][k] + Hme[i][j][k])/Ms;
 				//cout << "h   " << h[i][j][k] * Ms << endl;
 				//cout << "Hel   " << Helastic[i][j][k] * Ms << endl;
 			}
@@ -951,26 +917,6 @@ start: ;
 			}
 		}
 	}
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
 
 
 
