@@ -37,21 +37,11 @@ using namespace Eigen;
 	int nd=ND, ndm=ND-1; 	//計算領域の一辺の差分分割数(差分ブロック数)、ND-1を定義
 	int nd2=ND/2;				 	//ND/2を定義：高速フ−リエ変換で使用
 	int ig=IG;						//2^ig=ND
-	double PI=3.14159;		//円周率
-	double rr=8.3145;			//ガス定数	double alpha=0.5;
 	double alpha=0.5;
 	double time1;					//計算カウント数(時間に比例)
 	double time1max = 10000;
 
 	double filter[3][3][3];
-
-	double s1h[ND][ND], s2h[ND][ND];		//マルテンサイトのフェーズフィールド
-
-	double qs;					//フ−リエ変換(qs:-1)とフ−リエ逆変換(qs:1)の区別
-	double xi[ND][ND], xr[ND][ND], xif[ND], xrf[ND];//フ−リエ変換の実部・虚部配列
-	double s[ND],c[ND];	//sinとcosのテーブル
-	int ik[ND];					//ビット反転テーブル
-
 
 
     //*******************  FePd  ************************
@@ -65,14 +55,16 @@ using namespace Eigen;
 	double mu0 = 1.0;
 	double ld = 1.8E-8;
 
-
-	double G = 2;
+	double G = 1.0E-15;
 	double Q1 = 2.32E+11;
-	double Q2 = 0;
+	double Q2 = 0.63E+8;
 	double Q3 = 0.40E+10;
 	double Q4 = 7.50E+10;
-	double Q5 = 0;
 	double B = 4.00E+6;
+
+
+	double smob = 1.0;
+	double ds_fac = 0.001;
 
 	double root3 = 1.73205080757;
 	double root2 = 1.41421356237;
@@ -140,7 +132,7 @@ using namespace Eigen;
 
 	double eta[ND][ND][3][3];
 
-	double epsilon_zero_grad[ND][ND][3][3][3];
+	double epsilon_zero_grad[3][3][3];
 	double epsilon_homo_grad[3][3][3];
 	double eta_grad[ND][ND][3][3][3];
 
@@ -195,90 +187,16 @@ using namespace Eigen;
 //******* メインプログラム ******************************************
 int main(void)
 {
-	double s1, s2;									//マルテンサイトのフェーズフィールド
-	double ep11h0[ND][ND], ep22h0[ND][ND];				//組織内の変態歪
-	double ep11qrh0[ND][ND],	ep11qih0[ND][ND];		//拘束歪変動量のフーリエ変換
-	double ep22qrh0[ND][ND],	ep22qih0[ND][ND];		//拘束歪変動量のフーリエ変換
-	double s1k_chem, s1k_str, s1k_su[ND][ND];			//ポテンシャル
-	double s2k_chem, s2k_str, s2k_su[ND][ND];			//ポテンシャル
-	double c11, c12, c44, lam0, mu0, nu0; 				//弾性定数
-	double eta_s1[4][4], eta_s2[4][4];						//アイゲン歪成分
-	double ec11[ND][ND], ec22[ND][ND];						//拘束歪変動量（実空間）
-	double ep11T, ep22T;
-	double ep11_0, ep22_0;									//組織内の変態歪の平均値
-	double ep11_a, ep22_a, ep12_a, ep21_a;	//外力に起因する歪
-	double sig11_a, sig22_a;								//外力
-	double Z11ep, Z12ep, Z21ep, Z22ep;			//フーリエ逆変換時の係数
-	double sum11, sum22;										//s1とs2の空間積分
-	double s1ddtt, s2ddtt;									//s1とs2の時間変化量（発展方程式の左辺）
 
 	int   i, j, k, l, ii, jj, kk, ll, iii, jjj;		//整数
-	//int   p, q, m, n;													//整数
 	int   ip, im, jp, jm, Nstep;							//整数
-	double al, temp, delt;										//計算領域、温度、時間きざみ
-	double time1max;													//計算カウント数の最大値（計算終了カウント）
-	double b1, vm0, atom_n;										//差分プロック１辺の長さ、モル体積、単位胞内の原子数
-	double smob;															//モビリティー（結晶変態の緩和係数）
-	double nxx, nyy, nxy, alnn;								//フーリエ空間の基本ベクトルの積、ノルム
-
-	double AA0, AA1, AA2, AA3;								//ギズブエネルギー内の係数
-	double a1_c, b1_c, c1_c;									//格子定数
-	double a1_t, b1_t, c1_t;									//格子定数
-	double kappa_s1, kappa_s2;								//勾配エネルギ−係数
-	double ds_fac;														//結晶変態の揺らぎ係数
 	double mlength;
 
 	srand(time(NULL));
 
 //****** 計算条件および物質定数の設定 ****************************************
-
-	printf("DELT(0.2)=  ");	scanf(" %lf",&delt);		//時間きざみ入力
-	//delt=0.2;
-
-	temp=300.0;						//温度(K)
-	al=500.0*1.0E-09;			//計算領域(m)
-	b1=al/nd;							//差分ブロックの長さ
-	
-
-	time1=0.0;						//初期計算カウント数の設定
-	time1max=1.0+1.0e+07;	//最大計算カウント数の設定
-
-	smob=1.0;							//モビリティー（結晶変態の緩和係数）
-	ds_fac=0.01;					//結晶変態の揺らぎ係数
-
-	AA0=1000.0/rr/temp;		//マルテンサイト変態の化学的駆動力
-	AA1=1.0;  AA2=3.0*AA1+12.0;  AA3=2.0*AA1+12.0;	//ギズブエネルギー内の係数
-
-	kappa_s1=kappa_s2=5.0e-15/rr/temp/b1/b1;				//勾配エネルギ−係数
-
-	a1_c=b1_c=c1_c=3.5E-10;													//格子定数(m)
-	atom_n=4.0;  vm0=6.02E23*a1_c*b1_c*c1_c/atom_n;	//モル体積の計算（fccを仮定）
-
-//*** s1場のアイゲン歪の設定 ***************
-	eta_s1[1][1]=0.043; eta_s1[2][2]=-0.043;
-	eta_s1[3][3]=0.;
-	eta_s1[1][2]=eta_s1[2][1]=eta_s1[1][3]=eta_s1[3][1]=eta_s1[2][3]=eta_s1[3][2]=0.;
-
-//*** s2場のアイゲン歪の設定 ***************
-	eta_s2[1][1]=eta_s1[2][2];
-	eta_s2[2][2]=eta_s1[1][1];
-	eta_s2[3][3]=0.;
-	eta_s2[1][2]=eta_s2[2][1]=eta_s2[1][3]=eta_s2[3][1]=eta_s2[2][3]=eta_s2[3][2]=0.;
-
-//***** FePdの弾性定数 ****************************
-
-	lam0=c12;		mu0=c44;//cijのデーからラーメ定数を設定
-	nu0=lam0/2.0/(lam0+mu0);//ポアソン比
-	printf("nu0= %f  \n", nu0);//ポアソン比の値を表示（ラーメ定数の妥当性の確認のため）
-
-//*** 外力の設定 *******************************
- 	sig22_a=0.;//本計算では、外力を考慮していないので０を設定
-	ep11_a=-0.5*lam0/mu0/(3.0*lam0+2.0*mu0)*sig22_a;
-	ep22_a=(lam0+mu0)/mu0/(3.0*lam0+2.0*mu0)*sig22_a;
-	ep12_a=ep21_a=0.0;
-
 	Astar = (2 * A)/(mu0 * Ms * Ms * ld * ld);
-	//Astar = 0.0625 ;
+	Astar = 0.0625 ;
 	cout << "Astar : " << Astar << endl;
 
 	for(i=0;i<=ndm;i++){
@@ -295,19 +213,19 @@ int main(void)
 			//Hanis[i][j][1] = 0;//(4 * K1)/(3 );// * 1.0E+7;//ok
 			//Hanis[i][j][2] = 0;//(4 * K1)/(3 );// * 1.0E+7;//ok
 
-			sigma_a[0][0] = 0;
-			sigma_a[1][1] = 0;
-			sigma_a[2][2] = 0;
-
-			sigma_a[0][1] = 0;
-			sigma_a[0][2] = 0;
-			sigma_a[1][0] = 0;
-			sigma_a[1][2] = 0;
-			sigma_a[2][0] = 0;
-			sigma_a[2][1] = 0;
-
 		}
 	}
+
+	sigma_a[0][0] = 0;
+	sigma_a[1][1] = 0;
+	sigma_a[2][2] = 0;
+
+	sigma_a[0][1] = 0;
+	sigma_a[0][2] = 0;
+	sigma_a[1][0] = 0;
+	sigma_a[1][2] = 0;
+	sigma_a[2][0] = 0;
+	sigma_a[2][1] = 0;
 
 	for(i=0;i<=ndm;i++){
 		xf[i] = i - nd2;
@@ -334,8 +252,6 @@ int main(void)
 
 
 //*** sinおよびcosテ−ブル、ビット反転テーブル、および初期場の設定 ***************
-
-	table();		//sinおよびcosテ−ブルとビット反転テーブルの設定
 
 	ini000();		//初期場の設定
  	//gwinsize(INXY,INXY); ginit(2); gsetorg(0,0);//描画Window表示
@@ -423,208 +339,17 @@ start: ;
 	}
 
 
-/*
-//**** アイゲン歪場[式(4.7)]のフ−リエ変換 ep11 ********************************
-	for(i=0;i<=ndm;i++){
-		for(j=0;j<=ndm;j++){
-			xr[i][j]=ep11h0[i][j]=eta_s1[1][1]*s1h[i][j]+eta_s2[1][1]*s2h[i][j];
-			xi[i][j]=0.;
-		}
-	}
-	qs=-1.; rcfft();
-	for(i=0;i<=ndm;i++){
-		for(j=0;j<=ndm;j++){ 
-			ep11qrh0[i][j]=xr[i][j];
-			ep11qih0[i][j]=xi[i][j];
-		}
-	}
-	ep11qrh0[0][0]=ep11qih0[0][0]=0.;
-
-//**** アイゲン歪場[式(4.7)]のフ−リエ変換 ep22 ********************************
-	for(i=0;i<=ndm;i++){
-		for(j=0;j<=ndm;j++){
-			xr[i][j]=ep22h0[i][j]=eta_s1[2][2]*s1h[i][j]+eta_s2[2][2]*s2h[i][j];
-			xi[i][j]=0.;
-		}
-	}
-	qs=-1.; rcfft();
-	for(i=0;i<=ndm;i++){
-		for(j=0;j<=ndm;j++){ 
-			ep22qrh0[i][j]=xr[i][j];
-			ep22qih0[i][j]=xi[i][j];
-		}
-	}
-	ep22qrh0[0][0]=ep22qih0[0][0]=0.;
-
-//*** アイゲン歪場の平均値の算出 ***
-	sum11=sum22=0.;
-	for(i=0;i<=ndm;i++){
-		for(j=0;j<=ndm;j++){ sum11+=ep11h0[i][j];  sum22+=ep22h0[i][j]; }
-	}
-  ep11_0=sum11/nd/nd;  ep22_0=sum22/nd/nd;
-
-//***** 拘束歪変動量ec11の計算[式(4.9)] *************************************
-	for(i=0;i<=ndm;i++){
-		if(i<=nd2-1){ii=i;}  if(i>=nd2){ii=i-nd;}
-		for(j=0;j<=ndm;j++){
-			if(j<=nd2-1){jj=j;}  if(j>=nd2){jj=j-nd;}
-			alnn=sqrt((double)ii*(double)ii+(double)jj*(double)jj);
-			if(alnn==0.){alnn=1.;}
-			nxx=(double)ii/alnn*(double)ii/alnn;
-			nyy=(double)jj/alnn*(double)jj/alnn;
-			Z11ep=nxx*(2.0*(1.0-nu0)-nxx-nu0/(1.0-nu0)*nyy)/(1.0-2.0*nu0);
-			Z12ep=nxx*(2.0*nu0      -nyy-nu0/(1.0-nu0)*nxx)/(1.0-2.0*nu0);
-			xr[i][j]=Z11ep*ep11qrh0[i][j]+Z12ep*ep22qrh0[i][j];
-			xi[i][j]=Z11ep*ep11qih0[i][j]+Z12ep*ep22qih0[i][j];
-	 }
-	}
-	qs=1.; rcfft();
-	for(i=0;i<=ndm;i++){
-		for(j=0;j<=ndm;j++){
-			ec11[i][j]=xr[i][j];
-		}
-	}
-
-//***** 拘束歪変動量ec22の計算[式(4.9)] *****************************
-	for(i=0;i<=ndm;i++){
-		if(i<=nd2-1){ii=i;}  if(i>=nd2){ii=i-nd;}
-		for(j=0;j<=ndm;j++){
-			if(j<=nd2-1){jj=j;}  if(j>=nd2){jj=j-nd;}
-			alnn=sqrt((double)ii*(double)ii+(double)jj*(double)jj);
-			if(alnn==0.){alnn=1.;}
-			nxx=(double)ii/alnn*(double)ii/alnn;
-			nyy=(double)jj/alnn*(double)jj/alnn;
-			Z21ep=nyy*(2.0*nu0      -nxx-nu0/(1.0-nu0)*nyy)/(1.0-2.0*nu0);
-			Z22ep=nyy*(2.0*(1.0-nu0)-nyy-nu0/(1.0-nu0)*nxx)/(1.0-2.0*nu0);
-			xr[i][j]=Z21ep*ep11qrh0[i][j]+Z22ep*ep22qrh0[i][j];
-			xi[i][j]=Z21ep*ep11qih0[i][j]+Z22ep*ep22qih0[i][j];
-	 }
-	}
-	qs=1.; rcfft();
-	for(i=0;i<=ndm;i++){
-		for(j=0;j<=ndm;j++){
-			ec22[i][j]=xr[i][j];
-		}
-	}
-
-//******  ポテンシャルの計算 ********************************
-	for(i=0;i<=ndm;i++){
-		for(j=0;j<=ndm;j++){
-
-			s1=s1h[i][j];  	s2=s2h[i][j];
-
-//******  化学ポテンシャルの計算[式(4.4)] ********************************
-			s1k_chem=AA0*s1*(AA1-AA2*s1+AA3*(s1*s1+s2*s2));
-			s2k_chem=AA0*s2*(AA1-AA2*s2+AA3*(s1*s1+s2*s2));
-
-//******  弾性ポテンシャルの計算[式(4.8)] ********************************
-
-			ep11T=ep11h0[i][j]-ep11_0-ec11[i][j]-ep11_a;
-			ep22T=ep22h0[i][j]-ep22_0-ec22[i][j]-ep22_a;
-
-			s1k_str=ep11T*((lam0+2.0*mu0)*eta_s1[1][1]+lam0*eta_s1[2][2])
-						 +ep22T*((lam0+2.0*mu0)*eta_s1[2][2]+lam0*eta_s1[1][1]);
-			s2k_str=ep11T*((lam0+2.0*mu0)*eta_s2[1][1]+lam0*eta_s2[2][2])
-						 +ep22T*((lam0+2.0*mu0)*eta_s2[2][2]+lam0*eta_s2[1][1]);
-
-//****** フェーズフィールドの時間発展の計算[式(4.10)] ********************************
-			s1ddtt=-smob*(s1k_chem+s1k_su[i][j]+s1k_str);
-			s2ddtt=-smob*(s2k_chem+s2k_su[i][j]+s2k_str);
-			s1h[i][j]=s1h[i][j]+( s1ddtt+ds_fac*(2.0*DRND(1.)-1.0) )*delt;//陽解法
-			s2h[i][j]=s2h[i][j]+( s2ddtt+ds_fac*(2.0*DRND(1.)-1.0) )*delt;
-
-//*** sの変域(0<=s<=1)の補正 ***
-			if(s1h[i][j]>=1.0){s1h[i][j]=1.0;}  if(s1h[i][j]<=0.0){s1h[i][j]=0.0;}
-			if(s2h[i][j]>=1.0){s2h[i][j]=1.0;}  if(s2h[i][j]<=0.0){s2h[i][j]=0.0;}
-		}
-	}
-*/
-
-
-	for(i=0;i<=ndm;i++){
-		for(j=0;j<=ndm;j++){
-			for(k=0;k<3;k++){
-				P[i][j][k]= -1 * smob * (Plandau[i][j][k] + Pgradient[i][j][k] + Pme[i][j][k] + Pelastic[i][j][k]);
-				epsilon_zero[i][j][k][k] += ( P[i][j][k] + ds_fac*( 2.0*DRND(1.) - 1.0) )*delt;
-			}
-		}
-	}
-
-
 	for(k=0;k<3;k++){
-		for(i=0;i<=ndm;i++){
-			for(j=0;j<=ndm;j++){
-				fourier_input[i][j] = m[i][j][k];
-			}
-		}
-		fft3d();
-		for(i=0;i<=ndm;i++){
-			for(j=0;j<=ndm;j++){
-				mfour[i][j][k] = fourier_output[i][j];
-				mfour_i[i][j][k] = fourier_output_i[i][j];
-				if (isinf(mfour[i][j][k]) == 1){
-					cout << "mfour        " << i << " : " << j << "   -    " << dec << mfour[i][j][k] << endl;
+		for(i=0;i<3;i++){
+			for(j=0;j<3;j++){
+				if(i==j && i==k){
+					epsilon_zero_grad[i][j][k] = 1;
+				}else{
+					epsilon_zero_grad[i][j][k] = 0;
 				}
 			}
 		}
 	}
-
-	for(i=0;i<=ndm;i++){
-		for(j=0;j<=ndm;j++){
-			//cout << "faifour        " << i << " : " << j << "   -    " << dec << faifour[i][j] << endl;
-			if(xf[i]*xf[i] + yf[j]*yf[j] == 0){
-				faifour[i][j] = 0;
-				faifour_i[i][j] = 0;
-				//faifour[i][j] = Ms*(mfour_i[i][j][0]*xf[i] + mfour_i[i][j][1]*yf[j] + mfour_i[i][j][2]*0 )/1;
-				//faifour_i[i][j] = -1*Ms*(mfour[i][j][0]*xf[i] + mfour[i][j][1]*yf[j] + mfour[i][j][2]*0 )/1;
-			}else{
-				faifour[i][j] = Ms*(mfour_i[i][j][0]*xf[i] + mfour_i[i][j][1]*yf[j] + mfour_i[i][j][2]*0 )/(xf[i]*xf[i] + yf[j]*yf[j] + 0);
-				faifour_i[i][j] = -1*Ms*(mfour[i][j][0]*xf[i] + mfour[i][j][1]*yf[j] + mfour[i][j][2]*0 )/(xf[i]*xf[i] + yf[j]*yf[j] + 0);
-			}
-		}
-	}
-
-	for(i=0;i<=ndm;i++){
-		for(j=0;j<=ndm;j++){
-			fourier_output[i][j] = faifour[i][j];
-			fourier_output_i[i][j] = faifour_i[i][j];
-		}
-	}
-	ifft3d();
-	for(i=0;i<=ndm;i++){
-		for(j=0;j<=ndm;j++){
-			fai[i][j] = fourier_input[i][j];
-		}
-	}
-
-	grad_fai();
-
-	for(k=0;k<3;k++){
-		m_ave[k] = 0;
-		m2_ave[k] = 0;
-		mm_ave[k] = 0;
-		for(i=0;i<=ndm;i++){
-			for(j=0;j<=ndm;j++){
-				m_ave[k] += m[i][j][k] / SIZE;
-				m2_ave[k] += m[i][j][k] * m[i][j][k] / SIZE;
-				mm_ave[k] += m[i][j][(k + 1) % 3] * m[i][j][(k + 2) % 3] / SIZE;
-			}
-		}
-	}
-
-	//cout << "m_ave  :   " << m_ave[0] << " : " << m_ave[1] << " : "  << m_ave[2] << endl;
-	for(i=0;i<=ndm;i++){
-		for(j=0;j<=ndm;j++){
-			for(k=0;k<3;k++){
-				//cout << "   " << endl;
-				//cout << "Hms   " << Hms[i][j][k] << endl;
-				Hms[i][j][k] = -1 * m_ave[k] * Ms * N[k];
-				//cout << "Hms   " << Hms[i][j][k] << endl;
-			}
-		}
-	}
-
-
 
 	epsilon_homo[0][0] = s[0][0][0][0] * sigma_a[0][0] + s[0][0][1][1] * (sigma_a[1][1] + sigma_a[2][2]) + 3/2 * ram100 * (m2_ave[0] - 1/3);
 	epsilon_homo[1][1] = s[0][0][0][0] * sigma_a[1][1] + s[0][0][1][1] * (sigma_a[0][0] + sigma_a[2][2]) + 3/2 * ram100 * (m2_ave[1] - 1/3);
@@ -718,22 +443,119 @@ start: ;
 	for(i=0;i<=ndm;i++){
 		for(j=0;j<=ndm;j++){
 			for(k=0;k<3;k++){
-				Helastic[i][j][k] = 0;
+				Pelastic[i][j][k] = 0;
 
 				for(ii=0;ii<3;ii++){
 					for(jj=0;jj<3;jj++){
 						for(kk=0;kk<3;kk++){
 							for(ll=0;ll<3;ll++){
-								Helastic[i][j][k] += -1/ (mu0 * Ms) * (c[ii][jj][kk][ll] * (eta[i][j][ii][jj] - epsilon_zero[i][j][ii][jj]) * epsilon_zero_grad[i][j][ii][jj][k]);
+								Pelastic[i][j][k] += c[ii][jj][kk][ll] * (eta[i][j][ii][jj] - epsilon_zero[i][j][ii][jj]) * epsilon_zero_grad[ii][jj][k];
 							}
 						}
 					}
 				}
 
-
 			}
 		}
 	}
+
+
+
+	cout << "Plandau - x   " << dec << Plandau[10][10][0] << endl;
+	cout << "Pgradient - x   " << dec << Pgradient[10][10][0] << endl;
+	cout << "Pme - x   " << dec << Pme[10][10][0] << endl;
+	cout << "Pelastic - x   " << dec << Pelastic[10][10][0] << endl;
+
+	for(i=0;i<=ndm;i++){
+		for(j=0;j<=ndm;j++){
+			for(k=0;k<3;k++){
+				P[i][j][k]= -1 * smob * (Plandau[i][j][k] + Pgradient[i][j][k] + Pme[i][j][k] + Pelastic[i][j][k]);
+				epsilon_zero[i][j][k][k] += ( P[i][j][k] + ds_fac*( 2.0*DRND(1.) - 1.0) )*delt;
+				if(epsilon_zero[i][j][k][k]>=0.043){epsilon_zero[i][j][k][k]=0.043;}  if(epsilon_zero[i][j][k][k]<=-0.043){epsilon_zero[i][j][k][k]=-0.043;}
+			}
+		}
+	}
+
+
+
+	cout << "mfour - x   " << dec << epsilon_zero[10][10][0][0] << endl;
+	cout << "mfour - y   " << dec << epsilon_zero[10][10][1][1] << endl;
+	cout << "mfour - z   " << dec << epsilon_zero[10][10][2][2] << endl;
+
+
+	for(k=0;k<3;k++){
+		for(i=0;i<=ndm;i++){
+			for(j=0;j<=ndm;j++){
+				fourier_input[i][j] = m[i][j][k];
+			}
+		}
+		fft3d();
+		for(i=0;i<=ndm;i++){
+			for(j=0;j<=ndm;j++){
+				mfour[i][j][k] = fourier_output[i][j];
+				mfour_i[i][j][k] = fourier_output_i[i][j];
+				if (isinf(mfour[i][j][k]) == 1){
+					cout << "mfour        " << i << " : " << j << "   -    " << dec << mfour[i][j][k] << endl;
+				}
+			}
+		}
+	}
+
+	for(i=0;i<=ndm;i++){
+		for(j=0;j<=ndm;j++){
+			//cout << "faifour        " << i << " : " << j << "   -    " << dec << faifour[i][j] << endl;
+			if(xf[i]*xf[i] + yf[j]*yf[j] == 0){
+				faifour[i][j] = 0;
+				faifour_i[i][j] = 0;
+				//faifour[i][j] = Ms*(mfour_i[i][j][0]*xf[i] + mfour_i[i][j][1]*yf[j] + mfour_i[i][j][2]*0 )/1;
+				//faifour_i[i][j] = -1*Ms*(mfour[i][j][0]*xf[i] + mfour[i][j][1]*yf[j] + mfour[i][j][2]*0 )/1;
+			}else{
+				faifour[i][j] = Ms*(mfour_i[i][j][0]*xf[i] + mfour_i[i][j][1]*yf[j] + mfour_i[i][j][2]*0 )/(xf[i]*xf[i] + yf[j]*yf[j] + 0);
+				faifour_i[i][j] = -1*Ms*(mfour[i][j][0]*xf[i] + mfour[i][j][1]*yf[j] + mfour[i][j][2]*0 )/(xf[i]*xf[i] + yf[j]*yf[j] + 0);
+			}
+		}
+	}
+
+	for(i=0;i<=ndm;i++){
+		for(j=0;j<=ndm;j++){
+			fourier_output[i][j] = faifour[i][j];
+			fourier_output_i[i][j] = faifour_i[i][j];
+		}
+	}
+	ifft3d();
+	for(i=0;i<=ndm;i++){
+		for(j=0;j<=ndm;j++){
+			fai[i][j] = fourier_input[i][j];
+		}
+	}
+
+	grad_fai();
+
+	for(k=0;k<3;k++){
+		m_ave[k] = 0;
+		m2_ave[k] = 0;
+		mm_ave[k] = 0;
+		for(i=0;i<=ndm;i++){
+			for(j=0;j<=ndm;j++){
+				m_ave[k] += m[i][j][k] / SIZE;
+				m2_ave[k] += m[i][j][k] * m[i][j][k] / SIZE;
+				mm_ave[k] += m[i][j][(k + 1) % 3] * m[i][j][(k + 2) % 3] / SIZE;
+			}
+		}
+	}
+
+	//cout << "m_ave  :   " << m_ave[0] << " : " << m_ave[1] << " : "  << m_ave[2] << endl;
+	for(i=0;i<=ndm;i++){
+		for(j=0;j<=ndm;j++){
+			for(k=0;k<3;k++){
+				//cout << "   " << endl;
+				//cout << "Hms   " << Hms[i][j][k] << endl;
+				Hms[i][j][k] = -1 * m_ave[k] * Ms * N[k];
+				//cout << "Hms   " << Hms[i][j][k] << endl;
+			}
+		}
+	}
+
 
 	for(i=0;i<=ndm;i++){
 		for(j=0;j<=ndm;j++){
@@ -951,10 +773,6 @@ start: ;
 
 
 
-
-
-
-
 	//if(keypress()){return 0;}//キー待ち状態
 
 	time1=time1+1.0;								//計算カウント数の加算
@@ -970,12 +788,13 @@ void ini000()
 	int i, j ,k;
 	double mlength;
 	
+	/*
 	for(i=0;i<=ndm;i++){
 		for(j=0;j<=ndm;j++){
 			s1h[i][j]=0.2*DRND(1.0); s2h[i][j]=0.2*DRND(1.0);//場を最大20%の乱数にて設定
 			//if(abs(j-nd2)<(nd/40)){s1h[i][j]=DRND(1.0); s2h[i][j]=DRND(1.0);}
 		}
-	}
+	}*/
 
 	cv::Mat_<uchar> image;
 	if(SIZEX == 256){
@@ -1011,44 +830,29 @@ void graph_s1()
 	double col, col_R, col_G, col_B, col_RG;	//色
 	int ixmin=0, iymin=0, igx, igy, irad0;		//スクリーン座標系の設定
 	double c, x, xmax, xmin, y, ymax, ymin, rad0, dia0;//規格化座標系の設定
-	int ixmax=INXY, iymax=INXY;								//描画Window範囲
-
-	//gcls(); //画面クリア
-	xmin=0.; xmax=1.; ymin=0.; ymax=1.;//描画領域（規格化されている）
 
 	printf("time %f\n",time1);//計算カウント数の表示
-	dia0=1.0/nd;
-	rad0=dia0/2.0;   						irad0=(ixmax-ixmin)/(xmax-xmin)*rad0+1;
-	//差分ブロックの半分の長さ	//スクリーン座標系に変換（+1は整数化時の切捨て補正）
-	cv::Mat chann(cv::Size(256, 256), CV_8UC3, cv::Scalar(255, 255, 255));
-
-	for(i=0;i<=nd;i++){
-		for(j=0;j<=nd;j++){
-			x=rad0+dia0*i;  igx=(ixmax-ixmin)/(xmax-xmin)*(x-xmin)+ixmin;
-			y=rad0+dia0*j;  igy=(iymax-iymin)/(ymax-ymin)*(y-ymin)+iymin;
-			//座標計算			//スクリーン座標系に変換
-			ii=i; jj=j; if(i==nd){ii=0;} if(j==nd){jj=0;}//周期的境界条件
-
-			col_R=s1h[ii][jj];//場の色をRGBにて設定
-			col_G=s2h[ii][jj];
-			col_RG=col_R+col_G;  if(col_RG>1.){col_RG=1.;}  col_B=1.-col_RG;
-			if(col_R>=0.999){col_R=1.;} if(col_R<=0.001){col_R=0.;}//RGBの変域補正
-			if(col_G>=0.999){col_G=1.;} if(col_G<=0.001){col_G=0.;}
-			if(col_B>=0.999){col_B=1.;} if(col_B<=0.001){col_B=0.;}
-			col_R *= 255;
-			col_G *= 255;
-			col_B *= 255;
-
-			chann.at<cv::Vec3b>(ii,jj) = cv::Vec3b(int(col_B), int(col_G), int(col_R));
-
-		}
-	}
-	cv::imwrite("test" + std::to_string(time1) + ".png", chann);
     
-
 
 	//差分ブロックの半分の長さ	//スクリーン座標系に変換（+1は整数化時の切捨て補正）
 	cv::Mat chann(cv::Size(nd, nd), CV_8UC3, cv::Scalar(255, 255, 255));
+
+	for(i=0;i<=ndm;i++){
+		for(j=0;j<=ndm;j++){
+			col_R=epsilon_zero[i][j][0][0];//場の色をRGBにて設定
+			col_G=epsilon_zero[i][j][1][1];
+			col_B=epsilon_zero[i][j][2][2];
+			col_R *= 100;
+			col_G *= 100;
+			col_B *= 100;
+			col_R += 128;
+			col_G += 128;
+			col_B += 128;
+
+			chann.at<cv::Vec3b>(i,j) = cv::Vec3b(abs(int(col_B)), abs(int(col_G)), abs(int(col_R)));
+		}
+	}
+	cv::imwrite("LLG_Terfenol_" + std::to_string(int(time1)) + "_strain_2d.png", chann);
 
 	for(i=0;i<=ndm;i++){
 		for(j=0;j<=ndm;j++){
@@ -1066,23 +870,6 @@ void graph_s1()
 		}
 	}
 	cv::imwrite("LLG_Terfenol_" + std::to_string(int(time1)) + "_m_2d.png", chann);
-
-	for(i=0;i<=ndm;i++){
-		for(j=0;j<=ndm;j++){
-			col_R=u[i][j][0];//場の色をRGBにて設定
-			col_G=u[i][j][1];
-			col_B=u[i][j][2];
-			col_R *= 1000000;
-			col_G *= 1000000;
-			col_B *= 1000000;
-			col_R += 128;
-			col_G += 128;
-			col_B += 128;
-
-			chann.at<cv::Vec3b>(i,j) = cv::Vec3b(abs(int(col_B)), abs(int(col_G)), abs(int(col_R)));
-		}
-	}
-	cv::imwrite("LLG_Terfenol_" + std::to_string(int(time1)) + "_u_2d.png", chann);
 
 	ofstream outputfile("check_Terfenol_" + std::to_string(int(time1)) + "_2d.txt");
 	for(i=0;i<=ndm;i++){
@@ -1103,98 +890,6 @@ void graph_s1()
 	}
 	outputfile.close();
 }
-
-//******* Sin, Cos のテーブルおよびビット反転テーブルの設定 ***************
-void table()
-{
-	int it, it1, it2, mc, mn;
-	double q;
-
-	q=2.0*PI/nd;
-	for(it=0;it<=nd2-1;it++){ c[it]=cos(q*it); s[it]=sin(q*it); }//Sin, Cos のテーブル
-
-	ik[0]=0; mn=nd2; mc=1;
-	for(it1=1;it1<=ig;it1++){
-		for(it2=0;it2<=mc-1;it2++){
-			ik[it2+mc]=ik[it2]+mn;				//ビット反転テーブル
-		}
-		mn=mn/2; mc=2*mc;
-	}
-}
-
-//********** １次元高速フーリエ変換 **************************************
-void fft()
-{
-	int ix, ka, kb, l2, lf, mf, n2, nf;
-	double tj, tr;
-
-	l2=1;
-	for(lf=1;lf<=ig;lf++){
-		n2=nd2/l2;
-		for(mf=1;mf<=l2;mf++){
-			for(nf=0;nf<=n2-1;nf++){
-				ix=nf*l2;
-				ka=nf+2*n2*(mf-1);
-				kb=ka+n2;
-				tr=xrf[ka]-xrf[kb];  					tj=xif[ka]-xif[kb];
-				xrf[ka]=xrf[ka]+xrf[kb]; 			xif[ka]=xif[ka]+xif[kb];
-				xrf[kb]=tr*c[ix]-tj*qs*s[ix];	xif[kb]=tj*c[ix]+tr*qs*s[ix];
-			}
-		}
-		l2=l2*2;
-	}
-
-}
-
-//************ ２次元高速フーリエ変換 ***********************************
-void rcfft()
-{
-	int i, ic, ir, j;
-
-	for(ir=0;ir<=ndm;ir++){
-		for(ic=0;ic<=ndm;ic++){
-			xrf[ic]=xr[ir][ic];	xif[ic]=xi[ir][ic];
-		}
-	fft();
-		for(ic=0;ic<=ndm;ic++){
-			xr[ir][ic]=xrf[ik[ic]];	xi[ir][ic]=xif[ik[ic]];
-		}
-	}
-	for(ic=0;ic<=ndm;ic++){
-		for(ir=0;ir<=ndm;ir++){
-			xrf[ir]=xr[ir][ic];	xif[ir]=xi[ir][ic];
-		}
-	fft();
-		for(ir=0;ir<=ndm;ir++){
-			xr[ir][ic]=xrf[ik[ir]];	xi[ir][ic]=xif[ik[ir]];
-		}
-	}
-	if(qs>0.){return;}
-	for(i=0;i<=ndm;i++){
-		for(j=0;j<=ndm;j++){
-			xr[i][j]=xr[i][j]/nd/nd;	xi[i][j]=xi[i][j]/nd/nd;
-		}
-	}
-
-}
-
-//************ データ保存サブルーチン *******************************
-void datsave()
-{
-	FILE *stream;	//ストリームのポインタ設定
-	int i, j;			//整数
-
-	stream = fopen("test.dat", "a");	//書き込み先のファイルを追記方式でオープン
-	fprintf(stream, "%e\n", time1);		//繰返しカウント数の保存
-	for(i=0;i<=ndm;i++){
-		for(j=0;j<=ndm;j++){
-			fprintf(stream, "%e  %e ", s1h[i][j], s2h[i][j]);//場のデータ保存
-		}
-	}
-	fprintf(stream, "\n");	//改行の書き込み
-	fclose(stream);					//ファイルをクローズ
-}
-
 
 
 int DCexchange2D( fftw_complex *data, int cols, int rows, int depth )
