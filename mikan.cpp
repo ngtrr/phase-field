@@ -168,12 +168,12 @@ using namespace Eigen;
 	double e5[ND][ND];
 	double e6[ND][ND];
 
-	double e1_grad[ND][ND][3];
-	double e2_grad[ND][ND][3];
-	double e3_grad[ND][ND][3];
-	double e4_grad[ND][ND][3];
-	double e5_grad[ND][ND][3];
-	double e6_grad[ND][ND][3];
+	double e1_grad[3];
+	double e2_grad[3];
+	double e3_grad[3];
+	double e4_grad[3];
+	double e5_grad[3];
+	double e6_grad[3];
 
 
 	void ini000();			//初期場の設定サブル−チン
@@ -356,13 +356,44 @@ start: ;
 	if((((int)(time1) % 10)==0)) {graph_s1();} 		//一定繰返しカウント毎に組織を表示
 	//if((((int)(time1) % 100)==0)) {datsave();} 		//一定繰返しカウント毎にデータを保存
 
+
+	for(i=0;i<=ndm;i++){
+		for(j=0;j<=ndm;j++){
+			e1[i][j] = (epsilon_zero[i][j][0][0] + epsilon_zero[i][j][1][1] + epsilon_zero[i][j][2][2])/root3;
+			e2[i][j] = (epsilon_zero[i][j][0][0] - epsilon_zero[i][j][1][1])/root2;
+			e3[i][j] = (2*epsilon_zero[i][j][2][2] - epsilon_zero[i][j][1][1] - epsilon_zero[i][j][0][0])/root6;
+			e4[i][j] = epsilon_zero[i][j][1][2];
+			e5[i][j] = epsilon_zero[i][j][0][2];
+			e6[i][j] = epsilon_zero[i][j][0][1];
+		}
+	}
+	
+	e1_grad[0] = 1/root3;
+	e1_grad[1] = 1/root3;
+	e1_grad[2] = 1/root3;
+	e2_grad[0] = 1/root2;
+	e2_grad[1] = -1/root2;
+	e2_grad[2] = 0;
+	e3_grad[0] = -1/root6;
+	e3_grad[1] = -1/root6;
+	e3_grad[2] = 2/root6;
+	e4_grad[0] = 0;
+	e4_grad[1] = 0;
+	e4_grad[2] = 0;
+	e5_grad[0] = 0;
+	e5_grad[1] = 0;
+	e5_grad[2] = 0;
+	e6_grad[0] = 0;
+	e6_grad[1] = 0;
+	e6_grad[2] = 0;
+
 //***** 化学ポテンシャル ************************
 	for(i=0;i<=ndm;i++){
 		for(j=0;j<=ndm;j++){
 			for(k=0;k<3;k++){
-				Plandau[i][j][0] = Q1 * (2*epsilon_zero[i][j][0][0] + 2*epsilon_zero[i][j][1][1] + 2*epsilon_zero[i][j][2][2])/3 + Q2 * ((2*epsilon_zero[i][j][0][0] - 2*epsilon_zero[i][j][1][1])/2 + (2*epsilon_zero[i][j][0][0] + epsilon_zero[i][j][1][1] - 2*epsilon_zero[i][j][2][2])/6) + Q3 * ();
-				Plandau[i][j][1] = Q1 * (2*epsilon_zero[i][j][0][0] + 2*epsilon_zero[i][j][1][1] + 2*epsilon_zero[i][j][2][2])/3 + Q2 * ((2*epsilon_zero[i][j][0][0] - 2*epsilon_zero[i][j][1][1])/2 + (2*epsilon_zero[i][j][1][1] + epsilon_zero[i][j][0][0] - 2*epsilon_zero[i][j][2][2])/6);
-				Plandau[i][j][2] = Q1 * (2*epsilon_zero[i][j][0][0] + 2*epsilon_zero[i][j][1][1] + 2*epsilon_zero[i][j][2][2])/3 + Q2 * (8*epsilon_zero[i][j][2][2] - 2*epsilon_zero[i][j][1][1] - 2*epsilon_zero[i][j][0][0])/6 + Q4 * (8*epsilon_zero[i][j][2][2] - 2*epsilon_zero[i][j][1][1] - 2*epsilon_zero[i][j][0][0])/6;
+				Plandau[i][j][0] = Q1 * (2*e1[i][j]*e1_grad[0]) + Q2*(2*e2[i][j]*e2_grad[0] + 2*e3[i][j]*e3_grad[0]) + Q3*(3*e3[i][j]*e3[i][j]*e3_grad[0] - 3*(e3_grad[0]*e2[i][j]*e2[i][j] + e3[i][j]*2*e2[i][j]*e2_grad[0])) + Q4*(4*e2[i][j]*e2[i][j]*e2[i][j]*e2_grad[0] + 2*(2*e2[i][j]*e2_grad[0]*e3[i][j]*e3[i][j] + 2*e3[i][j]*e3_grad[0]*e2[i][j]*e2[i][j]) + 4*e3[i][j]*e3[i][j]*e3[i][j]*e3_grad[0]);
+				Plandau[i][j][1] = Q1 * (2*e1[i][j]*e1_grad[1]) + Q2*(2*e2[i][j]*e2_grad[1] + 2*e3[i][j]*e3_grad[1]) + Q3*(3*e3[i][j]*e3[i][j]*e3_grad[1] - 3*(e3_grad[1]*e2[i][j]*e2[i][j] + e3[i][j]*2*e2[i][j]*e2_grad[1])) + Q4*(4*e2[i][j]*e2[i][j]*e2[i][j]*e2_grad[1] + 2*(2*e2[i][j]*e2_grad[1]*e3[i][j]*e3[i][j] + 2*e3[i][j]*e3_grad[1]*e2[i][j]*e2[i][j]) + 4*e3[i][j]*e3[i][j]*e3[i][j]*e3_grad[1]);
+				Plandau[i][j][2] = Q1 * (2*e1[i][j]*e1_grad[2]) + Q2*( 2*e3[i][j]*e3_grad[2]) + Q3*(3*e3[i][j]*e3[i][j]*e3_grad[2] - 3*(e3_grad[2]*e2[i][j]*e2[i][j])) + Q4*( 2*( 2*e3[i][j]*e3_grad[2]*e2[i][j]*e2[i][j]) + 4*e3[i][j]*e3[i][j]*e3[i][j]*e3_grad[2]);
 			}
 		}
 	}
