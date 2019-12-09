@@ -9,67 +9,63 @@
 #include <opencv2/opencv.hpp>
 //#include "wingxa.h"
 
-#define DRND(x) ((double)(x)/RAND_MAX*rand())//乱数の関数設定
+#define DRND(x) ((double)(x)/RAND_MAX*rand())//乱数の関数設定//same
 
-#define ND 256			//差分計算における計算領域一辺の分割数(高速フーリエ変換を用いるため２のべき乗)
-#define IG 8				//2^IG=ND
-#define INXY 400		//描画window１辺のピクセルサイズ(正方形の描画領域)
+#define ND 256			//差分計算における計算領域一辺の分割数(高速フーリエ変換を用いるため２のべき乗)//same
+#define IG 8				//2^IG=ND//same
+#define INXY 400		//描画window１辺のピクセルサイズ(正方形の描画領域)//erace
 
-	int nd=ND, ndm=ND-1; 	//計算領域の一辺の差分分割数(差分ブロック数)、ND-1を定義
-	int nd2=ND/2;				 	//ND/2を定義：高速フ−リエ変換で使用
-	int ig=IG;						//2^ig=ND
-	double PI=3.14159;		//円周率
-	double rr=8.3145;			//ガス定数
-	double time1;					//計算カウント数(時間に比例)
+	int nd=ND, ndm=ND-1; 	//計算領域の一辺の差分分割数(差分ブロック数)、ND-1を定義//erace
+	int nd2=ND/2;				 	//ND/2を定義：高速フ−リエ変換で使用//erace
+	int ig=IG;						//2^ig=ND//same
+	double PI=3.14159;		//円周率//erace
+	double rr=8.3145;			//ガス定数//same
+	double time1;					//計算カウント数(時間に比例)//same
 
-	double s1h[ND][ND], s2h[ND][ND];		//マルテンサイトのフェーズフィールド
+	double s1h[ND][ND], s2h[ND][ND];		//マルテンサイトのフェーズフィールド//adopt
 
-	double qs;					//フ−リエ変換(qs:-1)とフ−リエ逆変換(qs:1)の区別
-	double xi[ND][ND], xr[ND][ND], xif[ND], xrf[ND];//フ−リエ変換の実部・虚部配列
-	double s[ND],c[ND];	//sinとcosのテーブル
-	int ik[ND];					//ビット反転テーブル
+	double qs;					//フ−リエ変換(qs:-1)とフ−リエ逆変換(qs:1)の区別//erace
+	double xi[ND][ND], xr[ND][ND], xif[ND], xrf[ND];//フ−リエ変換の実部・虚部配列//unify
+	double s[ND],c[ND];			//sinとcosのテーブル//erace
+	int ik[ND];					//ビット反転テーブル//erace
 
-	void ini000();			//初期場の設定サブル−チン
-	void graph_s1();		//組織描画サブル−チン
-	void table();				//sinとcosのテーブルとビット反転テーブルの作成サブル−チン
-	void fft();					//１次元高速フーリエ変換
-	void rcfft();				//２次元高速フーリエ変換
-	void datsave();			//デ−タ保存サブル−チン
+	void ini000();			//初期場の設定サブル−チン//unify
+	void graph_s1();		//組織描画サブル−チン//unify
+	void table();				//sinとcosのテーブルとビット反転テーブルの作成サブル−チン//erace
+	void fft();					//１次元高速フーリエ変換//erace
+	void rcfft();				//２次元高速フーリエ変換//erace
 
 //******* メインプログラム ******************************************
 int main(void)
 {
-	double s1, s2;																//マルテンサイトのフェーズフィールド
-	double ep11h0[ND][ND], ep22h0[ND][ND];				//組織内の変態歪
-	double ep11qrh0[ND][ND],	ep11qih0[ND][ND];		//拘束歪変動量のフーリエ変換
-	double ep22qrh0[ND][ND],	ep22qih0[ND][ND];		//拘束歪変動量のフーリエ変換
-	double s1k_chem, s1k_str, s1k_su[ND][ND];			//ポテンシャル
-	double s2k_chem, s2k_str, s2k_su[ND][ND];			//ポテンシャル
-	double c11, c12, c44, lam0, mu0, nu0; 				//弾性定数
-	double eta_s1[4][4], eta_s2[4][4];						//アイゲン歪成分
-	double ec11[ND][ND], ec22[ND][ND];						//拘束歪変動量（実空間）
-	double ep11T, ep22T;
-	double ep11_0, ep22_0;									//組織内の変態歪の平均値
-	double ep11_a, ep22_a, ep12_a, ep21_a;	//外力に起因する歪
-	double sig11_a, sig22_a;								//外力
-	double Z11ep, Z12ep, Z21ep, Z22ep;			//フーリエ逆変換時の係数
+	double s1, s2;										//マルテンサイトのフェーズフィールド//adopt
+	double ep11h0[ND][ND], ep22h0[ND][ND];				//組織内の変態歪//adopt
+	double ep11qrh0[ND][ND],	ep11qih0[ND][ND];		//拘束歪変動量のフーリエ変換//adopt
+	double ep22qrh0[ND][ND],	ep22qih0[ND][ND];		//拘束歪変動量のフーリエ変換//adopt
+	double s1k_chem, s1k_str, s1k_su[ND][ND];			//ポテンシャル//adopt
+	double s2k_chem, s2k_str, s2k_su[ND][ND];			//ポテンシャル//adopt
+	double c11, c12, c44, lam0, mu0, nu0; 				//弾性定数//unify
+	double eta_s1[4][4], eta_s2[4][4];						//アイゲン歪成分//adopt
+	double ec11[ND][ND], ec22[ND][ND];					//拘束歪変動量（実空間）//adopt
+	double ep11T, ep22T;								//?
+	double ep11_0, ep22_0;									//組織内の変態歪の平均値//adopt
+	double ep11_a, ep22_a, ep12_a, ep21_a;				//外力に起因する歪//adopt
+	double sig11_a, sig22_a;								//外力//adopt
+	double Z11ep, Z12ep, Z21ep, Z22ep;					//フーリエ逆変換時の係数//?
 	double sum11, sum22;										//s1とs2の空間積分
-	double s1ddtt, s2ddtt;									//s1とs2の時間変化量（発展方程式の左辺）
+	double s1ddtt, s2ddtt;									//s1とs2の時間変化量（発展方程式の左辺）//adopt
 
-	int   i, j, k, l, ii, jj, kk, iii, jjj;		//整数
-	int   p, q, m, n;													//整数
-	int   ip, im, jp, jm, Nstep;							//整数
-	double al, temp, delt;										//計算領域、温度、時間きざみ
-	double time1max;													//計算カウント数の最大値（計算終了カウント）
-	double b1, vm0, atom_n;										//差分プロック１辺の長さ、モル体積、単位胞内の原子数
-	double smob;															//モビリティー（結晶変態の緩和係数）
-	double nxx, nyy, nxy, alnn;								//フーリエ空間の基本ベクトルの積、ノルム
+	int   i, j, k, l, ii, jj, kk, iii, jjj;					//整数//unify
+	int   ip, im, jp, jm, Nstep;							//整数//unify
+	double al, temp, delt;										//計算領域、温度、時間きざみ//unify adopt same
+	double time1max;													//計算カウント数の最大値（計算終了カウント）//same
+	double b1;										//差分プロック１辺の長さ //unify
+	double smob;															//モビリティー（結晶変態の緩和係数）//adopt
+	double nxx, nyy, nxy, alnn;								//フーリエ空間の基本ベクトルの積、ノルム//erace
 
-	double AA0, AA1, AA2, AA3;								//ギズブエネルギー内の係数
-	double a1_c, b1_c, c1_c;									//格子定数
-	double a1_t, b1_t, c1_t;									//格子定数
-	double kappa_s1, kappa_s2;								//勾配エネルギ−係数
-	double ds_fac;														//結晶変態の揺らぎ係数
+	double AA0, AA1, AA2, AA3;								//ギズブエネルギー内の係数//adopt
+	double kappa_s1, kappa_s2;								//勾配エネルギ−係数//adopt
+	double ds_fac;										//結晶変態の揺らぎ係数//adopt
 
 //****** 計算条件および物質定数の設定 ****************************************
 
@@ -91,9 +87,6 @@ int main(void)
 	AA1=1.0;  AA2=3.0*AA1+12.0;  AA3=2.0*AA1+12.0;	//ギズブエネルギー内の係数
 
 	kappa_s1=kappa_s2=5.0e-15/rr/temp/b1/b1;				//勾配エネルギ−係数
-
-	a1_c=b1_c=c1_c=3.5E-10;													//格子定数(m)
-	atom_n=4.0;  vm0=6.02E23*a1_c*b1_c*c1_c/atom_n;	//モル体積の計算（fccを仮定）
 
 //*** s1場のアイゲン歪の設定 ***************
 	eta_s1[1][1]=0.043; eta_s1[2][2]=-0.043;
@@ -405,22 +398,3 @@ void rcfft()
 	}
 
 }
-
-//************ データ保存サブルーチン *******************************
-void datsave()
-{
-	FILE *stream;	//ストリームのポインタ設定
-	int i, j;			//整数
-
-	stream = fopen("test.dat", "a");	//書き込み先のファイルを追記方式でオープン
-	fprintf(stream, "%e\n", time1);		//繰返しカウント数の保存
-	for(i=0;i<=ndm;i++){
-		for(j=0;j<=ndm;j++){
-			fprintf(stream, "%e  %e ", s1h[i][j], s2h[i][j]);//場のデータ保存
-		}
-	}
-	fprintf(stream, "\n");	//改行の書き込み
-	fclose(stream);					//ファイルをクローズ
-}
-
-
