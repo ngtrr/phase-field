@@ -39,11 +39,11 @@ using namespace std;
 	//**************************	FePd	**************************************
 	double Ms = 8.0E+5;
   	double K1 = -6.0E+4, K2 = 0.0E+4;
-	double A = 1.0E-9;
+	double A = 1.0E-6;
   	double Astar;
 	double myu0 = 1.0;
-	double ld = 1.0E-9;
-	double B = 8.0E+6;
+	double ld = 18.0E-9;
+	double B = 4.0E+8;
 
 
 
@@ -183,7 +183,7 @@ int main(void)
 
 //****** 計算条件および物質定数の設定 ****************************************
 
-	delt=0.1;					//時間きざみ入力
+	delt=0.025;					//時間きざみ入力
 
 	temp=300.0;						//温度(K)
 	
@@ -197,7 +197,7 @@ int main(void)
 	AA0=1000.0/rr/temp;		//マルテンサイト変態の化学的駆動力
 	AA1=1.0;  AA2=3.0*AA1+12.0;  AA3=2.0*AA1+12.0;	//ギズブエネルギー内の係数
 
-	kappa_s1=kappa_s2=5.0e-15/rr/temp/ld/ld;				//勾配エネルギ−係数
+	kappa_s1=kappa_s2=5.0e-12/rr/temp/ld/ld;				//勾配エネルギ−係数
 
 //*** s1場のアイゲン歪の設定 ***************
 	eta_s1[1][1]=0.083; eta_s1[2][2]=-0.083;
@@ -240,7 +240,7 @@ start: ;
 
 	//if(time1<=100.){Nstep=10;} else{Nstep=200;}		//データ保存する時間間隔の変更
 	//if((((int)(time1) % Nstep)==0)) {datsave();} 	//一定繰返しカウント毎に組織データを保存
-	if((((int)(time1) % 10)==0)) {graph_s1();} 		//一定繰返しカウント毎に組織を表示
+	if((((int)(time1) % 100)==0)) {graph_s1();} 		//一定繰返しカウント毎に組織を表示
 	//if((((int)(time1) % 100)==0)) {datsave();} 		//一定繰返しカウント毎にデータを保存
 
 //***** 勾配ポテンシャル ***********************
@@ -465,8 +465,8 @@ start: ;
 	
 	for(i=0;i<=ndm;i++){
 		for(j=0;j<=ndm;j++){
-			Hme[i][j][0] = -1/(myu0 * Ms) * 2*B*(ep11_0*m[i][j][0]);
-			Hme[i][j][1] = -1/(myu0 * Ms) * 2*B*(ep22_0*m[i][j][1]);
+			Hme[i][j][0] = -1/(myu0 * Ms) * 2*B*(ep11h0[i][j]*m[i][j][0]);
+			Hme[i][j][1] = -1/(myu0 * Ms) * 2*B*(ep22h0[i][j]*m[i][j][1]);
 			Hme[i][j][2] = -1/(myu0 * Ms) * 0;
 		}
 	}
@@ -710,7 +710,7 @@ void ini000()
 {
 
 	int i, j ,k;
-	double mlength;  //srand(time(NULL)); // 乱数初期化
+	double mlength;
 
 	for(i=0;i<=ndm;i++){
 		for(j=0;j<=ndm;j++){
@@ -755,14 +755,9 @@ void graph_s1()
 	double c, x, xmax, xmin, y, ymax, ymin, rad0, dia0;//規格化座標系の設定
 	int ixmax=INXY, iymax=INXY;								//描画Window範囲
 
-	//gcls(); //画面クリア
-	xmin=0.; xmax=1.; ymin=0.; ymax=1.;//描画領域（規格化されている）
-
-	printf("time %f\n",time1);//計算カウント数の表示
-	dia0=1.0/nd;
-	rad0=dia0/2.0;   						irad0=(ixmax-ixmin)/(xmax-xmin)*rad0+1;
 	//差分ブロックの半分の長さ	//スクリーン座標系に変換（+1は整数化時の切捨て補正）
 	cv::Mat chann(cv::Size(256, 256), CV_8UC3, cv::Scalar(255, 255, 255));
+	cout << "time " << (int)time1 << endl;
 
 	for(i=0;i<=nd;i++){
 		for(j=0;j<=nd;j++){
@@ -804,6 +799,23 @@ void graph_s1()
 		}
 	}
 	cv::imwrite("LLG_Terfenol_" + std::to_string(int(time1)) + "_m_2d.png", chann);
+
+	for(i=0;i<=ndm;i++){
+		for(j=0;j<=ndm;j++){
+			col_R = ep11h0[i][j];//場の色をRGBにて設定
+			col_G = ep22h0[i][j];
+			col_B = 0;
+			col_R *= 100;
+			col_G *= 100;
+			col_B *= 100;
+			col_R += 128;
+			col_G += 128;
+			col_B += 128;
+
+			chann.at<cv::Vec3b>(i,j) = cv::Vec3b(abs(int(col_B)), abs(int(col_G)), abs(int(col_R)));
+		}
+	}
+	cv::imwrite("A_Terfenol_" + std::to_string(int(time1)) + "_epsilon.png", chann);
 }
 
 //******* Sin, Cos のテーブルおよびビット反転テーブルの設定 ***************
