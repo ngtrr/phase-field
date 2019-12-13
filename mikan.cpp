@@ -55,15 +55,21 @@ using namespace Eigen;
 	double mu0 = 1.0;
 	double ld = 1.8E-8;
 
-	double G = 1.0E-15;
+	double G = 1.0E-15/(250*ld*ld);
+
 	double Q1 = 2.32E+11;
-	double Q2 = 0.63E+8;
+	double Q2 = -0.63E+10;
 	double Q3 = 0.40E+10;
 	double Q4 = 7.50E+10;
+	//double Q1 = 2.4;
+	//double Q2 = -1.0;
+	//double Q3 = 0.83;
+	//double Q4 = 0.04;
+
 	double B = 4.00E+6;
 
 
-	double smob = 1.0;
+	double smob = 3.0E-8;
 	double ds_fac = 0.001;
 
 	double root3 = 1.73205080757;
@@ -79,8 +85,6 @@ using namespace Eigen;
 	double faifour_i[ND][ND];
 
 	double m_ave[3];
-	double m2_ave[3];
-	double mm_ave[3];
 
 	double N[3];
 
@@ -112,6 +116,11 @@ using namespace Eigen;
 	double Hme[ND][ND][3];
 
 	double P[ND][ND][3];
+	double Pfour[ND][ND][3];
+	double Pfour_i[ND][ND][3];
+
+	double P_prefour[ND][ND][3];
+	double P_prefour_i[ND][ND][3];
 
 	double Plandau[ND][ND][3];
 	double Pgradient[ND][ND][3];
@@ -128,6 +137,13 @@ using namespace Eigen;
 	double epsilon_zerofour[ND][ND][3][3];
 	double epsilon_zerofour_i[ND][ND][3][3];
 
+	double epsilon_zero_prefour[ND][ND][3][3];
+	double epsilon_zero_prefour_i[ND][ND][3][3];
+
+	double epsilon_zero_postfour[ND][ND][3][3];
+	double epsilon_zero_postfour_i[ND][ND][3][3];
+
+	double epsilon_sum[3][3];
 	double epsilon_homo[3][3];
 
 	double eta[ND][ND][3][3];
@@ -269,7 +285,7 @@ start: ;
 
 	//if(time1<=100.){Nstep=10;} else{Nstep=200;}		//データ保存する時間間隔の変更
 	//if((((int)(time1) % Nstep)==0)) {datsave();} 	//一定繰返しカウント毎に組織データを保存
-	if((((int)(time1) % 10)==0)) {graph_s1();} 		//一定繰返しカウント毎に組織を表示
+	if((((int)(time1) % 1)==0)) {graph_s1();} 		//一定繰返しカウント毎に組織を表示
 	//if((((int)(time1) % 100)==0)) {datsave();} 		//一定繰返しカウント毎にデータを保存
 
 
@@ -309,7 +325,7 @@ start: ;
 			for(k=0;k<3;k++){
 				Plandau[i][j][0] = Q1 * (2*e1[i][j]*e1_grad[0]) + Q2*(2*e2[i][j]*e2_grad[0] + 2*e3[i][j]*e3_grad[0]) + Q3*(3*e3[i][j]*e3[i][j]*e3_grad[0] - 3*(e3_grad[0]*e2[i][j]*e2[i][j] + e3[i][j]*2*e2[i][j]*e2_grad[0])) + Q4*(4*e2[i][j]*e2[i][j]*e2[i][j]*e2_grad[0] + 2*(2*e2[i][j]*e2_grad[0]*e3[i][j]*e3[i][j] + 2*e3[i][j]*e3_grad[0]*e2[i][j]*e2[i][j]) + 4*e3[i][j]*e3[i][j]*e3[i][j]*e3_grad[0]);
 				Plandau[i][j][1] = Q1 * (2*e1[i][j]*e1_grad[1]) + Q2*(2*e2[i][j]*e2_grad[1] + 2*e3[i][j]*e3_grad[1]) + Q3*(3*e3[i][j]*e3[i][j]*e3_grad[1] - 3*(e3_grad[1]*e2[i][j]*e2[i][j] + e3[i][j]*2*e2[i][j]*e2_grad[1])) + Q4*(4*e2[i][j]*e2[i][j]*e2[i][j]*e2_grad[1] + 2*(2*e2[i][j]*e2_grad[1]*e3[i][j]*e3[i][j] + 2*e3[i][j]*e3_grad[1]*e2[i][j]*e2[i][j]) + 4*e3[i][j]*e3[i][j]*e3[i][j]*e3_grad[1]);
-				Plandau[i][j][2] = Q1 * (2*e1[i][j]*e1_grad[2]) + Q2*( 2*e3[i][j]*e3_grad[2]) + Q3*(3*e3[i][j]*e3[i][j]*e3_grad[2] - 3*(e3_grad[2]*e2[i][j]*e2[i][j])) + Q4*( 2*( 2*e3[i][j]*e3_grad[2]*e2[i][j]*e2[i][j]) + 4*e3[i][j]*e3[i][j]*e3[i][j]*e3_grad[2]);
+				Plandau[i][j][2] = Q1 * (2*e1[i][j]*e1_grad[2]) + Q2*(2*e3[i][j]*e3_grad[2]) + Q3*(3*e3[i][j]*e3[i][j]*e3_grad[2] - 3*(e3_grad[2]*e2[i][j]*e2[i][j])) + Q4*( 2*( 2*e3[i][j]*e3_grad[2]*e2[i][j]*e2[i][j]) + 4*e3[i][j]*e3[i][j]*e3[i][j]*e3_grad[2]);
 			}
 		}
 	}
@@ -317,7 +333,7 @@ start: ;
 
 
 //***** 勾配ポテンシャル ***********************
-	for(i=0;i<=ndm;i++){
+	/*for(i=0;i<=ndm;i++){
 		for(j=0;j<=ndm;j++){
 			ip=i+1; im=i-1; jp=j+1; jm=j-1;
 			if(i==ndm){ip=0;}  if(i==0){im=ndm;}	//周期的境界条件
@@ -326,7 +342,7 @@ start: ;
 				Pgradient[i][j][k] = -1 * G * (epsilon_zero[ip][j][k][k] + epsilon_zero[im][j][k][k] + epsilon_zero[i][jp][k][k] + epsilon_zero[i][jm][k][k] - 4.0*epsilon_zero[i][j][k][k]);
 			}
 		}
-	}
+	}*/
 
 
 //***** 磁気弾性ポテンシャル ***********************
@@ -351,12 +367,25 @@ start: ;
 		}
 	}
 
-	epsilon_homo[0][0] = s[0][0][0][0] * sigma_a[0][0] + s[0][0][1][1] * (sigma_a[1][1] + sigma_a[2][2]) + 3/2 * ram100 * (m2_ave[0] - 1/3);
-	epsilon_homo[1][1] = s[0][0][0][0] * sigma_a[1][1] + s[0][0][1][1] * (sigma_a[0][0] + sigma_a[2][2]) + 3/2 * ram100 * (m2_ave[1] - 1/3);
-	epsilon_homo[2][2] = s[0][0][0][0] * sigma_a[2][2] + s[0][0][1][1] * (sigma_a[0][0] + sigma_a[1][1]) + 3/2 * ram100 * (m2_ave[2] - 1/3);
-	epsilon_homo[0][1] = epsilon_homo[1][0] = 1/2 * s[0][1][0][1] * sigma_a[0][1] + 3/2 * ram111 * mm_ave[2];
-	epsilon_homo[1][2] = epsilon_homo[2][1] = 1/2 * s[0][1][0][1] * sigma_a[1][2] + 3/2 * ram111 * mm_ave[0];
-	epsilon_homo[2][0] = epsilon_homo[0][2] = 1/2 * s[0][1][0][1] * sigma_a[2][0] + 3/2 * ram111 * mm_ave[1];
+
+	for(ii=0;ii<3;ii++){
+		for(jj=0;jj<3;jj++){
+			epsilon_sum[ii][jj] = 0;
+			for(i=0;i<=ndm;i++){
+				for(j=0;j<=ndm;j++){
+					epsilon_sum[ii][jj] += epsilon_zero[i][j][ii][jj];
+				}
+			}
+		}
+	}
+
+
+	//epsilon_homo[0][0] = s[0][0][0][0] * sigma_a[0][0] + s[0][0][1][1] * (sigma_a[1][1] + sigma_a[2][2]) + epsilon_sum[0][0]/SIZE;
+	//epsilon_homo[1][1] = s[0][0][0][0] * sigma_a[1][1] + s[0][0][1][1] * (sigma_a[0][0] + sigma_a[2][2]) + epsilon_sum[1][1]/SIZE;
+	//epsilon_homo[2][2] = s[0][0][0][0] * sigma_a[2][2] + s[0][0][1][1] * (sigma_a[0][0] + sigma_a[1][1]) + epsilon_sum[2][2]/SIZE;
+	//epsilon_homo[0][1] = epsilon_homo[1][0] = 1/2 * s[0][1][0][1] * sigma_a[0][1] + epsilon_sum[0][1]/SIZE;
+	//epsilon_homo[1][2] = epsilon_homo[2][1] = 1/2 * s[0][1][0][1] * sigma_a[1][2] + epsilon_sum[1][2]/SIZE;
+	//epsilon_homo[2][0] = epsilon_homo[0][2] = 1/2 * s[0][1][0][1] * sigma_a[2][0] + epsilon_sum[2][0]/SIZE;
 
 	for(l=0;l<3;l++){
 		for(k=0;k<3;k++){
@@ -449,7 +478,7 @@ start: ;
 					for(jj=0;jj<3;jj++){
 						for(kk=0;kk<3;kk++){
 							for(ll=0;ll<3;ll++){
-								Pelastic[i][j][k] += c[ii][jj][kk][ll] * (eta[i][j][ii][jj] - epsilon_zero[i][j][ii][jj]) * epsilon_zero_grad[ii][jj][k];
+								Pelastic[i][j][k] += c[ii][jj][kk][ll] * (epsilon_homo[ii][jj] + eta[i][j][ii][jj] - epsilon_zero[i][j][ii][jj]) * epsilon_zero_grad[ii][jj][k];
 							}
 						}
 					}
@@ -461,12 +490,12 @@ start: ;
 
 
 
+	cout << " ********************************************************** " << endl;
 	cout << "Plandau - x   " << dec << Plandau[10][10][0] << endl;
-	cout << "Pgradient - x   " << dec << Pgradient[10][10][0] << endl;
 	cout << "Pme - x   " << dec << Pme[10][10][0] << endl;
 	cout << "Pelastic - x   " << dec << Pelastic[10][10][0] << endl;
 
-	for(i=0;i<=ndm;i++){
+	/*for(i=0;i<=ndm;i++){
 		for(j=0;j<=ndm;j++){
 			for(k=0;k<3;k++){
 				P[i][j][k]= -1 * smob * (Plandau[i][j][k] + Pgradient[i][j][k] + Pme[i][j][k] + Pelastic[i][j][k]);
@@ -474,13 +503,143 @@ start: ;
 				if(epsilon_zero[i][j][k][k]>=0.043){epsilon_zero[i][j][k][k]=0.043;}  if(epsilon_zero[i][j][k][k]<=-0.043){epsilon_zero[i][j][k][k]=-0.043;}
 			}
 		}
+	}*/
+
+
+	for(i=0;i<=ndm;i++){
+		for(j=0;j<=ndm;j++){
+			for(k=0;k<3;k++){
+				P[i][j][k] = Plandau[i][j][k] + Pme[i][j][k] + Pelastic[i][j][k];
+			}
+		}
+	}
+
+	if(time1 == 0){
+
+		for(k=0;k<3;k++){
+			for(i=0;i<=ndm;i++){
+				for(j=0;j<=ndm;j++){
+					fourier_input[i][j] = P[i][j][k];
+				}
+			}
+			fft3d();
+			for(i=0;i<=ndm;i++){
+				for(j=0;j<=ndm;j++){
+					Pfour[i][j][k] = fourier_output[i][j];
+					Pfour_i[i][j][k] = fourier_output_i[i][j];
+				}
+			}
+		}
+
+
+		for(k=0;k<3;k++){
+			for(i=0;i<=ndm;i++){
+				for(j=0;j<=ndm;j++){
+					fourier_input[i][j] = epsilon_zero[i][j][k][k];
+				}
+			}
+			fft3d();
+			for(i=0;i<=ndm;i++){
+				for(j=0;j<=ndm;j++){
+					epsilon_zerofour[i][j][k][k] = fourier_output[i][j];
+					epsilon_zerofour_i[i][j][k][k] = fourier_output_i[i][j];
+				}
+			}
+		}
+
+		for(k=0;k<3;k++){
+			for(i=0;i<=ndm;i++){
+				for(j=0;j<=ndm;j++){
+					epsilon_zero_postfour[i][j][k][k] = (epsilon_zerofour[i][j][k][k] + -1*smob*delt*Pfour[i][j][k])/(1 + G*(four_axis(0,i,j)*four_axis(0,i,j) + four_axis(1,i,j)*four_axis(1,i,j) + four_axis(2,i,j)*four_axis(2,i,j))*-1*smob*delt);
+					epsilon_zero_postfour_i[i][j][k][k] = (epsilon_zerofour_i[i][j][k][k] + -1*smob*delt*Pfour_i[i][j][k])/(1 + G*(four_axis(0,i,j)*four_axis(0,i,j) + four_axis(1,i,j)*four_axis(1,i,j) + four_axis(2,i,j)*four_axis(2,i,j))*-1*smob*delt);
+				}
+			}
+		}
+
+	}else{
+
+
+		for(k=0;k<3;k++){
+			for(i=0;i<=ndm;i++){
+				for(j=0;j<=ndm;j++){
+					P_prefour[i][j][k] = Pfour[i][j][k];
+					P_prefour_i[i][j][k] = Pfour_i[i][j][k];
+
+					epsilon_zero_prefour[i][j][k][k] = epsilon_zerofour[i][j][k][k];
+					epsilon_zero_prefour_i[i][j][k][k] = epsilon_zerofour_i[i][j][k][k];
+				}
+			}
+		}
+
+
+
+		for(k=0;k<3;k++){
+			for(i=0;i<=ndm;i++){
+				for(j=0;j<=ndm;j++){
+					fourier_input[i][j] = P[i][j][k];
+				}
+			}
+			fft3d();
+			for(i=0;i<=ndm;i++){
+				for(j=0;j<=ndm;j++){
+					Pfour[i][j][k] = fourier_output[i][j];
+					Pfour_i[i][j][k] = fourier_output_i[i][j];
+				}
+			}
+		}
+
+
+		for(k=0;k<3;k++){
+			for(i=0;i<=ndm;i++){
+				for(j=0;j<=ndm;j++){
+					fourier_input[i][j] = epsilon_zero[i][j][k][k];
+				}
+			}
+			fft3d();
+			for(i=0;i<=ndm;i++){
+				for(j=0;j<=ndm;j++){
+					epsilon_zerofour[i][j][k][k] = fourier_output[i][j];
+					epsilon_zerofour_i[i][j][k][k] = fourier_output_i[i][j];
+				}
+			}
+		}
+
+		for(k=0;k<3;k++){
+			for(i=0;i<=ndm;i++){
+				for(j=0;j<=ndm;j++){
+					epsilon_zero_postfour[i][j][k][k] = ((4*epsilon_zero_prefour[i][j][k][k] - epsilon_zerofour[i][j][k][k]) + 2*-1*smob*delt*(2*Pfour[i][j][k] - P_prefour[i][j][k]))/(3 + 2*G*(four_axis(0,i,j)*four_axis(0,i,j) + four_axis(1,i,j)*four_axis(1,i,j) + four_axis(2,i,j)*four_axis(2,i,j))*-1*smob*delt);
+					epsilon_zero_postfour_i[i][j][k][k] = ((4*epsilon_zero_prefour_i[i][j][k][k] - epsilon_zerofour_i[i][j][k][k]) + 2*-1*smob*delt*(2*Pfour_i[i][j][k] - P_prefour_i[i][j][k]))/(3 + 2*G*(four_axis(0,i,j)*four_axis(0,i,j) + four_axis(1,i,j)*four_axis(1,i,j) + four_axis(2,i,j)*four_axis(2,i,j))*-1*smob*delt);
+				}
+			}
+		}
+
+
+	}
+
+
+	for(k=0;k<3;k++){
+		for(i=0;i<=ndm;i++){
+			for(j=0;j<=ndm;j++){
+				fourier_output[i][j] = epsilon_zero_postfour[i][j][k][k];
+				fourier_output_i[i][j] = epsilon_zero_postfour_i[i][j][k][k];
+			}
+		}
+		ifft3d();
+		for(i=0;i<=ndm;i++){
+			for(j=0;j<=ndm;j++){
+				epsilon_zero[i][j][k][k] = fourier_input[i][j];
+			}
+		}
 	}
 
 
 
-	cout << "mfour - x   " << dec << epsilon_zero[10][10][0][0] << endl;
-	cout << "mfour - y   " << dec << epsilon_zero[10][10][1][1] << endl;
-	cout << "mfour - z   " << dec << epsilon_zero[10][10][2][2] << endl;
+	cout << "epsilon_zero - x   " << dec << epsilon_zero[10][10][0][0] << endl;
+	cout << "epsilon_zero - y   " << dec << epsilon_zero[10][10][1][1] << endl;
+	cout << "epsilon_zero - z   " << dec << epsilon_zero[10][10][2][2] << endl;
+	cout << "epsilon_zero - xy  " << dec << epsilon_zero[10][10][0][1] << endl;
+	cout << "epsilon_zero - yz  " << dec << epsilon_zero[10][10][1][2] << endl;
+	cout << "epsilon_zero - zx  " << dec << epsilon_zero[10][10][2][0] << endl;
 
 
 	for(k=0;k<3;k++){
@@ -533,18 +692,13 @@ start: ;
 
 	for(k=0;k<3;k++){
 		m_ave[k] = 0;
-		m2_ave[k] = 0;
-		mm_ave[k] = 0;
 		for(i=0;i<=ndm;i++){
 			for(j=0;j<=ndm;j++){
 				m_ave[k] += m[i][j][k] / SIZE;
-				m2_ave[k] += m[i][j][k] * m[i][j][k] / SIZE;
-				mm_ave[k] += m[i][j][(k + 1) % 3] * m[i][j][(k + 2) % 3] / SIZE;
 			}
 		}
 	}
 
-	//cout << "m_ave  :   " << m_ave[0] << " : " << m_ave[1] << " : "  << m_ave[2] << endl;
 	for(i=0;i<=ndm;i++){
 		for(j=0;j<=ndm;j++){
 			for(k=0;k<3;k++){
@@ -559,9 +713,9 @@ start: ;
 
 	for(i=0;i<=ndm;i++){
 		for(j=0;j<=ndm;j++){
-			Hme[i][j][0] = 2 * B * epsilon_zero[i][j][0][0] * m[i][j][0];
-			Hme[i][j][1] = 2 * B * epsilon_zero[i][j][1][1] * m[i][j][1];
-			Hme[i][j][2] = 2 * B * epsilon_zero[i][j][2][2] * m[i][j][2];
+			Hme[i][j][0] = -1/(mu0 * Ms) * 2 * B * epsilon_zero[i][j][0][0] * m[i][j][0];
+			Hme[i][j][1] = -1/(mu0 * Ms) * 2 * B * epsilon_zero[i][j][1][1] * m[i][j][1];
+			Hme[i][j][2] = -1/(mu0 * Ms) * 2 * B * epsilon_zero[i][j][2][2] * m[i][j][2];
 		}
 	}
 
@@ -811,6 +965,7 @@ void ini000()
 		for(j=0;j<=ndm;j++){
 			for(k=0;k<3;k++){
 				m[i][j][k] = rand() % 201 - 100;
+				epsilon_zero[i][j][k][k] = DRND(0.01);
 			}
 			//m[i][j][0] = int(image[i][j]);
 			//m[i][j][1] = int(256-image[i][j]);
@@ -871,7 +1026,7 @@ void graph_s1()
 	}
 	cv::imwrite("LLG_Terfenol_" + std::to_string(int(time1)) + "_m_2d.png", chann);
 
-	ofstream outputfile("check_Terfenol_" + std::to_string(int(time1)) + "_2d.txt");
+	/*ofstream outputfile("check_Terfenol_" + std::to_string(int(time1)) + "_2d.txt");
 	for(i=0;i<=ndm;i++){
 		for(j=0;j<=ndm;j++){
 			if(i%(nd/16)==0 && j%(nd/16)==0){
@@ -888,7 +1043,7 @@ void graph_s1()
 			}
 		}
 	}
-	outputfile.close();
+	outputfile.close();*/
 }
 
 
