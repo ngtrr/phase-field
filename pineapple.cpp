@@ -26,7 +26,7 @@ using namespace std;
 	int nd=ND, ndm=ND-1; 	//計算領域の一辺の差分分割数(差分ブロック数)、ND-1を定義//same
 	int nd2=ND/2;				 	//ND/2を定義：高速フ−リエ変換で使用//adopt
 	int ig=IG;						//2^ig=ND//same
-	double alpha=0.5;
+	double alpha=0.2;
 	double rr=8.3145;			//ガス定数//adopt
 	double time1;					//計算カウント数(時間に比例)//same
 
@@ -38,11 +38,11 @@ using namespace std;
 	//**************************	FePd	**************************************
 	double Ms = 8.0E+5;
   	double K1 = -6.0E+4, K2 = 0.0E+4;
-	double A = 1.0E-6;
+	double A = 2.0E-8;
   	double Astar;
 	double myu0 = 1.0;
 	double ld = 18.0E-9;
-	double B = 8.0E+5;
+	double B = 4.0E+6;
 
 
 
@@ -188,7 +188,7 @@ int main(void)
 	
 
 	time1=0.0;						//初期計算カウント数の設定
-	time1max=1.0+1.0e+07;	//最大計算カウント数の設定
+	time1max=100000;	//最大計算カウント数の設定
 
 	smob=1.0;							//モビリティー（結晶変態の緩和係数）
 	ds_fac=0.01;					//結晶変態の揺らぎ係数
@@ -773,7 +773,7 @@ void graph_s1()
 
 		}
 	}
-	cv::imwrite("test" + std::to_string(time1) + ".png", chann);
+	cv::imwrite("TDGL_Fepd_" + std::to_string(int(time1)) + ".png", chann);
 
 
 	for(i=0;i<=ndm;i++){
@@ -791,24 +791,7 @@ void graph_s1()
 			chann.at<cv::Vec3b>(i,j) = cv::Vec3b(abs(int(col_B)), abs(int(col_G)), abs(int(col_R)));
 		}
 	}
-	cv::imwrite("LLG_Terfenol_" + std::to_string(int(time1)) + "_m_2d.png", chann);
-
-	for(i=0;i<=ndm;i++){
-		for(j=0;j<=ndm;j++){
-			col_R = ep11h0[i][j];//場の色をRGBにて設定
-			col_G = ep22h0[i][j];
-			col_B = 0;
-			col_R *= 100;
-			col_G *= 100;
-			col_B *= 100;
-			col_R += 128;
-			col_G += 128;
-			col_B += 128;
-
-			chann.at<cv::Vec3b>(i,j) = cv::Vec3b(abs(int(col_B)), abs(int(col_G)), abs(int(col_R)));
-		}
-	}
-	cv::imwrite("A_Terfenol_" + std::to_string(int(time1)) + "_epsilon.png", chann);
+	cv::imwrite("LLG_Fepd_" + std::to_string(int(time1)) + ".png", chann);
 }
 
 //******* Sin, Cos のテーブルおよびビット反転テーブルの設定 ***************
