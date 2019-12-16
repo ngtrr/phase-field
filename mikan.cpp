@@ -55,9 +55,9 @@ using namespace Eigen;
 	double mu0 = 1.0;
 	double ld = 1.8E-8;
 
-	double G = 1.0E-10/(250*ld*ld);
+	double G = 1.0E-15/(250*ld*ld);
 
-	double Q1 = 2.32E+1;
+	double Q1 = 2.32E+10;
 	double Q2 = -0.63E+10;
 	double Q3 = 0.40E+10;
 	double Q4 = 7.50E+10;
@@ -69,7 +69,7 @@ using namespace Eigen;
 	double B = 4.00E+6;
 
 
-	double smob = 3.0E-9;
+	double smob = 3.0E-11;
 	double ds_fac = 0.001;
 
 	double root3 = 1.73205080757;
@@ -149,7 +149,6 @@ using namespace Eigen;
 	double eta[ND][ND][3][3];
 
 	double epsilon_zero_grad[3][3][3];
-	double epsilon_homo_grad[3][3][3];
 	double eta_grad[ND][ND][3][3][3];
 
 	double c[3][3][3][3];
@@ -380,12 +379,12 @@ start: ;
 	}
 
 
-	//epsilon_homo[0][0] = s[0][0][0][0] * sigma_a[0][0] + s[0][0][1][1] * (sigma_a[1][1] + sigma_a[2][2]) + epsilon_sum[0][0]/SIZE;
-	//epsilon_homo[1][1] = s[0][0][0][0] * sigma_a[1][1] + s[0][0][1][1] * (sigma_a[0][0] + sigma_a[2][2]) + epsilon_sum[1][1]/SIZE;
-	//epsilon_homo[2][2] = s[0][0][0][0] * sigma_a[2][2] + s[0][0][1][1] * (sigma_a[0][0] + sigma_a[1][1]) + epsilon_sum[2][2]/SIZE;
-	//epsilon_homo[0][1] = epsilon_homo[1][0] = 1/2 * s[0][1][0][1] * sigma_a[0][1] + epsilon_sum[0][1]/SIZE;
-	//epsilon_homo[1][2] = epsilon_homo[2][1] = 1/2 * s[0][1][0][1] * sigma_a[1][2] + epsilon_sum[1][2]/SIZE;
-	//epsilon_homo[2][0] = epsilon_homo[0][2] = 1/2 * s[0][1][0][1] * sigma_a[2][0] + epsilon_sum[2][0]/SIZE;
+	epsilon_homo[0][0] = s[0][0][0][0] * sigma_a[0][0] + s[0][0][1][1] * (sigma_a[1][1] + sigma_a[2][2]) + epsilon_sum[0][0]/SIZE;
+	epsilon_homo[1][1] = s[0][0][0][0] * sigma_a[1][1] + s[0][0][1][1] * (sigma_a[0][0] + sigma_a[2][2]) + epsilon_sum[1][1]/SIZE;
+	epsilon_homo[2][2] = s[0][0][0][0] * sigma_a[2][2] + s[0][0][1][1] * (sigma_a[0][0] + sigma_a[1][1]) + epsilon_sum[2][2]/SIZE;
+	epsilon_homo[0][1] = epsilon_homo[1][0] = 1/2 * s[0][1][0][1] * sigma_a[0][1] + epsilon_sum[0][1]/SIZE;
+	epsilon_homo[1][2] = epsilon_homo[2][1] = 1/2 * s[0][1][0][1] * sigma_a[1][2] + epsilon_sum[1][2]/SIZE;
+	epsilon_homo[2][0] = epsilon_homo[0][2] = 1/2 * s[0][1][0][1] * sigma_a[2][0] + epsilon_sum[2][0]/SIZE;
 
 	for(l=0;l<3;l++){
 		for(k=0;k<3;k++){
@@ -491,9 +490,9 @@ start: ;
 
 
 	cout << " ********************************************************** " << endl;
-	cout << "Plandau - x   " << dec << Plandau[10][10][0] << endl;
-	cout << "Pme - x   " << dec << Pme[10][10][0] << endl;
-	cout << "Pelastic - x   " << dec << Pelastic[10][10][0] << endl;
+	cout << "Plandau - x   " << dec << -1 * Plandau[10][10][0] << endl;
+	cout << "Pme - x   " << dec << -1 * Pme[10][10][0] << endl;
+	cout << "Pelastic - x   " << dec << -1 * Pelastic[10][10][0] << endl;
 
 	/*for(i=0;i<=ndm;i++){
 		for(j=0;j<=ndm;j++){
@@ -509,7 +508,7 @@ start: ;
 	for(i=0;i<=ndm;i++){
 		for(j=0;j<=ndm;j++){
 			for(k=0;k<3;k++){
-				P[i][j][k] = Plandau[i][j][k] + Pelastic[i][j][k];
+				P[i][j][k] = Plandau[i][j][k] + Pme[i][j][k];
 			}
 		}
 	}
@@ -550,8 +549,8 @@ start: ;
 		for(k=0;k<3;k++){
 			for(i=0;i<=ndm;i++){
 				for(j=0;j<=ndm;j++){
-					epsilon_zero_postfour[i][j][k][k] = (epsilon_zerofour[i][j][k][k] + -1*smob*delt*Pfour[i][j][k])/(1 + G*(four_axis(0,i,j)*four_axis(0,i,j) + four_axis(1,i,j)*four_axis(1,i,j) + four_axis(2,i,j)*four_axis(2,i,j))*-1*smob*delt);
-					epsilon_zero_postfour_i[i][j][k][k] = (epsilon_zerofour_i[i][j][k][k] + -1*smob*delt*Pfour_i[i][j][k])/(1 + G*(four_axis(0,i,j)*four_axis(0,i,j) + four_axis(1,i,j)*four_axis(1,i,j) + four_axis(2,i,j)*four_axis(2,i,j))*-1*smob*delt);
+					epsilon_zero_postfour[i][j][k][k] = (epsilon_zerofour[i][j][k][k] + -1*smob*delt*Pfour[i][j][k])/(1 + G*(four_axis(0,i,j)*four_axis(0,i,j) + four_axis(1,i,j)*four_axis(1,i,j) + four_axis(2,i,j)*four_axis(2,i,j))*1*smob*delt);
+					epsilon_zero_postfour_i[i][j][k][k] = (epsilon_zerofour_i[i][j][k][k] + -1*smob*delt*Pfour_i[i][j][k])/(1 + G*(four_axis(0,i,j)*four_axis(0,i,j) + four_axis(1,i,j)*four_axis(1,i,j) + four_axis(2,i,j)*four_axis(2,i,j))*1*smob*delt);
 				}
 			}
 		}
@@ -607,8 +606,8 @@ start: ;
 		for(k=0;k<3;k++){
 			for(i=0;i<=ndm;i++){
 				for(j=0;j<=ndm;j++){
-					epsilon_zero_postfour[i][j][k][k] = ((4*epsilon_zero_prefour[i][j][k][k] - epsilon_zerofour[i][j][k][k]) + 2*-1*smob*delt*(2*Pfour[i][j][k] - P_prefour[i][j][k]))/(3 + 2*G*(four_axis(0,i,j)*four_axis(0,i,j) + four_axis(1,i,j)*four_axis(1,i,j) + four_axis(2,i,j)*four_axis(2,i,j))*-1*smob*delt);
-					epsilon_zero_postfour_i[i][j][k][k] = ((4*epsilon_zero_prefour_i[i][j][k][k] - epsilon_zerofour_i[i][j][k][k]) + 2*-1*smob*delt*(2*Pfour_i[i][j][k] - P_prefour_i[i][j][k]))/(3 + 2*G*(four_axis(0,i,j)*four_axis(0,i,j) + four_axis(1,i,j)*four_axis(1,i,j) + four_axis(2,i,j)*four_axis(2,i,j))*-1*smob*delt);
+					epsilon_zero_postfour[i][j][k][k] = ((4*epsilon_zero_prefour[i][j][k][k] - epsilon_zerofour[i][j][k][k]) + 2*-1*smob*delt*(2*Pfour[i][j][k] - P_prefour[i][j][k]))/(3 + 2*G*(four_axis(0,i,j)*four_axis(0,i,j) + four_axis(1,i,j)*four_axis(1,i,j) + four_axis(2,i,j)*four_axis(2,i,j))*1*smob*delt);
+					epsilon_zero_postfour_i[i][j][k][k] = ((4*epsilon_zero_prefour_i[i][j][k][k] - epsilon_zerofour_i[i][j][k][k]) + 2*-1*smob*delt*(2*Pfour_i[i][j][k] - P_prefour_i[i][j][k]))/(3 + 2*G*(four_axis(0,i,j)*four_axis(0,i,j) + four_axis(1,i,j)*four_axis(1,i,j) + four_axis(2,i,j)*four_axis(2,i,j))*1*smob*delt);
 				}
 			}
 		}
@@ -640,6 +639,9 @@ start: ;
 	/*cout << "epsilon_zero - xy  " << dec << epsilon_zero[10][10][0][1] << endl;
 	cout << "epsilon_zero - yz  " << dec << epsilon_zero[10][10][1][2] << endl;
 	cout << "epsilon_zero - zx  " << dec << epsilon_zero[10][10][2][0] << endl;*/
+	cout << "m  -  x   " << dec << m[10][10][0] << endl;
+	cout << "m  -  y   " << dec << m[10][10][1] << endl;
+	cout << "m  -  z   " << dec << m[10][10][2] << endl;
 
 
 	for(k=0;k<3;k++){
@@ -941,6 +943,7 @@ void ini000()
 {
 	int i, j ,k;
 	double mlength;
+	int c;
 	
 	/*
 	for(i=0;i<=ndm;i++){
@@ -965,8 +968,22 @@ void ini000()
 		for(j=0;j<=ndm;j++){
 			for(k=0;k<3;k++){
 				m[i][j][k] = rand() % 201 - 100;
-				epsilon_zero[i][j][k][k] = DRND(0.01);
+				//epsilon_zero[i][j][k][k] = DRND(0.01);
 			}
+
+			c = rand() % 3;
+			if(c==0){
+				epsilon_zero[i][j][0][0] = -1 * DRND(0.01);
+				epsilon_zero[i][j][1][1] = epsilon_zero[i][j][2][2] = -1/2 * epsilon_zero[i][j][0][0];
+			}else if(c==1){
+				epsilon_zero[i][j][1][1] = -1 * DRND(0.01);
+				epsilon_zero[i][j][0][0] = epsilon_zero[i][j][2][2] = -1/2 * epsilon_zero[i][j][1][1];
+			}else{
+				epsilon_zero[i][j][2][2] = -1 * DRND(0.01);
+				epsilon_zero[i][j][0][0] = epsilon_zero[i][j][1][1] = -1/2 * epsilon_zero[i][j][2][2];
+			}
+
+
 			//m[i][j][0] = int(image[i][j]);
 			//m[i][j][1] = int(256-image[i][j]);
 			//m[i][j][2] = int(100-image[i][j]/2);
@@ -997,9 +1014,9 @@ void graph_s1()
 			col_R=epsilon_zero[i][j][0][0];//場の色をRGBにて設定
 			col_G=epsilon_zero[i][j][1][1];
 			col_B=epsilon_zero[i][j][2][2];
-			col_R *= 1000;
-			col_G *= 1000;
-			col_B *= 1000;
+			col_R *= 500;
+			col_G *= 500;
+			col_B *= 500;
 			col_R += 128;
 			col_G += 128;
 			col_B += 128;
