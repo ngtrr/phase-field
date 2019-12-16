@@ -16,9 +16,8 @@ using namespace std;
 
 #define DRND(x) ((double)(x)/RAND_MAX*rand())//乱数の関数設定//same
 
-#define ND 256			//差分計算における計算領域一辺の分割数(高速フーリエ変換を用いるため２のべき乗)//same
-#define IG 8				//2^IG=ND//same
-#define INXY 400		//描画window１辺のピクセルサイズ(正方形の描画領域)//erace
+#define ND 512			//差分計算における計算領域一辺の分割数(高速フーリエ変換を用いるため２のべき乗)//same
+#define IG 9				//2^IG=ND//same
 #define SIZEX (ND)
 #define SIZEY (ND)
 #define SIZEZ 1
@@ -43,7 +42,7 @@ using namespace std;
   	double Astar;
 	double myu0 = 1.0;
 	double ld = 18.0E-9;
-	double B = 4.0E+8;
+	double B = 8.0E+5;
 
 
 
@@ -233,7 +232,6 @@ int main(void)
 	table();		//sinおよびcosテ−ブルとビット反転テーブルの設定
 
 	ini000();		//初期場の設定
- 	//gwinsize(INXY,INXY); ginit(2); gsetorg(0,0);//描画Window表示
 
 //**** シミュレーションスタート ******************************
 start: ;
@@ -465,9 +463,9 @@ start: ;
 	
 	for(i=0;i<=ndm;i++){
 		for(j=0;j<=ndm;j++){
-			Hme[i][j][0] = -1/(myu0 * Ms) * 2*B*(ep11h0[i][j]*m[i][j][0]);
-			Hme[i][j][1] = -1/(myu0 * Ms) * 2*B*(ep22h0[i][j]*m[i][j][1]);
-			Hme[i][j][2] = -1/(myu0 * Ms) * 0;
+			Hme[i][j][0] = 2*B*(ep11h0[i][j]*m[i][j][0]);
+			Hme[i][j][1] = 2*B*(ep22h0[i][j]*m[i][j][1]);
+			Hme[i][j][2] = 0;
 		}
 	}
 
@@ -751,18 +749,13 @@ void graph_s1()
 {
 	int i, j, ii, jj;													//整数
 	double col, col_R, col_G, col_B, col_RG;	//色
-	int ixmin=0, iymin=0, igx, igy, irad0;		//スクリーン座標系の設定
-	double c, x, xmax, xmin, y, ymax, ymin, rad0, dia0;//規格化座標系の設定
-	int ixmax=INXY, iymax=INXY;								//描画Window範囲
 
 	//差分ブロックの半分の長さ	//スクリーン座標系に変換（+1は整数化時の切捨て補正）
-	cv::Mat chann(cv::Size(256, 256), CV_8UC3, cv::Scalar(255, 255, 255));
+	cv::Mat chann(cv::Size(nd, nd), CV_8UC3, cv::Scalar(255, 255, 255));
 	cout << "time " << (int)time1 << endl;
 
 	for(i=0;i<=nd;i++){
 		for(j=0;j<=nd;j++){
-			x=rad0+dia0*i;  igx=(ixmax-ixmin)/(xmax-xmin)*(x-xmin)+ixmin;
-			y=rad0+dia0*j;  igy=(iymax-iymin)/(ymax-ymin)*(y-ymin)+iymin;
 			//座標計算			//スクリーン座標系に変換
 			ii=i; jj=j; if(i==nd){ii=0;} if(j==nd){jj=0;}//周期的境界条件
 
