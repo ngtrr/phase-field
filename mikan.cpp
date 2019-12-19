@@ -45,7 +45,7 @@ using namespace Eigen;
 
 
     //*******************  FePd  ************************
-	double Ms = 6.02E+5;
+	/*double Ms = 6.02E+5;
   	double K1 = 2.7E+3, K2 = -6.1E+3;
   	double ram100 = 0.0E+4, ram111 = 1.64E-3;
   	double c11 = 1.495E+11, c12 = 1.43E+12, c44 = 7.05E+10;
@@ -53,12 +53,22 @@ using namespace Eigen;
   	double Astar;
 	double delt = 0.01;
 	double mu0 = 1.0;
-	double ld = 1.8E-8;
+	double ld = 1.8E-8;*/
 
-	double G = 1.0E-4/(250*ld*ld);
+    //******************* NiMnGa ************************
+	double Ms = 6.02E+5;
+  	double K1 = 2.7E+3, K2 = -6.1E+3;
+  	double ram100 = 0.0E+4, ram111 = 1.64E-3;
+  	double c11 = 1.6E+11, c12 = 1.52E+11, c44 = 0.43E+11;
+	double A = 2.0E-11;
+  	double Astar;
+	double delt = 0.01;
+	double mu0 = 1.0;
+	double ld = 18E-9;
+	double G = 1.0E-3/(250*ld*ld);
 
 	double Q1 = 2.32E+10;
-	double Q2 = -0.63E+10;
+	double Q2 = -0.63E+8;
 	double Q3 = 0.40E+10;
 	double Q4 = 7.50E+10;
 	//double Q1 = 2.4;
@@ -357,8 +367,12 @@ start: ;
 	for(k=0;k<3;k++){
 		for(i=0;i<3;i++){
 			for(j=0;j<3;j++){
-				if(i==j && i==k){
-					epsilon_zero_grad[i][j][k] = 1;
+				if(i==j){
+					if(i==k){
+						epsilon_zero_grad[i][j][k] = 1;
+					}else{
+						epsilon_zero_grad[i][j][k] = 0;
+					}
 				}else{
 					epsilon_zero_grad[i][j][k] = 0;
 				}
@@ -379,9 +393,9 @@ start: ;
 	}
 
 
-	//epsilon_homo[0][0] = s[0][0][0][0] * sigma_a[0][0] + s[0][0][1][1] * (sigma_a[1][1] + sigma_a[2][2]) + epsilon_sum[0][0]/SIZE;
-	//epsilon_homo[1][1] = s[0][0][0][0] * sigma_a[1][1] + s[0][0][1][1] * (sigma_a[0][0] + sigma_a[2][2]) + epsilon_sum[1][1]/SIZE;
-	//epsilon_homo[2][2] = s[0][0][0][0] * sigma_a[2][2] + s[0][0][1][1] * (sigma_a[0][0] + sigma_a[1][1]) + epsilon_sum[2][2]/SIZE;
+	epsilon_homo[0][0] = s[0][0][0][0] * sigma_a[0][0] + s[0][0][1][1] * (sigma_a[1][1] + sigma_a[2][2]) + epsilon_sum[0][0]/SIZE;
+	epsilon_homo[1][1] = s[0][0][0][0] * sigma_a[1][1] + s[0][0][1][1] * (sigma_a[0][0] + sigma_a[2][2]) + epsilon_sum[1][1]/SIZE;
+	epsilon_homo[2][2] = s[0][0][0][0] * sigma_a[2][2] + s[0][0][1][1] * (sigma_a[0][0] + sigma_a[1][1]) + epsilon_sum[2][2]/SIZE;
 	//epsilon_homo[0][1] = epsilon_homo[1][0] = 1/2 * s[0][1][0][1] * sigma_a[0][1] + epsilon_sum[0][1]/SIZE;
 	//epsilon_homo[1][2] = epsilon_homo[2][1] = 1/2 * s[0][1][0][1] * sigma_a[1][2] + epsilon_sum[1][2]/SIZE;
 	//epsilon_homo[2][0] = epsilon_homo[0][2] = 1/2 * s[0][1][0][1] * sigma_a[2][0] + epsilon_sum[2][0]/SIZE;
@@ -477,7 +491,7 @@ start: ;
 					for(jj=0;jj<3;jj++){
 						for(kk=0;kk<3;kk++){
 							for(ll=0;ll<3;ll++){
-								Pelastic[i][j][k] += c[ii][jj][kk][ll] * (epsilon_homo[ii][jj] + eta[i][j][ii][jj] - epsilon_zero[i][j][ii][jj]) * epsilon_zero_grad[ii][jj][k];
+								Pelastic[i][j][k] += c[ii][jj][kk][ll] * (epsilon_homo[ii][jj] + eta[i][j][ii][jj] - epsilon_zero[i][j][ii][jj]) * epsilon_zero_grad[kk][ll][k];
 							}
 						}
 					}
@@ -508,7 +522,7 @@ start: ;
 	for(i=0;i<=ndm;i++){
 		for(j=0;j<=ndm;j++){
 			for(k=0;k<3;k++){
-				P[i][j][k] = Plandau[i][j][k] + Pelastic[i][j][k] + Pme[i][j][k];
+				P[i][j][k] = Plandau[i][j][k] + Pelastic[i][j][k];
 			}
 		}
 	}
@@ -1014,9 +1028,9 @@ void graph_s1()
 			col_R=epsilon_zero[i][j][0][0];//場の色をRGBにて設定
 			col_G=epsilon_zero[i][j][1][1];
 			col_B=epsilon_zero[i][j][2][2];
-			col_R *= 10000;
-			col_G *= 10000;
-			col_B *= 10000;
+			col_R *= 100000;
+			col_G *= 100000;
+			col_B *= 100000;
 			col_R += 128;
 			col_G += 128;
 			col_B += 128;
@@ -1028,12 +1042,13 @@ void graph_s1()
 
 	for(i=0;i<=ndm;i++){
 		for(j=0;j<=ndm;j++){
-			col_R=u[i][j][0];//場の色をRGBにて設定
-			col_G=u[i][j][1];
-			col_B=u[i][j][2];
-			col_R *= 100;
-			col_G *= 100;
-			col_B *= 100;
+			col_R=eta[i][j][0][0];//場の色をRGBにて設定
+			col_G=eta[i][j][1][1];
+			col_B=eta[i][j][2][2];
+			cout << u[i][j][1] << endl;
+			col_R *= 10000000;
+			col_G *= 10000000;
+			col_B *= 10000000;
 			col_R += 128;
 			col_G += 128;
 			col_B += 128;
@@ -1042,6 +1057,40 @@ void graph_s1()
 		}
 	}
 	cv::imwrite("LLG_Terfenol_" + std::to_string(int(time1)) + "_u_2d.png", chann);
+
+	for(i=0;i<=ndm;i++){
+		for(j=0;j<=ndm;j++){
+			col_R=-P[i][j][0];//場の色をRGBにて設定
+			col_G=-P[i][j][1];
+			col_B=-P[i][j][2];
+			col_R *= 0.0000000001;
+			col_G *= 0.0000000001;
+			col_B *= 0.0000000001;
+			col_R += 128;
+			col_G += 128;
+			col_B += 128;
+
+			chann.at<cv::Vec3b>(i,j) = cv::Vec3b(abs(int(col_B)), abs(int(col_G)), abs(int(col_R)));
+		}
+	}
+	cv::imwrite("LLG_Terfenol_" + std::to_string(int(time1)) + "_p_2d.png", chann);
+
+	for(i=0;i<=ndm;i++){
+		for(j=0;j<=ndm;j++){
+			col_R=-Pelastic[i][j][0];//場の色をRGBにて設定
+			col_G=-Pelastic[i][j][1];
+			col_B=-Pelastic[i][j][2];
+			col_R *= 0.0000000001;
+			col_G *= 0.0000000001;
+			col_B *= 0.0000000001;
+			col_R += 128;
+			col_G += 128;
+			col_B += 128;
+
+			chann.at<cv::Vec3b>(i,j) = cv::Vec3b(abs(int(col_B)), abs(int(col_G)), abs(int(col_R)));
+		}
+	}
+	cv::imwrite("LLG_Terfenol_" + std::to_string(int(time1)) + "_pelas_2d.png", chann);
 
 	for(i=0;i<=ndm;i++){
 		for(j=0;j<=ndm;j++){
