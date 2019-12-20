@@ -357,10 +357,12 @@ start: ;
 	for(k=0;k<3;k++){
 		for(i=0;i<3;i++){
 			for(j=0;j<3;j++){
-				if(i==j && i==k){
-					epsilon_zero_grad[i][j][k] = 1;
-				}else{
-					epsilon_zero_grad[i][j][k] = 0;
+				if(i==j){
+					if(i==k){
+						epsilon_zero_grad[i][j][k] = 1;
+					}else{
+						epsilon_zero_grad[i][j][k] = 0;
+					}
 				}
 			}
 		}
@@ -379,9 +381,9 @@ start: ;
 	}
 
 
-	//epsilon_homo[0][0] = s[0][0][0][0] * sigma_a[0][0] + s[0][0][1][1] * (sigma_a[1][1] + sigma_a[2][2]) + epsilon_sum[0][0]/SIZE;
-	//epsilon_homo[1][1] = s[0][0][0][0] * sigma_a[1][1] + s[0][0][1][1] * (sigma_a[0][0] + sigma_a[2][2]) + epsilon_sum[1][1]/SIZE;
-	//epsilon_homo[2][2] = s[0][0][0][0] * sigma_a[2][2] + s[0][0][1][1] * (sigma_a[0][0] + sigma_a[1][1]) + epsilon_sum[2][2]/SIZE;
+	epsilon_homo[0][0] = s[0][0][0][0] * sigma_a[0][0] + s[0][0][1][1] * (sigma_a[1][1] + sigma_a[2][2]) + epsilon_sum[0][0]/SIZE;
+	epsilon_homo[1][1] = s[0][0][0][0] * sigma_a[1][1] + s[0][0][1][1] * (sigma_a[0][0] + sigma_a[2][2]) + epsilon_sum[1][1]/SIZE;
+	epsilon_homo[2][2] = s[0][0][0][0] * sigma_a[2][2] + s[0][0][1][1] * (sigma_a[0][0] + sigma_a[1][1]) + epsilon_sum[2][2]/SIZE;
 	//epsilon_homo[0][1] = epsilon_homo[1][0] = 1/2 * s[0][1][0][1] * sigma_a[0][1] + epsilon_sum[0][1]/SIZE;
 	//epsilon_homo[1][2] = epsilon_homo[2][1] = 1/2 * s[0][1][0][1] * sigma_a[1][2] + epsilon_sum[1][2]/SIZE;
 	//epsilon_homo[2][0] = epsilon_homo[0][2] = 1/2 * s[0][1][0][1] * sigma_a[2][0] + epsilon_sum[2][0]/SIZE;
@@ -508,7 +510,7 @@ start: ;
 	for(i=0;i<=ndm;i++){
 		for(j=0;j<=ndm;j++){
 			for(k=0;k<3;k++){
-				P[i][j][k] = Plandau[i][j][k] + Pelastic[i][j][k] + Pme[i][j][k];
+				P[i][j][k] = Plandau[i][j][k] - Pelastic[i][j][k];
 			}
 		}
 	}
@@ -1014,9 +1016,9 @@ void graph_s1()
 			col_R=epsilon_zero[i][j][0][0];//場の色をRGBにて設定
 			col_G=epsilon_zero[i][j][1][1];
 			col_B=epsilon_zero[i][j][2][2];
-			col_R *= 10000;
-			col_G *= 10000;
-			col_B *= 10000;
+			col_R *= 100;
+			col_G *= 100;
+			col_B *= 100;
 			col_R += 128;
 			col_G += 128;
 			col_B += 128;
