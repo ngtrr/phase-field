@@ -1,3 +1,4 @@
+//g++ -o samplepleple example.cpp `pkg-config --cflags opencv4` `pkg-config --libs opencv4`
 //for magenetostriction model by llg equation with phase-field simulation only 2d
 
 /*
@@ -17,6 +18,9 @@ replot "check300_2d.txt" with vector lc rgb "#000000"
 #include <fftw3.h>
 #include <Eigen/Core>
 #include <Eigen/LU>
+
+//#include "wingxa.h"
+
 
 using namespace std;
 using namespace Eigen;
@@ -39,31 +43,37 @@ using namespace Eigen;
 
 	double filter[3][3][3];
 
-	//**************************	Terfenol-D	**************************************
-	double Ms = 8.0E+5;
-  	double K1 = -6.0E+4, K2 = 0.0E+4;
+
+    //*******************  FePd  ************************
+	/*double Ms = 6.02E+5;
+  	double K1 = 2.7E+3, K2 = -6.1E+3;
   	double ram100 = 0.0E+4, ram111 = 1.64E-3;
-  	double c11 = 1.41E+11, c12 = 6.48E+10, c44 = 4.87E+10;
-	double A = 9.0E-12;
+  	double c11 = 1.495E+11, c12 = 1.43E+12, c44 = 7.05E+10;
+	double A = 2.0E-11;
+  	double Astar;
+	double delt = 0.01;
+	double mu0 = 1.0;
+	double ld = 1.8E-8;*/
+
+    //******************* NiMnGa ************************
+	double Ms = 6.02E+5;
+  	double K1 = 2.7E+3, K2 = -6.1E+3;
+	double Ks = 1.65E+8;
+	double stretch = -0.034;
+  	double ram100 = 2.0E-2, ram111 = 1.64E-3;
+  	double c11 = 1.6E+11, c12 = 1.52E+11, c44 = 0.43E+11;
+	double A = 2.0E-8;
   	double Astar;
 	double delt = 0.1;
 	double mu0 = 1.0;
-	double ld = 1.0E-9;
+	double ld = 18E-9;
+	double G = 2.0E-8/(250*ld*ld);
 
-	//**************************	Galfenol	**************************************
-	/*double Ms = 1.432E+6;
-  	double K1 = 2.0E+4, K2 = -4.5E+4;
-  	double ram100 = 1.32E-4, ram111 = 0;
-  	double c11 = 1.96E+11, c12 = 1.56E+11, c44 = 1.23E+11;
-	double A = 1.3E-11;
-  	double Astar;
-	double delt = 0.1;
-	double mu0 = 1.0;
-	double ld = 1.0E-06;*/
+	double B = 4.00E+8;
 
-	double root3 = 1.73205080757;
-	double root2 = 1.41421356237;
-	double root6 = 2.44948974278;
+
+	double smob = 4.0E-9;
+	double ds_fac = 0.01;
 
 	double xf[SIZEX];
 	double yf[SIZEY];
@@ -74,8 +84,6 @@ using namespace Eigen;
 	double faifour_i[ND][ND];
 
 	double m_ave[3];
-	double m2_ave[3];
-	double mm_ave[3];
 
 	double N[3];
 
@@ -104,9 +112,27 @@ using namespace Eigen;
 	double Hms[ND][ND][3];
 	double Hexternal[ND][ND][3];
 	double Helastic[ND][ND][3];
-	double Hlandau[ND][ND][3];
-	double Hgradient[ND][ND][3];
 	double Hme[ND][ND][3];
+
+    double p[ND][ND][2];
+    double pfour[ND][ND][2];
+    double pfour_i[ND][ND][2];
+    double p_prefour[ND][ND][2];
+    double p_prefour_i[ND][ND][2];
+    double p_postfour[ND][ND][2];
+    double p_postfour_i[ND][ND][2];
+
+	double Dr[ND][ND][3];
+	double Drfour[ND][ND][3];
+	double Drfour_i[ND][ND][3];
+
+	double Dr_prefour[ND][ND][3];
+	double Dr_prefour_i[ND][ND][3];
+
+	double Dlandau[ND][ND][2];
+	double Dgradient[ND][ND][2];
+	double Dme[ND][ND][2];
+	double Delastic[ND][ND][2];
 
 	double fourier_output[ND][ND];
 	double fourier_output_i[ND][ND];
@@ -118,12 +144,22 @@ using namespace Eigen;
 	double epsilon_zerofour[ND][ND][3][3];
 	double epsilon_zerofour_i[ND][ND][3][3];
 
+	double epsilon_zero_prefour[ND][ND][3][3];
+	double epsilon_zero_prefour_i[ND][ND][3][3];
+
+	double epsilon_zero_postfour[ND][ND][3][3];
+	double epsilon_zero_postfour_i[ND][ND][3][3];
+
+	double epsilon_phase[3][3];
+	double epsilon_eigen[ND][ND][3][3];
+
+	double epsilon_sum[3][3];
 	double epsilon_homo[3][3];
 
 	double eta[ND][ND][3][3];
 
-	double epsilon_zero_grad[ND][ND][3][3][3];
-	double epsilon_homo_grad[3][3][3];
+	double epsilon_zero_grad[ND][ND][3][3][2];
+	double epsilon_zero_grad_m[ND][ND][3][3][3];
 	double eta_grad[ND][ND][3][3][3];
 
 	double c[3][3][3][3];
@@ -143,27 +179,14 @@ using namespace Eigen;
 
 	double sigma_a[3][3];
 
-	double e1[ND][ND];
-	double e2[ND][ND];
-	double e3[ND][ND];
-	double e4[ND][ND];
-	double e5[ND][ND];
-	double e6[ND][ND];
-
-	double e1_grad[ND][ND][3];
-	double e2_grad[ND][ND][3];
-	double e3_grad[ND][ND][3];
-	double e4_grad[ND][ND][3];
-	double e5_grad[ND][ND][3];
-	double e6_grad[ND][ND][3];
-
-	double Q1 ,Q2 ,Q3 ,Q4 ,Q5;
-	double B;
 
 	void ini000();			//初期場の設定サブル−チン
 	void graph_s1();		//組織描画サブル−チン
-	void graph_h();		//組織描画サブル−チン
-	void graph_mstar1();		//組織描画サブル−チン
+	void table();				//sinとcosのテーブルとビット反転テーブルの作成サブル−チン
+	void fft();					//１次元高速フーリエ変換
+	void rcfft();				//２次元高速フーリエ変換
+	void datsave();			//デ−タ保存サブル−チン
+
 	int DCexchange2D();
 	int fft3d();
 	int ifft3d();
@@ -172,21 +195,21 @@ using namespace Eigen;
 	void grad_u();
 	int four_axis(int k,int i,int j);
 
-int main(void){
 
-	int i;
-	int j;
-	int k;
-	int l;
-	int ii;
-	int jj;
-	int kk;
-	int ll;
+//******* メインプログラム ******************************************
+int main(void)
+{
 
+	int   i, j, k, l, ii, jj, kk, ll;		//整数
+	int   ip, im, jp, jm;							//整数
 	double mlength;
+	double alnn, nxx, nyy;
+	double nu0 = c12/(2*(c12+c44));
+	c11=c12 + 2.0*c44;
 
 	srand(time(NULL));
 
+//****** 計算条件および物質定数の設定 ****************************************
 	Astar = (2 * A)/(mu0 * Ms * Ms * ld * ld);
 	//Astar = 0.0625 ;
 	cout << "Astar : " << Astar << endl;
@@ -205,19 +228,19 @@ int main(void){
 			//Hanis[i][j][1] = 0;//(4 * K1)/(3 );// * 1.0E+7;//ok
 			//Hanis[i][j][2] = 0;//(4 * K1)/(3 );// * 1.0E+7;//ok
 
-			sigma_a[0][0] = 0;
-			sigma_a[1][1] = 0;
-			sigma_a[2][2] = 0;
-
-			sigma_a[0][1] = 0;
-			sigma_a[0][2] = 0;
-			sigma_a[1][0] = 0;
-			sigma_a[1][2] = 0;
-			sigma_a[2][0] = 0;
-			sigma_a[2][1] = 0;
-
 		}
 	}
+
+	sigma_a[0][0] = 0;
+	sigma_a[1][1] = 0;
+	sigma_a[2][2] = 0;
+
+	sigma_a[0][1] = 0;
+	sigma_a[0][2] = 0;
+	sigma_a[1][0] = 0;
+	sigma_a[1][2] = 0;
+	sigma_a[2][0] = 0;
+	sigma_a[2][1] = 0;
 
 	for(i=0;i<=ndm;i++){
 		xf[i] = i - nd2;
@@ -242,12 +265,11 @@ int main(void){
 	s[1][2][1][2] = s[0][2][0][2] = s[0][1][0][1] = s_matrix(3,3);
 	s[0][0][1][1] = s[0][0][2][2] = s[1][1][2][2] = s[1][1][0][0] = s[2][2][0][0] = s[2][2][1][1] = s_matrix(0,1);
 
-	//*** 初期場の設定 ***************
+
 	ini000();		//初期場の設定
 
-
-	//**** シミュレーションスタート ******************************
-	start: ;
+//**** シミュレーションスタート ******************************
+start: ;
 
 	for(i=0;i<=ndm;i++){
 		for(j=0;j<=ndm;j++){
@@ -259,8 +281,533 @@ int main(void){
 
 	//if(time1<=100.){Nstep=10;} else{Nstep=200;}		//データ保存する時間間隔の変更
 	//if((((int)(time1) % Nstep)==0)) {datsave();} 	//一定繰返しカウント毎に組織データを保存
-	if((((int)(time1) % 100)==0)) {graph_s1();}//graph_fai();graph_h();graph_mstar1();} 		//一定繰返しカウント毎に組織を表示
+	if((((int)(time1) % 100)==0)) {graph_s1();} 		//一定繰返しカウント毎に組織を表示
 	//if((((int)(time1) % 100)==0)) {datsave();} 		//一定繰返しカウント毎にデータを保存
+
+
+
+
+	epsilon_phase[0][0] = stretch;
+	epsilon_phase[0][1] = -1/2 * stretch;
+	epsilon_phase[0][2] = -1/2 * stretch;
+
+	epsilon_phase[1][0] = -1/2 * stretch;
+	epsilon_phase[1][1] = stretch;
+	epsilon_phase[1][2] = -1/2 * stretch;
+
+	epsilon_phase[2][0] = -1/2 * stretch;
+	epsilon_phase[2][1] = -1/2 * stretch;
+	epsilon_phase[2][2] = stretch;
+
+	for(i=0;i<=ndm;i++){
+		for(j=0;j<=ndm;j++){
+			for(k=0;k<3;k++){
+				epsilon_zero[i][j][k][k] = epsilon_phase[0][k] * p[i][j][0] + epsilon_phase[1][k] * (1-p[i][j][0])*p[i][j][1] + epsilon_phase[2][k] * (1-p[i][j][0])*(1-p[i][j][1]) + 3/2*ram100*( m[i][j][k]*m[i][j][k] - 1/3);
+			}
+		}
+	}
+
+
+//***** 化学ポテンシャル ************************
+	for(i=0;i<=ndm;i++){
+		for(j=0;j<=ndm;j++){
+			Dlandau[i][j][0] = Ks * (2*p[i][j][0]-6*p[i][j][0]*p[i][j][0]+4*p[i][j][0]*p[i][j][0]*p[i][j][0]);
+			Dlandau[i][j][1] = Ks * (2*p[i][j][1]-6*p[i][j][1]*p[i][j][1]+4*p[i][j][1]*p[i][j][1]*p[i][j][1]);
+		}
+	}
+
+
+
+//***** 勾配ポテンシャル ***********************
+	/*for(i=0;i<=ndm;i++){
+		for(j=0;j<=ndm;j++){
+			ip=i+1; im=i-1; jp=j+1; jm=j-1;
+			if(i==ndm){ip=0;}  if(i==0){im=ndm;}	//周期的境界条件
+			if(j==ndm){jp=0;}  if(j==0){jm=ndm;}
+			for(k=0;k<3;k++){
+				Pgradient[i][j][k] = -1 * G * (epsilon_zero[ip][j][k][k] + epsilon_zero[im][j][k][k] + epsilon_zero[i][jp][k][k] + epsilon_zero[i][jm][k][k] - 4.0*epsilon_zero[i][j][k][k]);
+			}
+		}
+	}*/
+
+
+//***** 磁気弾性ポテンシャル ***********************
+	/*for(i=0;i<=ndm;i++){
+		for(j=0;j<=ndm;j++){
+			for(k=0;k<3;k++){
+				Dme[i][j][k] = B * (m[i][j][k]*m[i][j][k] - 1/3);
+			}
+		}
+	}*/
+
+	//おかしい
+	for(k=0;k<3;k++){
+		for(i=0;i<=ndm;i++){
+			for(j=0;j<=ndm;j++){
+				epsilon_zero_grad[i][j][k][k][0] = epsilon_phase[0][k] - epsilon_phase[1][k] * p[i][j][1]　- epsilon_phase[2][k] * (1-p[i][j][1]);
+				epsilon_zero_grad[i][j][k][k][1] = epsilon_phase[1][k] * (1-p[i][j][0]) - epsilon_phase[2][k] * (1-p[i][j][0]);
+			}
+		}
+	}
+
+	for(k=0;k<3;k++){
+		for(i=0;i<=ndm;i++){
+			for(j=0;j<=ndm;j++){
+				epsilon_zero_grad_m[i][j][k][k][k] = 3*ram100*m[i][j][k];
+			}
+		}
+	}
+
+
+	for(ii=0;ii<3;ii++){
+		for(jj=0;jj<3;jj++){
+			epsilon_sum[ii][jj] = 0;
+			for(i=0;i<=ndm;i++){
+				for(j=0;j<=ndm;j++){
+					epsilon_sum[ii][jj] += epsilon_zero[i][j][ii][jj];
+				}
+			}
+		}
+	}
+
+
+	epsilon_homo[0][0] = epsilon_sum[0][0]/SIZE;
+	epsilon_homo[1][1] = epsilon_sum[1][1]/SIZE;
+	epsilon_homo[2][2] = epsilon_sum[2][2]/SIZE;
+	//epsilon_homo[0][0] = s[0][0][0][0] * sigma_a[0][0] + s[0][0][1][1] * (sigma_a[1][1] + sigma_a[2][2]) + epsilon_sum[0][0]/SIZE;
+	//epsilon_homo[1][1] = s[0][0][0][0] * sigma_a[1][1] + s[0][0][1][1] * (sigma_a[0][0] + sigma_a[2][2]) + epsilon_sum[1][1]/SIZE;
+	//epsilon_homo[2][2] = s[0][0][0][0] * sigma_a[2][2] + s[0][0][1][1] * (sigma_a[0][0] + sigma_a[1][1]) + epsilon_sum[2][2]/SIZE;
+	//epsilon_homo[0][1] = epsilon_homo[1][0] = 1/2 * s[0][1][0][1] * sigma_a[0][1] + epsilon_sum[0][1]/SIZE;
+	//epsilon_homo[1][2] = epsilon_homo[2][1] = 1/2 * s[0][1][0][1] * sigma_a[1][2] + epsilon_sum[1][2]/SIZE;
+	//epsilon_homo[2][0] = epsilon_homo[0][2] = 1/2 * s[0][1][0][1] * sigma_a[2][0] + epsilon_sum[2][0]/SIZE;
+
+	for(k=0;k<3;k++){
+		for(i=0;i<=ndm;i++){
+			for(j=0;j<=ndm;j++){
+				fourier_input[i][j] = epsilon_zero[i][j][k][k];
+			}
+		}
+		fft3d();
+		for(i=0;i<=ndm;i++){
+			for(j=0;j<=ndm;j++){
+				epsilon_zerofour[i][j][k][k] = fourier_output[i][j];
+				epsilon_zerofour_i[i][j][k][k] = fourier_output_i[i][j];
+			}
+		}
+	}
+
+
+	/*for(i=0;i<=ndm;i++){
+		for(j=0;j<=ndm;j++){
+			Dfour[i][j] = c44 * c44 * c11 * (xf[i] * xf[i] + yf[j] * yf[j] + zf[k] * zf[k]) * (xf[i] * xf[i] + yf[j] * yf[j] + zf[k] * zf[k]) * (xf[i] * xf[i] + yf[j] * yf[j] + zf[k] * zf[k]) + c44 * (c11-c12-2*c44) * (c11+c12) * (xf[i] * xf[i] + yf[j] * yf[j] + zf[k] * zf[k]) * (xf[i] * xf[i] * yf[j] * yf[j] + zf[k] * zf[k] * yf[j] * yf[j] + xf[i] * xf[i] * zf[k] * zf[k] ) + (c11 - c12 - 2*c44) * (c11 - c12 - 2*c44) * (c11+2*c12+c44) * xf[i] * xf[i] * yf[j] * yf[j] * zf[k] * zf[k];
+			Nfour[i][j][0][0] = c44 * c44 * (xf[i] * xf[i] + yf[j] * yf[j] + zf[k] * zf[k]) * (xf[i] * xf[i] + yf[j] * yf[j] + zf[k] * zf[k]) + c44 * (c11 - c44) * (xf[i] * xf[i] + yf[j] * yf[j] + zf[k] * zf[k]) * (yf[j] * yf[j] + zf[k] * zf[k]) + (c11-c12-2*c44) * (c11+c12) * yf[j] * yf[j] * zf[k] * zf[k];
+			Nfour[i][j][1][1] = c44 * c44 * (xf[i] * xf[i] + yf[j] * yf[j] + zf[k] * zf[k]) * (xf[i] * xf[i] + yf[j] * yf[j] + zf[k] * zf[k]) + c44 * (c11 - c44) * (xf[i] * xf[i] + yf[j] * yf[j] + zf[k] * zf[k]) * (xf[i] * xf[i] + zf[k] * zf[k]) + (c11-c12-2*c44) * (c11+c12) * xf[i] * xf[i] * zf[k] * zf[k];
+			Nfour[i][j][2][2] = c44 * c44 * (xf[i] * xf[i] + yf[j] * yf[j] + zf[k] * zf[k]) * (xf[i] * xf[i] + yf[j] * yf[j] + zf[k] * zf[k]) + c44 * (c11 - c44) * (xf[i] * xf[i] + yf[j] * yf[j] + zf[k] * zf[k]) * (yf[j] * yf[j] + xf[i] * xf[i]) + (c11-c12-2*c44) * (c11+c12) * yf[j] * yf[j] * xf[i] * xf[i];
+			Nfour[i][j][0][1] = Nfour[i][j][1][0] = -1 * (c12 + c44) * xf[i] * yf[j] * (c44 * (xf[i] * xf[i] + yf[j] * yf[j] + zf[k] * zf[k]) + (c11-c12-2*c44) * zf[k] * zf[k]);
+			Nfour[i][j][0][2] = Nfour[i][j][2][0] = -1 * (c12 + c44) * zf[k] * xf[i] * (c44 * (xf[i] * xf[i] + yf[j] * yf[j] + zf[k] * zf[k]) + (c11-c12-2*c44) * yf[j] * yf[j]);
+			Nfour[i][j][1][2] = Nfour[i][j][2][1] = -1 * (c12 + c44) * zf[k] * yf[j] * (c44 * (xf[i] * xf[i] + yf[j] * yf[j] + zf[k] * zf[k]) + (c11-c12-2*c44) * xf[i] * xf[i]);
+		}
+	}
+
+	for(i=0;i<=ndm;i++){
+		for(j=0;j<=ndm;j++){
+			for(kk=0;kk<3;kk++){
+				ufour[i][j][kk] = 0;
+				ufour_i[i][j][kk] = 0;
+				for(jj=0;jj<3;jj++){
+					for(ii=0;ii<3;ii++){
+						for(ll=0;ll<3;ll++){
+							if(Dfour[i][j] == 0 ){
+								ufour[i][j][kk] += 0;
+								ufour_i[i][j][kk] += 0;
+							}else{
+								//ufour[i][j][kk] += 1 / (c[ii][jj][kk][ll] * four_axis(jj, i, j) * four_axis(ll, i, j)) * four_axis(jj, i, j) * c[ii][jj][kk][ll] * epsilon_zerofour_i[i][j][kk][ll];
+								//ufour_i[i][j][kk] += -1 / (c[ii][jj][kk][ll] * four_axis(jj, i, j) * four_axis(ll, i, j)) * four_axis(jj, i, j) * c[ii][jj][kk][ll] * epsilon_zerofour[i][j][kk][ll];
+								ufour[i][j][kk] += 1 * four_axis(jj, i, j) * c[ii][jj][kk][ll] * epsilon_zerofour_i[i][j][kk][ll] * Nfour[i][j][kk][jj] / Dfour[i][j];
+								ufour_i[i][j][kk] += -1 * four_axis(jj, i, j) * c[ii][jj][kk][ll] * epsilon_zerofour[i][j][kk][ll] * Nfour[i][j][kk][jj] / Dfour[i][j];
+							}
+							//ufour[i][j][kk] += 1 * four_axis(jj, i, j) * c[ii][jj][kk][ll] * epsilon_zerofour_i[i][j][kk][ll] * Nfour[i][j][kk][jj] / Dfour[i][j];
+							//ufour_i[i][j][kk] += -1 * four_axis(jj, i, j) * c[ii][jj][kk][ll] * epsilon_zerofour[i][j][kk][ll] * Nfour[i][j][kk][jj] / Dfour[i][j];
+						}
+					}
+				}
+				//cout << "ufour " << i << ", " << j << ", " << kk << "   :    " << ufour[i][j][kk] << "  -  " << ufour_i[i][j][kk] << endl;
+			}
+		}
+	}
+
+	for(l=0;l<3;l++){
+		for(k=0;k<3;k++){
+			for(i=0;i<=ndm;i++){
+				for(j=0;j<=ndm;j++){
+					fourier_output[i][j] = -1 * ufour_i[i][j][k] * four_axis(l, i, j) + -1 * ufour_i[i][j][l] * four_axis(k, i, j);
+					fourier_output_i[i][j] = ufour[i][j][k] * four_axis(l, i, j) + ufour[i][j][l] * four_axis(k, i, j);
+				}
+			}
+			ifft3d();
+			for(i=0;i<=ndm;i++){
+				for(j=0;j<=ndm;j++){
+					eta[i][j][k][l] = fourier_input[i][j];
+				}
+			}
+		}
+	}
+	
+	for(kk=0;kk<3;kk++){
+		for(i=0;i<=ndm;i++){
+			for(j=0;j<=ndm;j++){
+
+				fourier_output[i][j]   = 0;
+				fourier_output_i[i][j] = 0;
+
+				for(ii=0;ii<3;ii++){
+					for(jj=0;jj<3;jj++){
+						for(ll=0;ll<3;ll++){
+
+							if(Dfour[i][j] == 0 ){
+								fourier_output[i][j] += 0;
+								fourier_output_i[i][j] += 0;
+							}else{
+								fourier_output[i][j]   += four_axis(jj, i, j) * four_axis(kk, i, j) * c[ii][jj][ll][ll] * epsilon_zerofour[i][j][ll][ll]   * Nfour[i][j][ii][kk] / Dfour[i][j];
+								fourier_output_i[i][j] += four_axis(jj, i, j) * four_axis(kk, i, j) * c[ii][jj][ll][ll] * epsilon_zerofour_i[i][j][ll][ll] * Nfour[i][j][ii][kk] / Dfour[i][j];
+							}
+
+						}
+					}
+				}
+
+
+			}
+		}
+
+		ifft3d();
+
+		for(i=0;i<=ndm;i++){
+			for(j=0;j<=ndm;j++){
+				//eta[i][j][kk][kk] = fourier_input[i][j];
+			}
+		}
+
+	}*/
+
+	for(i=0;i<=ndm;i++){
+		if(i<=nd2-1){ii=nd2-i;}  if(i>=nd2){ii=i-nd2;}
+		for(j=0;j<=ndm;j++){
+			if(j<=nd2-1){jj=nd2-j;}  if(j>=nd2){jj=j-nd2;}
+			alnn=sqrt((double)ii*(double)ii+(double)jj*(double)jj);
+			if(alnn==0.){alnn=1.;}
+			nxx=(double)ii/alnn*(double)ii/alnn;
+			nyy=(double)jj/alnn*(double)jj/alnn;
+			fourier_output[i][j]   = (nxx*(2.0*nu0-nyy-nu0/(1.0-nu0)*nxx)/(1.0-2.0*nu0))*(epsilon_zerofour[i][j][1][1] + epsilon_zerofour[i][j][2][2])     + (nxx*(2.0*(1.0-nu0)-nxx-nu0/(1.0-nu0)*nyy)/(1.0-2.0*nu0))*epsilon_zerofour[i][j][0][0];
+			fourier_output_i[i][j] = (nxx*(2.0*nu0-nyy-nu0/(1.0-nu0)*nxx)/(1.0-2.0*nu0))*(epsilon_zerofour_i[i][j][1][1] + epsilon_zerofour_i[i][j][2][2]) + (nxx*(2.0*(1.0-nu0)-nxx-nu0/(1.0-nu0)*nyy)/(1.0-2.0*nu0))*epsilon_zerofour_i[i][j][0][0];
+		}
+	}
+	ifft3d();
+	for(i=0;i<=ndm;i++){
+		for(j=0;j<=ndm;j++){
+			eta[i][j][0][0] = fourier_input[i][j];
+		}
+	}
+
+	for(i=0;i<=ndm;i++){
+		if(i<=nd2-1){ii=nd2-i;}  if(i>=nd2){ii=i-nd2;}
+		for(j=0;j<=ndm;j++){
+			if(j<=nd2-1){jj=nd2-j;}  if(j>=nd2){jj=j-nd2;}
+			alnn=sqrt((double)ii*(double)ii+(double)jj*(double)jj);
+			if(alnn==0.){alnn=1.;}
+			nxx=(double)ii/alnn*(double)ii/alnn;
+			nyy=(double)jj/alnn*(double)jj/alnn;
+			fourier_output[i][j]   = (nyy*(2.0*nu0-nxx-nu0/(1.0-nu0)*nyy)/(1.0-2.0*nu0))*(epsilon_zerofour[i][j][0][0]   + epsilon_zerofour[i][j][2][2])   + (nyy*(2.0*(1.0-nu0)-nyy-nu0/(1.0-nu0)*nxx)/(1.0-2.0*nu0))*epsilon_zerofour[i][j][1][1];
+			fourier_output_i[i][j] = (nyy*(2.0*nu0-nxx-nu0/(1.0-nu0)*nyy)/(1.0-2.0*nu0))*(epsilon_zerofour_i[i][j][0][0] + epsilon_zerofour_i[i][j][2][2]) + (nyy*(2.0*(1.0-nu0)-nyy-nu0/(1.0-nu0)*nxx)/(1.0-2.0*nu0))*epsilon_zerofour_i[i][j][1][1];
+		}
+	}
+	ifft3d();
+	for(i=0;i<=ndm;i++){
+		for(j=0;j<=ndm;j++){
+			eta[i][j][1][1] = fourier_input[i][j];
+		}
+	}
+
+	/*for(i=0;i<=ndm;i++){
+		if(i<=nd2-1){ii=nd2-i;}  if(i>=nd2){ii=i-nd2;}
+		for(j=0;j<=ndm;j++){
+			if(j<=nd2-1){jj=nd2-j;}  if(j>=nd2){jj=j-nd2;}
+			alnn=sqrt((double)ii*(double)ii+(double)jj*(double)jj);
+			if(alnn==0.){alnn=1.;}
+			nxx=(double)ii/alnn*(double)ii/alnn;
+			nyy=(double)jj/alnn*(double)jj/alnn;
+			fourier_output[i][j]   = (nyy*(2.0*nu0-nxx-nu0/(1.0-nu0)*nyy)/(1.0-2.0*nu0))*(epsilon_zerofour[i][j][0][0]   + epsilon_zerofour[i][j][1][1])   + (nyy*(2.0*(1.0-nu0)-nyy-nu0/(1.0-nu0)*nxx)/(1.0-2.0*nu0))*epsilon_zerofour[i][j][2][2];
+			fourier_output_i[i][j] = (nyy*(2.0*nu0-nxx-nu0/(1.0-nu0)*nyy)/(1.0-2.0*nu0))*(epsilon_zerofour_i[i][j][0][0] + epsilon_zerofour_i[i][j][1][1]) + (nyy*(2.0*(1.0-nu0)-nyy-nu0/(1.0-nu0)*nxx)/(1.0-2.0*nu0))*epsilon_zerofour_i[i][j][2][2];
+		}
+	}
+	ifft3d();
+	for(i=0;i<=ndm;i++){
+		for(j=0;j<=ndm;j++){
+			eta[i][j][2][2] = fourier_input[i][j];
+		}
+	}*/
+
+
+
+
+	//grad_u();
+
+	/*for(l=0;l<3;l++){
+		for(k=0;k<3;k++){
+			for(i=0;i<=ndm;i++){
+				for(j=0;j<=ndm;j++){
+					cout << "ugrad  "<< i << j << k << k << "  -  " << u_grad[i][j][k][k] << endl;
+					eta[i][j][k][l] = 0.5 * (u_grad[i][j][k][l] + u_grad[i][j][l][k]);
+					cout << "eta  "<< i << j << k << l << "  -  " << eta[i][j][k][l] << endl;
+				}
+			}
+		}
+	}*/
+	
+	for(k=0;k<3;k++){
+		for(i=0;i<=ndm;i++){
+			for(j=0;j<=ndm;j++){
+				//cout << "eta  "<< i << "," << j << "," << k << "," << k << "  -  " << eta[i][j][k][k] << endl;
+			}
+		}
+	}
+
+	/*for(i=0;i<=ndm;i++){
+		for(j=0;j<=ndm;j++){
+			for(k=0;k<2;k++){
+				Delastic[i][j][k] = 0;
+
+				for(ii=0;ii<3;ii++){
+					for(jj=0;jj<3;jj++){
+						for(kk=0;kk<3;kk++){
+							for(ll=0;ll<3;ll++){
+								Delastic[i][j][k] += c[ii][jj][kk][ll] * (epsilon_homo[ii][jj] + eta[i][j][ii][jj] - epsilon_zero[i][j][ii][jj]) * epsilon_zero_grad[kk][ll][k];
+							}
+						}
+					}
+				}
+
+			}
+		}
+	}*/
+
+	for(i=0;i<=ndm;i++){
+		for(j=0;j<=ndm;j++){
+			for(k=0;k<2;k++){
+				Delastic[i][j][k] = 0;
+
+				for(ii=0;ii<2;ii++){
+					for(ll=0;ll<2;ll++){
+						Delastic[i][j][k] += (epsilon_homo[ii][ii] + eta[i][j][ii][ii] - epsilon_zero[i][j][ii][ii]) * c[ll][ll][ii][ii] * epsilon_zero_grad[i][j][ll][ll][k];
+					}
+				}
+
+			}
+
+			for(k=0;k<3;k++){
+				Helastic[i][j][k] = 0;
+
+				for(ii=0;ii<2;ii++){
+					for(ll=0;ll<2;ll++){
+						Helastic[i][j][k] += 1/(mu0*Ms)*((epsilon_homo[ii][ii] + eta[i][j][ii][ii] - epsilon_zero[i][j][ii][ii]) * c[ll][ll][ii][ii] * epsilon_zero_grad_m[i][j][ll][ll][k]);
+					}
+				}
+
+			}
+		}
+	}
+
+//***** 勾配ポテンシャル ***********************
+	for(i=0;i<=ndm;i++){
+		for(j=0;j<=ndm;j++){
+			for(k=0;k<2;k++){
+				ip=i+1; im=i-1; jp=j+1; jm=j-1;
+				if(i==ndm){ip=0;}  if(i==0){im=ndm;}	//周期的境界条件
+				if(j==ndm){jp=0;}  if(j==0){jm=ndm;}
+				Dgradient[i][j][k] =  G *(p[ip][j][k]+p[im][j][k]+p[i][jp][k]+p[i][jm][k]-4.0*p[i][j][k]);
+			}
+		}
+	}
+
+	//cout << " ********************************************************** " << endl;
+	//cout << "Dlandau - x   " << dec << -1 * Dlandau[10][10][0] << endl;
+	//cout << "Dgradient - x   " << dec << -1 * Dgradient[10][10][0] << endl;
+	////cout << "Dme - x   " << dec << -1 * Dme[10][10][0] << endl;
+	//cout << "Delastic - x   " << dec << -1 * Delastic[10][10][0] << endl;
+	//cout << "p0  " << p[10][10][0] << endl;
+	//cout << "p1  " << p[10][10][1] << endl;
+
+
+
+	for(i=0;i<=ndm;i++){
+		for(j=0;j<=ndm;j++){
+			for(k=0;k<2;k++){
+				Dr[i][j][k] = Dlandau[i][j][k] - Delastic[i][j][k];
+			}
+		}
+	}
+
+	if(time1 >= 0){
+
+		for(k=0;k<2;k++){
+			for(i=0;i<=ndm;i++){
+				for(j=0;j<=ndm;j++){
+					fourier_input[i][j] = Dr[i][j][k];
+				}
+			}
+			fft3d();
+			for(i=0;i<=ndm;i++){
+				for(j=0;j<=ndm;j++){
+					Drfour[i][j][k] = fourier_output[i][j];
+					Drfour_i[i][j][k] = fourier_output_i[i][j];
+				}
+			}
+		}
+
+
+		for(k=0;k<2;k++){
+			for(i=0;i<=ndm;i++){
+				for(j=0;j<=ndm;j++){
+					fourier_input[i][j] = p[i][j][k];
+				}
+			}
+			fft3d();
+			for(i=0;i<=ndm;i++){
+				for(j=0;j<=ndm;j++){
+					pfour[i][j][k] = fourier_output[i][j];
+					pfour_i[i][j][k] = fourier_output_i[i][j];
+				}
+			}
+		}
+
+		for(k=0;k<2;k++){
+			for(i=0;i<=ndm;i++){
+				for(j=0;j<=ndm;j++){
+					p_postfour[i][j][k] = (pfour[i][j][k] + -1*smob*delt*Drfour[i][j][k])/(1 + G*(four_axis(0,i,j)*four_axis(0,i,j) + four_axis(1,i,j)*four_axis(1,i,j) + four_axis(2,i,j)*four_axis(2,i,j))*smob*delt);
+					p_postfour_i[i][j][k] = (pfour_i[i][j][k] + -1*smob*delt*Drfour_i[i][j][k])/(1 + G*(four_axis(0,i,j)*four_axis(0,i,j) + four_axis(1,i,j)*four_axis(1,i,j) + four_axis(2,i,j)*four_axis(2,i,j))*smob*delt);
+				}
+			}
+		}
+
+	}else{
+
+
+		for(k=0;k<2;k++){
+			for(i=0;i<=ndm;i++){
+				for(j=0;j<=ndm;j++){
+					Dr_prefour[i][j][k] = Drfour[i][j][k];
+					Dr_prefour_i[i][j][k] = Drfour_i[i][j][k];
+
+					p_prefour[i][j][k] = pfour[i][j][k];
+					p_prefour_i[i][j][k] = pfour_i[i][j][k];
+				}
+			}
+		}
+
+
+
+		for(k=0;k<2;k++){
+			for(i=0;i<=ndm;i++){
+				for(j=0;j<=ndm;j++){
+					fourier_input[i][j] = Dr[i][j][k];
+				}
+			}
+			fft3d();
+			for(i=0;i<=ndm;i++){
+				for(j=0;j<=ndm;j++){
+					Drfour[i][j][k] = fourier_output[i][j];
+					Drfour_i[i][j][k] = fourier_output_i[i][j];
+				}
+			}
+		}
+
+
+		for(k=0;k<2;k++){
+			for(i=0;i<=ndm;i++){
+				for(j=0;j<=ndm;j++){
+					fourier_input[i][j] = p[i][j][k];
+				}
+			}
+			fft3d();
+			for(i=0;i<=ndm;i++){
+				for(j=0;j<=ndm;j++){
+					pfour[i][j][k] = fourier_output[i][j];
+					pfour_i[i][j][k] = fourier_output_i[i][j];
+				}
+			}
+		}
+
+		for(k=0;k<2;k++){
+			for(i=0;i<=ndm;i++){
+				for(j=0;j<=ndm;j++){
+					p_postfour[i][j][k] = ((4*p_prefour[i][j][k] - pfour[i][j][k]) + 2*-1*smob*delt*(2*Drfour[i][j][k] - Dr_prefour[i][j][k]))/(3 + 2*G*(four_axis(0,i,j)*four_axis(0,i,j) + four_axis(1,i,j)*four_axis(1,i,j) + four_axis(2,i,j)*four_axis(2,i,j))*smob*delt);
+					p_postfour_i[i][j][k] = ((4*p_prefour_i[i][j][k] - pfour_i[i][j][k]) + 2*-1*smob*delt*(2*Drfour_i[i][j][k] - Dr_prefour_i[i][j][k]))/(3 + 2*G*(four_axis(0,i,j)*four_axis(0,i,j) + four_axis(1,i,j)*four_axis(1,i,j) + four_axis(2,i,j)*four_axis(2,i,j))*smob*delt);
+				}
+			}
+		}
+
+
+	}
+
+
+	for(k=0;k<2;k++){
+		for(i=0;i<=ndm;i++){
+			for(j=0;j<=ndm;j++){
+				fourier_output[i][j] = p_postfour[i][j][k];
+				fourier_output_i[i][j] = p_postfour_i[i][j][k];
+			}
+		}
+		ifft3d();
+		for(i=0;i<=ndm;i++){
+			for(j=0;j<=ndm;j++){
+				p[i][j][k] = fourier_input[i][j];
+			}
+		}
+
+		for(i=0;i<=ndm;i++){
+			for(j=0;j<=ndm;j++){
+				if(p[i][j][k] > 1){
+					p[i][j][k] = 1;
+				}
+				if(p[i][j][k] < 0){
+					p[i][j][k] = 0;
+				}
+			}
+		}
+
+	}
+
+	/*for(i=0;i<=ndm;i++){
+		for(j=0;j<=ndm;j++){
+			for(k=0;k<3;k++){
+				p[i][j][k] = p[i][j][k] - smob * Dr[i][j][k] * delt;
+			}
+		}
+	}
+
+	for(k=0;k<2;k++){
+		for(i=0;i<=ndm;i++){
+			for(j=0;j<=ndm;j++){
+				if(p[i][j][k] > 1){
+					p[i][j][k] = 1;
+				}
+				if(p[i][j][k] < 0){
+					p[i][j][k] = 0;
+				}
+			}
+		}
+	}*/
+
+
+	//cout << "epsilon_zero - x   " << dec << epsilon_zero[10][10][0][0] << endl;
+	//cout << "epsilon_zero - y   " << dec << epsilon_zero[10][10][1][1] << endl;
+	//cout << "epsilon_zero - z   " << dec << epsilon_zero[10][10][2][2] << endl;
+	/*cout << "epsilon_zero - xy  " << dec << epsilon_zero[10][10][0][1] << endl;
+	cout << "epsilon_zero - yz  " << dec << epsilon_zero[10][10][1][2] << endl;
+	cout << "epsilon_zero - zx  " << dec << epsilon_zero[10][10][2][0] << endl;*/
+	//cout << "m  -  x   " << dec << m[10][10][0] << endl;
+	//cout << "m  -  y   " << dec << m[10][10][1] << endl;
+	//cout << "m  -  z   " << dec << m[10][10][2] << endl;
 
 
 	for(k=0;k<3;k++){
@@ -313,18 +860,13 @@ int main(void){
 
 	for(k=0;k<3;k++){
 		m_ave[k] = 0;
-		m2_ave[k] = 0;
-		mm_ave[k] = 0;
 		for(i=0;i<=ndm;i++){
 			for(j=0;j<=ndm;j++){
 				m_ave[k] += m[i][j][k] / SIZE;
-				m2_ave[k] += m[i][j][k] * m[i][j][k] / SIZE;
-				mm_ave[k] += m[i][j][(k + 1) % 3] * m[i][j][(k + 2) % 3] / SIZE;
 			}
 		}
 	}
 
-	//cout << "m_ave  :   " << m_ave[0] << " : " << m_ave[1] << " : "  << m_ave[2] << endl;
 	for(i=0;i<=ndm;i++){
 		for(j=0;j<=ndm;j++){
 			for(k=0;k<3;k++){
@@ -335,182 +877,13 @@ int main(void){
 			}
 		}
 	}
-	
 
 
 	for(i=0;i<=ndm;i++){
 		for(j=0;j<=ndm;j++){
-			epsilon_zero[i][j][0][0] = 3/2 * ram100 * (m[i][j][0] * m[i][j][0] - 1/3);
-			epsilon_zero[i][j][1][1] = 3/2 * ram100 * (m[i][j][1] * m[i][j][1] - 1/3);
-			epsilon_zero[i][j][2][2] = 3/2 * ram100 * (m[i][j][2] * m[i][j][2] - 1/3);
-			epsilon_zero[i][j][0][1] = epsilon_zero[i][j][1][0] = 3/2 * ram111 * m[i][j][0] * m[i][j][1];
-			epsilon_zero[i][j][0][2] = epsilon_zero[i][j][2][0] = 3/2 * ram111 * m[i][j][0] * m[i][j][2];
-			epsilon_zero[i][j][1][2] = epsilon_zero[i][j][2][1] = 3/2 * ram111 * m[i][j][1] * m[i][j][2];
-
-
-			epsilon_zero_grad[i][j][0][0][0] = 3/2 * ram100 * (2 * m[i][j][0]);
-			epsilon_zero_grad[i][j][0][1][0] = epsilon_zero_grad[i][j][1][0][0] = 3/2 * ram111 * m[i][j][1];
-			epsilon_zero_grad[i][j][0][2][0] = epsilon_zero_grad[i][j][2][0][0] = 3/2 * ram111 * m[i][j][2];
-
-			epsilon_zero_grad[i][j][1][1][1] = 3/2 * ram100 * (2 * m[i][j][1]);
-			epsilon_zero_grad[i][j][0][1][1] = epsilon_zero_grad[i][j][1][0][1] = 3/2 * ram111 * m[i][j][0];
-			epsilon_zero_grad[i][j][1][2][1] = epsilon_zero_grad[i][j][2][1][1] = 3/2 * ram111 * m[i][j][2];
-
-			epsilon_zero_grad[i][j][2][2][2] = 3/2 * ram100 * (2 * m[i][j][2]);
-			epsilon_zero_grad[i][j][0][2][2] = epsilon_zero_grad[i][j][2][0][2] = 3/2 * ram111 * m[i][j][0];
-			epsilon_zero_grad[i][j][1][2][2] = epsilon_zero_grad[i][j][2][1][2] = 3/2 * ram111 * m[i][j][1];
-		}
-	}
-
-	epsilon_homo[0][0] = s[0][0][0][0] * sigma_a[0][0] + s[0][0][1][1] * (sigma_a[1][1] + sigma_a[2][2]) + 3/2 * ram100 * (m2_ave[0] - 1/3);
-	epsilon_homo[1][1] = s[0][0][0][0] * sigma_a[1][1] + s[0][0][1][1] * (sigma_a[0][0] + sigma_a[2][2]) + 3/2 * ram100 * (m2_ave[1] - 1/3);
-	epsilon_homo[2][2] = s[0][0][0][0] * sigma_a[2][2] + s[0][0][1][1] * (sigma_a[0][0] + sigma_a[1][1]) + 3/2 * ram100 * (m2_ave[2] - 1/3);
-	epsilon_homo[0][1] = epsilon_homo[1][0] = 1/2 * s[0][1][0][1] * sigma_a[0][1] + 3/2 * ram111 * mm_ave[2];
-	epsilon_homo[1][2] = epsilon_homo[2][1] = 1/2 * s[0][1][0][1] * sigma_a[1][2] + 3/2 * ram111 * mm_ave[0];
-	epsilon_homo[2][0] = epsilon_homo[0][2] = 1/2 * s[0][1][0][1] * sigma_a[2][0] + 3/2 * ram111 * mm_ave[1];
-
-	for(l=0;l<3;l++){
-		for(k=0;k<3;k++){
-			for(i=0;i<=ndm;i++){
-				for(j=0;j<=ndm;j++){
-					fourier_input[i][j] = epsilon_zero[i][j][k][l];
-				}
-			}
-			fft3d();
-			for(i=0;i<=ndm;i++){
-				for(j=0;j<=ndm;j++){
-					epsilon_zerofour[i][j][k][l] = fourier_output[i][j];
-					epsilon_zerofour_i[i][j][k][l] = fourier_output_i[i][j];
-				}
-			}
-		}
-	}
-
-
-	for(i=0;i<=ndm;i++){
-		for(j=0;j<=ndm;j++){
-			Dfour[i][j] = c44 * c44 * c11 * (xf[i] * xf[i] + yf[j] * yf[j] + zf[k] * zf[k]) * (xf[i] * xf[i] + yf[j] * yf[j] + zf[k] * zf[k]) * (xf[i] * xf[i] + yf[j] * yf[j] + zf[k] * zf[k]) + c44 * (c11-c12-2*c44) * (c11+c12) * (xf[i] * xf[i] + yf[j] * yf[j] + zf[k] * zf[k]) * (xf[i] * xf[i] * yf[j] * yf[j] + zf[k] * zf[k] * yf[j] * yf[j] + xf[i] * xf[i] * zf[k] * zf[k] ) + (c11 - c12 - 2*c44) * (c11 - c12 - 2*c44) * (c11+2*c12+c44) * xf[i] * xf[i] * yf[j] * yf[j] * zf[k] * zf[k];
-			Nfour[i][j][0][0] = c44 * c44 + c44 * (c11 - c44) * (xf[i] * xf[i] + yf[j] * yf[j] + zf[k] * zf[k]) * (yf[j] * yf[j] + zf[k] * zf[k]) + (c11-c12-2*c44) * (c11+c12) * yf[j] * yf[j] * zf[k] * zf[k];
-			Nfour[i][j][1][1] = c44 * c44 + c44 * (c11 - c44) * (xf[i] * xf[i] + yf[j] * yf[j] + zf[k] * zf[k]) * (xf[i] * xf[i] + zf[k] * zf[k]) + (c11-c12-2*c44) * (c11+c12) * xf[i] * xf[i] * zf[k] * zf[k];
-			Nfour[i][j][2][2] = c44 * c44 + c44 * (c11 - c44) * (xf[i] * xf[i] + yf[j] * yf[j] + zf[k] * zf[k]) * (yf[j] * yf[j] + xf[i] * xf[i]) + (c11-c12-2*c44) * (c11+c12) * yf[j] * yf[j] * xf[i] * xf[i];
-			Nfour[i][j][0][1] = Nfour[i][j][1][0] = -1 * (c12 + c44) * xf[i] * yf[j] * (c44 * (xf[i] * xf[i] + yf[j] * yf[j] + zf[k] * zf[k]) + (c11-c12-2*c44) * zf[k] * zf[k]);
-			Nfour[i][j][0][2] = Nfour[i][j][2][0] = -1 * (c12 + c44) * zf[k] * xf[i] * (c44 * (xf[i] * xf[i] + yf[j] * yf[j] + zf[k] * zf[k]) + (c11-c12-2*c44) * yf[j] * yf[j]);
-			Nfour[i][j][1][2] = Nfour[i][j][2][1] = -1 * (c12 + c44) * zf[k] * yf[j] * (c44 * (xf[i] * xf[i] + yf[j] * yf[j] + zf[k] * zf[k]) + (c11-c12-2*c44) * xf[i] * xf[i]);
-		}
-	}
-
-	for(i=0;i<=ndm;i++){
-		for(j=0;j<=ndm;j++){
-			for(kk=0;kk<3;kk++){
-				ufour[i][j][kk] = 0;
-				ufour_i[i][j][kk] = 0;
-				for(jj=0;jj<3;jj++){
-					for(ii=0;ii<3;ii++){
-						for(ll=0;ll<3;ll++){
-							if(c[ii][jj][kk][ll] * four_axis(jj, i, j) * four_axis(ll, i, j) == 0 ){
-								ufour[i][j][kk] += 0;
-								ufour_i[i][j][kk] += 0;
-							}else{
-								//ufour[i][j][kk] += 1 / (c[ii][jj][kk][ll] * four_axis(jj, i, j) * four_axis(ll, i, j)) * four_axis(jj, i, j) * c[ii][jj][kk][ll] * epsilon_zerofour_i[i][j][kk][ll];
-								//ufour_i[i][j][kk] += -1 / (c[ii][jj][kk][ll] * four_axis(jj, i, j) * four_axis(ll, i, j)) * four_axis(jj, i, j) * c[ii][jj][kk][ll] * epsilon_zerofour[i][j][kk][ll];
-								ufour[i][j][kk] += 1 * four_axis(jj, i, j) * c[ii][jj][kk][ll] * epsilon_zerofour_i[i][j][kk][ll] * Nfour[i][j][kk][jj] / Dfour[i][j];
-								ufour_i[i][j][kk] += -1 * four_axis(jj, i, j) * c[ii][jj][kk][ll] * epsilon_zerofour[i][j][kk][ll] * Nfour[i][j][kk][jj] / Dfour[i][j];
-								//cout << "ufour  : "<< ufour[i][j][kk] << ufour_i[i][j][kk] << endl;
-							}
-						}
-					}
-				}
-			}
-		}
-	}
-
-	for(k=0;k<3;k++){
-		for(i=0;i<=ndm;i++){
-			for(j=0;j<=ndm;j++){
-				fourier_output[i][j] = ufour[i][j][k];
-				fourier_output_i[i][j] = ufour_i[i][j][k];
-			}
-		}
-		ifft3d();
-		for(i=0;i<=ndm;i++){
-			for(j=0;j<=ndm;j++){
-				u[i][j][k] = fourier_input[i][j];
-			}
-		}
-	}
-
-	grad_u();
-
-	for(l=0;l<3;l++){
-		for(k=0;k<3;k++){
-			for(i=0;i<=ndm;i++){
-				for(j=0;j<=ndm;j++){
-					eta[i][j][k][l] = 0.5 * (u_grad[i][j][k][l] + u_grad[i][j][l][k]);
-				}
-			}
-		}
-	}
-
-	for(i=0;i<=ndm;i++){
-		for(j=0;j<=ndm;j++){
-			for(k=0;k<3;k++){
-				Helastic[i][j][k] = 0;
-
-				for(ii=0;ii<3;ii++){
-					for(jj=0;jj<3;jj++){
-						for(kk=0;kk<3;kk++){
-							for(ll=0;ll<3;ll++){
-								Helastic[i][j][k] += -1/ (mu0 * Ms) * (c[ii][jj][kk][ll] * (eta[i][j][ii][jj] - epsilon_zero[i][j][ii][jj]) * epsilon_zero_grad[i][j][ii][jj][k]);
-							}
-						}
-					}
-				}
-
-
-			}
-		}
-	}
-
-	for(i=0;i<=ndm;i++){
-		for(j=0;j<=ndm;j++){
-			e1[i][j] = (epsilon_zero[i][j][0][0] + epsilon_zero[i][j][1][1] + epsilon_zero[i][j][2][2]) / root3;
-			e2[i][j] = (epsilon_zero[i][j][0][0] - epsilon_zero[i][j][1][1]) / root2;
-			e3[i][j] = (2 * epsilon_zero[i][j][2][2] - epsilon_zero[i][j][1][1] - epsilon_zero[i][j][0][0]) / root6;
-			e4[i][j] = epsilon_zero[i][j][1][2];
-			e5[i][j] = epsilon_zero[i][j][0][2];
-			e6[i][j] = epsilon_zero[i][j][0][1];
-
-			e1_grad[i][j][0] = root3 * ram100 * m[i][j][0];
-			e1_grad[i][j][1] = root3 * ram100 * m[i][j][1];
-			e1_grad[i][j][2] = root3 * ram100 * m[i][j][2];
-			e2_grad[i][j][0] = 3 / root2 * ram100 * m[i][j][0];
-			e2_grad[i][j][1] = -3 / root2 * ram100 * m[i][j][1];
-			e2_grad[i][j][2] = 0;
-			e3_grad[i][j][0] = -1 * root3 / root2 * ram100 * m[i][j][0];
-			e3_grad[i][j][1] = -1 * root3 / root2 * ram100 * m[i][j][1];
-			e3_grad[i][j][2] = root6  * ram100 * m[i][j][2];
-			e4_grad[i][j][0] = epsilon_zero_grad[i][j][1][2][0];
-			e4_grad[i][j][1] = epsilon_zero_grad[i][j][1][2][1];
-			e4_grad[i][j][2] = epsilon_zero_grad[i][j][1][2][2];
-			e5_grad[i][j][0] = epsilon_zero_grad[i][j][0][2][0];
-			e5_grad[i][j][1] = epsilon_zero_grad[i][j][0][2][1];
-			e5_grad[i][j][2] = epsilon_zero_grad[i][j][0][2][2];
-			e6_grad[i][j][0] = epsilon_zero_grad[i][j][0][1][0];
-			e6_grad[i][j][1] = epsilon_zero_grad[i][j][0][1][1];
-			e6_grad[i][j][2] = epsilon_zero_grad[i][j][0][1][2];
-		}
-	}
-
-
-	for(i=0;i<=ndm;i++){
-		for(j=0;j<=ndm;j++){
-			Hlandau[i][j][0] = 2 * Q1 * e1[i][j] * e1_grad[i][j][0] + Q5 * (2 * e5[i][j] + 2 * e6[i][j]) * e5_grad[i][j][0] * e6_grad[i][j][0];
-			Hlandau[i][j][1] = 2 * Q2 * e2[i][j] * e2_grad[i][j][1] - 6 * Q3 * e3[i][j] * e2[i][j] * e2_grad[i][j][1] + 2 * Q4 * (e2[i][j] * e2[i][j] + e3[i][j] * e3[i][j]) * 2 * e2[i][j] * e2_grad[i][j][1] + Q5 * (2 * e4[i][j] + 2 * e6[i][j]) * e4_grad[i][j][1] * e6_grad[i][j][1];
-			Hlandau[i][j][2] = 2 * Q2 * e3[i][j] * e3_grad[i][j][2] + 3 * Q3 * e3[i][j] * e3[i][j] * e3_grad[i][j][2] + 2 * Q4 * (e2[i][j] * e2[i][j] + e3[i][j] * e3[i][j]) * 2 * e3[i][j] * e3_grad[i][j][2] + Q5 * (2 * e4[i][j] + 2 * e5[i][j]) * e4_grad[i][j][2] * e5_grad[i][j][2];
-
-			Hme[i][j][0] = 6 * B * ram100 * (m[i][j][0] * m[i][j][0] * m[i][j][0] - 1/3 * m[i][j][0]);
-			Hme[i][j][1] = 6 * B * ram100 * (m[i][j][1] * m[i][j][1] * m[i][j][1] - 1/3 * m[i][j][1]);
-			Hme[i][j][2] = 6 * B * ram100 * (m[i][j][2] * m[i][j][2] * m[i][j][2] - 1/3 * m[i][j][2]);
+			Hme[i][j][0] = -1/(mu0 * Ms) * 2 * B * epsilon_zero[i][j][0][0] * m[i][j][0];
+			Hme[i][j][1] = -1/(mu0 * Ms) * 2 * B * epsilon_zero[i][j][1][1] * m[i][j][1];
+			Hme[i][j][2] = -1/(mu0 * Ms) * 2 * B * epsilon_zero[i][j][2][2] * m[i][j][2];
 		}
 	}
 
@@ -520,7 +893,7 @@ int main(void){
 	for(i=0;i<=ndm;i++){
 		for(j=0;j<=ndm;j++){
 			for(k=0;k<3;k++){
-				h[i][j][k] = (Hanis[i][j][k]  + Hms[i][j][k] + Hexternal[i][j][k] + Helastic[i][j][k] + Hlandau[i][j][k] + Hme[i][j][k])/Ms;
+				h[i][j][k] = (Hanis[i][j][k]  + Hms[i][j][k] + Hexternal[i][j][k] + Hme[i][j][k] )/Ms;
 				//cout << "h   " << h[i][j][k] * Ms << endl;
 				//cout << "Hel   " << Helastic[i][j][k] * Ms << endl;
 			}
@@ -720,28 +1093,29 @@ int main(void){
 		}
 	}
 
-	//cout << "m  :   " << m[100][100][0]  << m[100][100][1]  << m[100][100][2] << endl;
+
+
+	//if(keypress()){return 0;}//キー待ち状態
 
 	time1=time1+1.0;								//計算カウント数の加算
 	if(time1<time1max){goto start;}	//最大カウント数に到達したかどうかの判断
 
-	end:;
+end:;
   return 0;
-
 }
-
 
 //************ 初期場の設定サブル−チン *************
 void ini000()
 {
 	int i, j ,k;
 	double mlength;
-	
+
 	cv::Mat_<uchar> image;
 	if(SIZEX == 256){
-		image = cv::imread("a.jpg" ,0);
+		image = cv::imread("a.png" ,0);
+		//image = cv::imread("test120.000000.png" ,0);
 	}else if(SIZEX == 512){
-		image = cv::imread("b.jpg" ,0);
+		image = cv::imread("c.jpg" ,0);
 	}else{
 		cout << "error : no image to load" << endl;
 	}
@@ -752,7 +1126,16 @@ void ini000()
 		for(j=0;j<=ndm;j++){
 			for(k=0;k<3;k++){
 				m[i][j][k] = rand() % 201 - 100;
+				//epsilon_zero[i][j][k][k] = DRND(0.01);
 			}
+
+			p[i][j][0] = DRND(0.9);
+			p[i][j][1] = DRND(1);
+
+			//p[i][j][0] = (image[i][j])/200;
+			//p[i][j][1] = 1;
+			//p[i][j][1] = (200 - (image[i][j]))/200;
+
 			//m[i][j][0] = int(image[i][j]);
 			//m[i][j][1] = int(256-image[i][j]);
 			//m[i][j][2] = int(100-image[i][j]/2);
@@ -762,17 +1145,114 @@ void ini000()
 			}
 		}
 	}
+	cout << "p0  " << p[10][10][0] << endl;
+	cout << "p1  " << p[10][10][1] << endl;
 }
 
 //******* 組織の描画サブルーチン ***************************************
 void graph_s1()
 {
-	int i, j;													//整数
-	double col_R, col_G, col_B;	//色
+	int i, j, ii, jj;													//整数
+	double col, col_R, col_G, col_B;	//色
+	double c, x, y;//規格化座標系の設定
 
-	printf("time %d\n",int(time1));//計算カウント数の表示
+	printf("time %f\n",time1);//計算カウント数の表示
+    
+
 	//差分ブロックの半分の長さ	//スクリーン座標系に変換（+1は整数化時の切捨て補正）
 	cv::Mat chann(cv::Size(nd, nd), CV_8UC3, cv::Scalar(255, 255, 255));
+
+	/*for(i=0;i<=ndm;i++){
+		for(j=0;j<=ndm;j++){
+			col_R=epsilon_zero[i][j][0][0];//場の色をRGBにて設定
+			col_G=epsilon_zero[i][j][1][1];
+			col_B=epsilon_zero[i][j][2][2];
+			col_R *= 1000;
+			col_G *= 1000;
+			col_B *= 1000;
+			col_R += 128;
+			col_G += 128;
+			col_B += 128;
+
+			chann.at<cv::Vec3b>(i,j) = cv::Vec3b(abs(int(col_B)), abs(int(col_G)), abs(int(col_R)));
+		}
+	}
+	cv::imwrite("LLG_Terfenol_" + std::to_string(int(time1)) + "_strain_2d.png", chann);
+
+	for(i=0;i<=ndm;i++){
+		for(j=0;j<=ndm;j++){
+			
+			col_R=eta[i][j][0][0];//場の色をRGBにて設定
+			col_G=eta[i][j][1][1];
+			col_B=eta[i][j][2][2];
+
+			col_R *= 1.0E+5;
+			col_G *= 1.0E+5;
+			col_B *= 1.0E+5;
+
+
+			col_R += 128;
+			col_G += 128;
+			col_B += 128;
+
+			chann.at<cv::Vec3b>(i,j) = cv::Vec3b(abs(int(col_B)), abs(int(col_G)), abs(int(col_R)));
+		}
+	}
+	cv::imwrite("LLG_Terfenol_" + std::to_string(int(time1)) + "_u_2d.png", chann);
+
+
+	for(i=0;i<=ndm;i++){
+		for(j=0;j<=ndm;j++){
+			col_R=Delastic[i][j][0];//場の色をRGBにて設定
+			col_G=Delastic[i][j][1];
+			col_B=0;
+			
+			col_R *= 1.0E-5;
+			col_G *= 1.0E-5;
+			col_B *= 1.0E-5;
+
+			col_R += 128;
+			col_G += 128;
+			col_B += 128;
+
+			chann.at<cv::Vec3b>(i,j) = cv::Vec3b(abs(int(col_B)), abs(int(col_G)), abs(int(col_R)));
+		}
+	}
+	cv::imwrite("LLG_Terfenol_" + std::to_string(int(time1)) + "_elas_2d.png", chann);
+
+	for(i=0;i<=ndm;i++){
+		for(j=0;j<=ndm;j++){
+			col_R=-Dr[i][j][0];//場の色をRGBにて設定
+			col_G=-Dr[i][j][1];
+			col_B=-Dr[i][j][2];
+			col_R *= 100;
+			col_G *= 100;
+			col_B *= 100;
+			col_R += 128;
+			col_G += 128;
+			col_B += 128;
+
+			chann.at<cv::Vec3b>(i,j) = cv::Vec3b(abs(int(col_B)), abs(int(col_G)), abs(int(col_R)));
+		}
+	}
+	cv::imwrite("LLG_Terfenol_" + std::to_string(int(time1)) + "_Dr_2d.png", chann);*/
+
+	for(i=0;i<=ndm;i++){
+		for(j=0;j<=ndm;j++){
+			col_R=p[i][j][0];//場の色をRGBにて設定
+			col_G=p[i][j][1]*(1-p[i][j][0]);
+			col_B=(1-p[i][j][1])*(1-p[i][j][0]);
+			col_R *= 200;
+			col_G *= 200;
+			col_B *= 200;
+			//col_R += 128;
+			//col_G += 128;
+			//col_B += 128;
+
+			chann.at<cv::Vec3b>(i,j) = cv::Vec3b(abs(int(col_B)), abs(int(col_G)), abs(int(col_R)));
+		}
+	}
+	cv::imwrite("LLG_Terfenol_" + std::to_string(int(time1)) + "_p_2d.png", chann);
 
 	for(i=0;i<=ndm;i++){
 		for(j=0;j<=ndm;j++){
@@ -791,24 +1271,7 @@ void graph_s1()
 	}
 	cv::imwrite("LLG_Terfenol_" + std::to_string(int(time1)) + "_m_2d.png", chann);
 
-	for(i=0;i<=ndm;i++){
-		for(j=0;j<=ndm;j++){
-			col_R=u[i][j][0];//場の色をRGBにて設定
-			col_G=u[i][j][1];
-			col_B=u[i][j][2];
-			col_R *= 1000000;
-			col_G *= 1000000;
-			col_B *= 1000000;
-			col_R += 128;
-			col_G += 128;
-			col_B += 128;
-
-			chann.at<cv::Vec3b>(i,j) = cv::Vec3b(abs(int(col_B)), abs(int(col_G)), abs(int(col_R)));
-		}
-	}
-	cv::imwrite("LLG_Terfenol_" + std::to_string(int(time1)) + "_u_2d.png", chann);
-
-	ofstream outputfile("check_Terfenol_" + std::to_string(int(time1)) + "_2d.txt");
+	/*ofstream outputfile("check_Terfenol_" + std::to_string(int(time1)) + "_2d.txt");
 	for(i=0;i<=ndm;i++){
 		for(j=0;j<=ndm;j++){
 			if(i%(nd/16)==0 && j%(nd/16)==0){
@@ -825,8 +1288,9 @@ void graph_s1()
 			}
 		}
 	}
-	outputfile.close();
+	outputfile.close();*/
 }
+
 
 int DCexchange2D( fftw_complex *data, int cols, int rows, int depth )
 {

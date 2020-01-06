@@ -23,6 +23,12 @@
 	double time1;					//計算カウント数(時間に比例)
 
 	double s1h[ND][ND], s2h[ND][ND];		//マルテンサイトのフェーズフィールド
+	double ep11h0[ND][ND], ep22h0[ND][ND];				//組織内の変態歪
+	double ec11[ND][ND], ec22[ND][ND];						//拘束歪変動量（実空間）
+	double ep11_0, ep22_0;									//組織内の変態歪の平均値
+
+	double s1k_str[ND][ND], s2k_str[ND][ND];
+	double ep11T[ND][ND], ep22T[ND][ND];
 
 	double qs;					//フ−リエ変換(qs:-1)とフ−リエ逆変換(qs:1)の区別
 	double xi[ND][ND], xr[ND][ND], xif[ND], xrf[ND];//フ−リエ変換の実部・虚部配列
@@ -40,16 +46,12 @@
 int main(void)
 {
 	double s1, s2;																//マルテンサイトのフェーズフィールド
-	double ep11h0[ND][ND], ep22h0[ND][ND];				//組織内の変態歪
 	double ep11qrh0[ND][ND],	ep11qih0[ND][ND];		//拘束歪変動量のフーリエ変換
 	double ep22qrh0[ND][ND],	ep22qih0[ND][ND];		//拘束歪変動量のフーリエ変換
-	double s1k_chem, s1k_str, s1k_su[ND][ND];			//ポテンシャル
-	double s2k_chem, s2k_str, s2k_su[ND][ND];			//ポテンシャル
+	double s1k_chem, s1k_su[ND][ND];			//ポテンシャル
+	double s2k_chem, s2k_su[ND][ND];			//ポテンシャル
 	double c11, c12, c44, lam0, mu0, nu0; 				//弾性定数
 	double eta_s1[4][4], eta_s2[4][4];						//アイゲン歪成分
-	double ec11[ND][ND], ec22[ND][ND];						//拘束歪変動量（実空間）
-	double ep11T, ep22T;
-	double ep11_0, ep22_0;									//組織内の変態歪の平均値
 	double ep11_a, ep22_a, ep12_a, ep21_a;	//外力に起因する歪
 	double sig11_a, sig22_a;								//外力
 	double Z11ep, Z12ep, Z21ep, Z22ep;			//フーリエ逆変換時の係数
@@ -240,24 +242,32 @@ start: ;
 		for(j=0;j<=ndm;j++){
 
 			s1=s1h[i][j];  	s2=s2h[i][j];
+//******  弾性ポテンシャルの計算[式(4.8)] ********************************
+
+			ep11T[i][j]=ep11h0[i][j]-ep11_0-ec11[i][j]-ep11_a;
+			ep22T[i][j]=ep22h0[i][j]-ep22_0-ec22[i][j]-ep22_a;
+
+			s1k_str[i][j]=ep11T[i][j]*((lam0+2.0*mu0)*eta_s1[1][1]+lam0*eta_s1[2][2])
+						 +ep22T[i][j]*((lam0+2.0*mu0)*eta_s1[2][2]+lam0*eta_s1[1][1]);
+
+			s2k_str[i][j]=ep11T[i][j]*((lam0+2.0*mu0)*eta_s2[1][1]+lam0*eta_s2[2][2])
+						 +ep22T[i][j]*((lam0+2.0*mu0)*eta_s2[2][2]+lam0*eta_s2[1][1]);
+		}
+	}
+
+//******  ポテンシャルの計算 ********************************
+	for(i=0;i<=ndm;i++){
+		for(j=0;j<=ndm;j++){
+
+			s1=s1h[i][j];  	s2=s2h[i][j];
 
 //******  化学ポテンシャルの計算[式(4.4)] ********************************
 			s1k_chem=AA0*s1*(AA1-AA2*s1+AA3*(s1*s1+s2*s2));
 			s2k_chem=AA0*s2*(AA1-AA2*s2+AA3*(s1*s1+s2*s2));
 
-//******  弾性ポテンシャルの計算[式(4.8)] ********************************
-
-			ep11T=ep11h0[i][j]-ep11_0-ec11[i][j]-ep11_a;
-			ep22T=ep22h0[i][j]-ep22_0-ec22[i][j]-ep22_a;
-
-			s1k_str=ep11T*((lam0+2.0*mu0)*eta_s1[1][1]+lam0*eta_s1[2][2])
-						 +ep22T*((lam0+2.0*mu0)*eta_s1[2][2]+lam0*eta_s1[1][1]);
-			s2k_str=ep11T*((lam0+2.0*mu0)*eta_s2[1][1]+lam0*eta_s2[2][2])
-						 +ep22T*((lam0+2.0*mu0)*eta_s2[2][2]+lam0*eta_s2[1][1]);
-
 //****** フェーズフィールドの時間発展の計算[式(4.10)] ********************************
-			s1ddtt=-smob*(s1k_chem+s1k_su[i][j]+s1k_str);
-			s2ddtt=-smob*(s2k_chem+s2k_su[i][j]+s2k_str);
+			s1ddtt=-smob*(s1k_chem+s1k_su[i][j]);
+			s2ddtt=-smob*(s2k_chem+s2k_su[i][j]);
 			s1h[i][j]=s1h[i][j]+( s1ddtt+ds_fac*(2.0*DRND(1.)-1.0) )*delt;//陽解法
 			s2h[i][j]=s2h[i][j]+( s2ddtt+ds_fac*(2.0*DRND(1.)-1.0) )*delt;
 
@@ -330,6 +340,75 @@ void graph_s1()
 		}
 	}
 	cv::imwrite("test" + std::to_string(time1) + ".png", chann);
+
+	for(i=0;i<=nd;i++){
+		for(j=0;j<=nd;j++){
+			x=rad0+dia0*i;  igx=(ixmax-ixmin)/(xmax-xmin)*(x-xmin)+ixmin;
+			y=rad0+dia0*j;  igy=(iymax-iymin)/(ymax-ymin)*(y-ymin)+iymin;
+			//座標計算			//スクリーン座標系に変換
+			ii=i; jj=j; if(i==nd){ii=0;} if(j==nd){jj=0;}//周期的境界条件
+
+			col_R=ec11[ii][jj];//場の色をRGBにて設定
+			col_G=ec22[ii][jj];
+			col_B=0;
+			col_R *= 1000;
+			col_G *= 1000;
+			col_B *= 1000;
+			col_R += 128;
+			col_G += 128;
+			col_B += 128;
+
+			chann.at<cv::Vec3b>(ii,jj) = cv::Vec3b(int(col_B), int(col_G), int(col_R));
+
+		}
+	}
+	cv::imwrite("test" + std::to_string(time1) + "_ec.png", chann);
+
+	for(i=0;i<=nd;i++){
+		for(j=0;j<=nd;j++){
+			x=rad0+dia0*i;  igx=(ixmax-ixmin)/(xmax-xmin)*(x-xmin)+ixmin;
+			y=rad0+dia0*j;  igy=(iymax-iymin)/(ymax-ymin)*(y-ymin)+iymin;
+			//座標計算			//スクリーン座標系に変換
+			ii=i; jj=j; if(i==nd){ii=0;} if(j==nd){jj=0;}//周期的境界条件
+
+			col_R=-s1k_str[ii][jj];//場の色をRGBにて設定
+			col_G=-s2k_str[ii][jj];
+			col_B=0;
+			col_R *= 100;
+			col_G *= 100;
+			col_B *= 100;
+			col_R += 128;
+			col_G += 128;
+			col_B += 128;
+
+			chann.at<cv::Vec3b>(ii,jj) = cv::Vec3b(int(col_B), int(col_G), int(col_R));
+
+		}
+	}
+	cv::imwrite("test" + std::to_string(time1) + "_str.png", chann);
+
+	for(i=0;i<=nd;i++){
+		for(j=0;j<=nd;j++){
+			x=rad0+dia0*i;  igx=(ixmax-ixmin)/(xmax-xmin)*(x-xmin)+ixmin;
+			y=rad0+dia0*j;  igy=(iymax-iymin)/(ymax-ymin)*(y-ymin)+iymin;
+			//座標計算			//スクリーン座標系に変換
+			ii=i; jj=j; if(i==nd){ii=0;} if(j==nd){jj=0;}//周期的境界条件
+
+			col_R=-ep11T[ii][jj];//場の色をRGBにて設定
+			col_G=-ep22T[ii][jj];
+			col_B=0;
+			col_R *= 1000;
+			col_G *= 1000;
+			col_B *= 1000;
+			col_R += 128;
+			col_G += 128;
+			col_B += 128;
+
+			chann.at<cv::Vec3b>(ii,jj) = cv::Vec3b(int(col_B), int(col_G), int(col_R));
+
+		}
+	}
+	cv::imwrite("test" + std::to_string(time1) + "_ep.png", chann);
 }
 
 //******* Sin, Cos のテーブルおよびビット反転テーブルの設定 ***************
