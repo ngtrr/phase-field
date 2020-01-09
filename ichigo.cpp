@@ -37,7 +37,7 @@ using namespace Eigen;
 	int nd=ND, ndm=ND-1; 	//計算領域の一辺の差分分割数(差分ブロック数)、ND-1を定義
 	int nd2=ND/2;				 	//ND/2を定義：高速フ−リエ変換で使用
 	int ig=IG;						//2^ig=ND
-	double alpha=0.5;
+	double alpha=1.5;
 	double time1;					//計算カウント数(時間に比例)
 	double time1max = 10000;
 
@@ -59,8 +59,8 @@ using namespace Eigen;
 	double Ms = 6.02E+5;
   	double K1 = 2.7E+3, K2 = -6.1E+3;
 	double Ks = 1.65E+8;
-	double stretch = -0.034;
-  	double ram100 = 2.0E-2, ram111 = 1.64E-3;
+	double stretch = 0.034;
+  	double ram100 = 0.0E-2, ram111 = 1.64E-3;
   	double c11 = 1.6E+11, c12 = 1.52E+11, c44 = 0.43E+11;
 	double A = 2.0E-8;
   	double Astar;
@@ -69,7 +69,7 @@ using namespace Eigen;
 	double ld = 18E-9;
 	double G = 2.0E-8/(250*ld*ld);
 
-	double B = 4.00E+8;
+	double B = 2.00E+11;
 
 
 	double smob = 4.0E-9;
@@ -211,7 +211,8 @@ int main(void)
 
 //****** 計算条件および物質定数の設定 ****************************************
 	Astar = (2 * A)/(mu0 * Ms * Ms * ld * ld);
-	//Astar = 0.0625 ;
+	//Astar = 0.0625;
+	//Astar = 0.00625;
 	cout << "Astar : " << Astar << endl;
 
 	for(i=0;i<=ndm;i++){
@@ -247,9 +248,9 @@ int main(void)
 		yf[i] = i - nd2;
 	}
 
-	N[0] = 0.333;
-	N[1] = 0.333;
-	N[2] = 0.333;
+	N[0] = 0.3333;
+	N[1] = 0.3333;
+	N[2] = 0.3333;
 
 	c[0][0][0][0] = c[1][1][1][1] = c[2][2][2][2] = c11;
 	c[1][2][1][2] = c[0][2][0][2] = c[0][1][0][1] = c44;
@@ -264,6 +265,26 @@ int main(void)
 	s[0][0][0][0] = s[1][1][1][1] = s[2][2][2][2] = s_matrix(0,0);
 	s[1][2][1][2] = s[0][2][0][2] = s[0][1][0][1] = s_matrix(3,3);
 	s[0][0][1][1] = s[0][0][2][2] = s[1][1][2][2] = s[1][1][0][0] = s[2][2][0][0] = s[2][2][1][1] = s_matrix(0,1);
+
+
+	epsilon_phase[0][0] = stretch / 2;
+	epsilon_phase[0][1] = stretch / 2;
+	epsilon_phase[0][2] = -1 * stretch;
+
+	epsilon_phase[1][0] = stretch / 2;
+	epsilon_phase[1][1] = -1 * stretch;
+	epsilon_phase[1][2] = stretch / 2;
+
+	epsilon_phase[2][0] = -1 * stretch;
+	epsilon_phase[2][1] = stretch / 2;
+	epsilon_phase[2][2] = stretch / 2;
+
+
+	for(i=0;i<3;i++){
+		for(j=0;j<3;j++){
+			//cout << i << ", " << j << "  -  " << epsilon_phase[i][j] <<endl;
+		}
+	}
 
 
 	ini000();		//初期場の設定
@@ -287,25 +308,18 @@ start: ;
 
 
 
-	epsilon_phase[0][0] = stretch;
-	epsilon_phase[0][1] = -1/2 * stretch;
-	epsilon_phase[0][2] = -1/2 * stretch;
-
-	epsilon_phase[1][0] = -1/2 * stretch;
-	epsilon_phase[1][1] = stretch;
-	epsilon_phase[1][2] = -1/2 * stretch;
-
-	epsilon_phase[2][0] = -1/2 * stretch;
-	epsilon_phase[2][1] = -1/2 * stretch;
-	epsilon_phase[2][2] = stretch;
 
 	for(i=0;i<=ndm;i++){
 		for(j=0;j<=ndm;j++){
 			for(k=0;k<3;k++){
-				epsilon_zero[i][j][k][k] = epsilon_phase[0][k] * p[i][j][0] + epsilon_phase[1][k] * (1-p[i][j][0])*p[i][j][1] + epsilon_phase[2][k] * (1-p[i][j][0])*(1-p[i][j][1]) + 3/2*ram100*( m[i][j][k]*m[i][j][k] - 1/3);
+				epsilon_zero[i][j][k][k] = epsilon_phase[0][k] * p[i][j][0] + epsilon_phase[1][k]*(1-p[i][j][0])*p[i][j][1] + epsilon_phase[2][k]*(1-p[i][j][0])*(1-p[i][j][1]) + 3/2*ram100*( m[i][j][k]*m[i][j][k] - 1/3);
 			}
 		}
 	}
+
+	//cout << "epsilon 0 " << "  -    " << epsilon_zero[10][10][0][0] << endl;
+	//cout << "epsilon 1 " << "  -    " << epsilon_zero[10][10][1][1] << endl;
+	//cout << "epsilon 2 " << "  -    " << epsilon_zero[10][10][2][2] << endl;
 
 
 //***** 化学ポテンシャル ************************
@@ -856,7 +870,20 @@ start: ;
 		}
 	}
 
-	grad_fai();
+	//grad_fai();
+
+	for(i=0;i<=ndm;i++){
+		for(j=0;j<=ndm;j++){
+			ip=i+1; im=i-1; jp=j+1; jm=j-1;
+			if(i==ndm){ip=0;}  if(i==0){im=ndm;}	//周期的境界条件
+			if(j==ndm){jp=0;}  if(j==0){jm=ndm;}
+			Hms[i][j][0] =  (fai[im][j] - fai[ip][j]) /2;
+			Hms[i][j][1] =  (fai[i][jm] - fai[i][jp]) /2;
+			Hms[i][j][2] =  0;
+		}
+	}
+
+
 
 	for(k=0;k<3;k++){
 		m_ave[k] = 0;
@@ -872,7 +899,7 @@ start: ;
 			for(k=0;k<3;k++){
 				//cout << "   " << endl;
 				//cout << "Hms   " << Hms[i][j][k] << endl;
-				Hms[i][j][k] = -1 * m_ave[k] * Ms * N[k];
+				Hms[i][j][k] += -1 * m_ave[k] * Ms * N[k];
 				//cout << "Hms   " << Hms[i][j][k] << endl;
 			}
 		}
@@ -881,9 +908,9 @@ start: ;
 
 	for(i=0;i<=ndm;i++){
 		for(j=0;j<=ndm;j++){
-			Hme[i][j][0] = -1/(mu0 * Ms) * 2 * B * epsilon_zero[i][j][0][0] * m[i][j][0];
-			Hme[i][j][1] = -1/(mu0 * Ms) * 2 * B * epsilon_zero[i][j][1][1] * m[i][j][1];
-			Hme[i][j][2] = -1/(mu0 * Ms) * 2 * B * epsilon_zero[i][j][2][2] * m[i][j][2];
+			Hme[i][j][0] = 1/(mu0 * Ms) * 2 * B * epsilon_zero[i][j][0][0] * m[i][j][0];
+			Hme[i][j][1] = 1/(mu0 * Ms) * 2 * B * epsilon_zero[i][j][1][1] * m[i][j][1];
+			//Hme[i][j][2] = -1/(mu0 * Ms) * 2 * B * epsilon_zero[i][j][2][2] * m[i][j][2];
 		}
 	}
 
@@ -893,7 +920,7 @@ start: ;
 	for(i=0;i<=ndm;i++){
 		for(j=0;j<=ndm;j++){
 			for(k=0;k<3;k++){
-				h[i][j][k] = (Hanis[i][j][k]  + Hms[i][j][k] + Hexternal[i][j][k] + Hme[i][j][k] )/Ms;
+				h[i][j][k] = (Hanis[i][j][k]  + Hms[i][j][k] + Hexternal[i][j][k] + Hme[i][j][k])/Ms;
 				//cout << "h   " << h[i][j][k] * Ms << endl;
 				//cout << "Hel   " << Helastic[i][j][k] * Ms << endl;
 			}
@@ -1110,9 +1137,10 @@ void ini000()
 	int i, j ,k;
 	double mlength;
 
-	cv::Mat_<uchar> image;
+	cv::Mat_<uchar> image , image2;
 	if(SIZEX == 256){
 		image = cv::imread("a.png" ,0);
+		image2 = cv::imread("wave.jpg" ,0);
 		//image = cv::imread("test120.000000.png" ,0);
 	}else if(SIZEX == 512){
 		image = cv::imread("c.jpg" ,0);
@@ -1132,12 +1160,12 @@ void ini000()
 			p[i][j][0] = DRND(0.9);
 			p[i][j][1] = DRND(1);
 
-			//p[i][j][0] = (image[i][j])/200;
+			//p[i][j][0] = 0;
 			//p[i][j][1] = 1;
-			//p[i][j][1] = (200 - (image[i][j]))/200;
+			//p[i][j][1] = (255 - (image[i][j]))/128;
 
-			//m[i][j][0] = int(image[i][j]);
-			//m[i][j][1] = int(256-image[i][j]);
+			//m[i][j][0] = int(image2[i][j]);
+			//m[i][j][1] = int(255-image2[i][j]);
 			//m[i][j][2] = int(100-image[i][j]/2);
 			mlength = sqrt( m[i][j][0] * m[i][j][0] + m[i][j][1] * m[i][j][1] + m[i][j][2] * m[i][j][2] );
 			for(k=0;k<3;k++){
@@ -1167,9 +1195,9 @@ void graph_s1()
 			col_R=epsilon_zero[i][j][0][0];//場の色をRGBにて設定
 			col_G=epsilon_zero[i][j][1][1];
 			col_B=epsilon_zero[i][j][2][2];
-			col_R *= 1000;
-			col_G *= 1000;
-			col_B *= 1000;
+			col_R *= 2000;
+			col_G *= 2000;
+			col_B *= 2000;
 			col_R += 128;
 			col_G += 128;
 			col_B += 128;
@@ -1270,6 +1298,23 @@ void graph_s1()
 		}
 	}
 	cv::imwrite("LLG_Terfenol_" + std::to_string(int(time1)) + "_m_2d.png", chann);
+
+	for(i=0;i<=ndm;i++){
+		for(j=0;j<=ndm;j++){
+			col_R=0;//場の色をRGBにて設定
+			col_G=0;
+			col_B=m[i][j][2];
+			col_R *= 100;
+			col_G *= 100;
+			col_B *= 100;
+			//col_R += 128;
+			//col_G += 128;
+			col_B += 128;
+
+			chann.at<cv::Vec3b>(i,j) = cv::Vec3b(abs(int(col_B)), abs(int(col_G)), abs(int(col_R)));
+		}
+	}
+	cv::imwrite("LLG_Terfenol_" + std::to_string(int(time1)) + "_wall_2d.png", chann);
 
 	/*ofstream outputfile("check_Terfenol_" + std::to_string(int(time1)) + "_2d.txt");
 	for(i=0;i<=ndm;i++){
