@@ -62,7 +62,7 @@ using namespace Eigen;
 	double stretch = 0.034;
   	double ram100 = 0.0E-2, ram111 = 1.64E-3;
   	double c11 = 1.6E+11, c12 = 1.52E+11, c44 = 0.43E+11;
-	double A = 2.0E-8;
+	double A = 4.0E-9;
   	double Astar;
 	double delt = 0.1;
 	double mu0 = 1.0;
