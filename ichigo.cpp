@@ -41,6 +41,9 @@ using namespace Eigen;
 	double time1;					//計算カウント数(時間に比例)
 	double time1max = 10000;
 
+	int name_id = 0;
+	int num_id = 0;
+
 	double filter[3][3][3];
 
 
@@ -133,6 +136,18 @@ using namespace Eigen;
 	double Dgradient[ND][ND][2];
 	double Dme[ND][ND][2];
 	double Delastic[ND][ND][2];
+
+	double Eanis[ND][ND];
+	double Eexch[ND][ND];
+	double Eexternal[ND][ND];
+	double Ems[ND][ND];
+	double Eme[ND][ND];
+
+	double Eanis_ave;
+	double Eexch_ave;
+	double Eexternal_ave;
+	double Ems_ave;
+	double Eme_ave;
 
 	double fourier_output[ND][ND];
 	double fourier_output_i[ND][ND];
@@ -280,14 +295,10 @@ int main(void)
 	epsilon_phase[2][2] = stretch / 2;
 
 
-	for(i=0;i<3;i++){
-		for(j=0;j<3;j++){
-			//cout << i << ", " << j << "  -  " << epsilon_phase[i][j] <<endl;
-		}
-	}
-
+init:;
 
 	ini000();		//初期場の設定
+	time1 = 0;
 
 //**** シミュレーションスタート ******************************
 start: ;
@@ -358,7 +369,7 @@ start: ;
 	for(k=0;k<3;k++){
 		for(i=0;i<=ndm;i++){
 			for(j=0;j<=ndm;j++){
-				epsilon_zero_grad[i][j][k][k][0] = epsilon_phase[0][k] - epsilon_phase[1][k] * p[i][j][1]　- epsilon_phase[2][k] * (1-p[i][j][1]);
+				epsilon_zero_grad[i][j][k][k][0] = epsilon_phase[0][k] - epsilon_phase[1][k] * p[i][j][1] - epsilon_phase[2][k] * (1-p[i][j][1]);
 				epsilon_zero_grad[i][j][k][k][1] = epsilon_phase[1][k] * (1-p[i][j][0]) - epsilon_phase[2][k] * (1-p[i][j][0]);
 			}
 		}
@@ -913,6 +924,43 @@ start: ;
 			//Hme[i][j][2] = -1/(mu0 * Ms) * 2 * B * epsilon_zero[i][j][2][2] * m[i][j][2];
 		}
 	}
+	//エネルギー算出
+
+	for(i=0;i<=ndm;i++){
+		for(j=0;j<=ndm;j++){
+			Eanis[i][j] = K1*(m[i][j][0]*m[i][j][0]*m[i][j][1]*m[i][j][1]+m[i][j][0]*m[i][j][0]*m[i][j][2]*m[i][j][2]+m[i][j][1]*m[i][j][1]*m[i][j][2]*m[i][j][2])+K2*(m[i][j][0]*m[i][j][0]*m[i][j][1]*m[i][j][1]*m[i][j][2]*m[i][j][2]);
+			Eexternal[i][j] = -1*mu0*Ms*(Hexternal[i][j][0]*m[i][j][0] + Hexternal[i][j][1]*m[i][j][1] + Hexternal[i][j][2]*m[i][j][2]);
+			Ems[i][j] = -1*mu0*Ms*(Hms[i][j][0]*m[i][j][0] + Hms[i][j][1]*m[i][j][1] + Hms[i][j][2]*m[i][j][2]);
+			Eme[i][j] = -1*mu0*Ms*(Hme[i][j][0]*m[i][j][0] + Hme[i][j][1]*m[i][j][1]);
+		}
+	}
+
+	for(i=0;i<=ndm;i++){
+		for(j=0;j<=ndm;j++){
+			ip=i+1; im=i-1; jp=j+1; jm=j-1;
+			if(i==ndm){ip=0;}  if(i==0){im=ndm;}	//周期的境界条件
+			if(j==ndm){jp=0;}  if(j==0){jm=ndm;}
+			Eexch[i][j] = (m[im][j][0] - m[ip][j][0])/2 + (m[im][j][1] - m[ip][j][1])/2 + (m[im][j][2] - m[ip][j][2])/2 + (m[i][jm][0] - m[i][jp][0])/2 + (m[i][jm][1] - m[i][jp][1])/2 + (m[i][jm][2] - m[i][jp][2])/2;
+		}
+	}
+
+	//平均を算出
+	Eanis_ave = 0;
+	Eexternal_ave = 0;
+	Ems_ave = 0;
+	Eme_ave = 0;
+	Eexch_ave = 0;
+	for(i=0;i<=ndm;i++){
+		for(j=0;j<=ndm;j++){
+			Eanis_ave += Eanis[i][j];
+			Eexternal_ave += Eexternal[i][j];
+			Ems_ave += Ems[i][j];
+			Eme_ave += Eme[i][j];
+			Eexch_ave += Eexch[i][j];
+		}
+	}
+
+
 
 
 	//*********************************  STEP 1  ******************************************************
@@ -1127,8 +1175,32 @@ start: ;
 	time1=time1+1.0;								//計算カウント数の加算
 	if(time1<time1max){goto start;}	//最大カウント数に到達したかどうかの判断
 
+	graph_s1();
+
+
+	while(num_id <= 0){
+		while(name_id <= 30){
+
+			for(i=0;i<=ndm;i++){
+				for(j=0;j<=ndm;j++){
+					//Hexternal[i][j][0] = num_id * 1.0E+3;
+					//Hexternal[i][j][1] = num_id * -1.0E+3;
+					//Hexternal[i][j][2] = 0;
+				}
+			}
+
+			cout << "num_id  : " << num_id << "  -  name_id  : " << name_id << endl;
+
+			name_id += 1;
+			goto init;
+		}
+		num_id += 1;
+		name_id = -1;
+	}
+
 end:;
-  return 0;
+
+	return 0;
 }
 
 //************ 初期場の設定サブル−チン *************
@@ -1173,8 +1245,8 @@ void ini000()
 			}
 		}
 	}
-	cout << "p0  " << p[10][10][0] << endl;
-	cout << "p1  " << p[10][10][1] << endl;
+	//cout << "p0  " << p[10][10][0] << endl;
+	//cout << "p1  " << p[10][10][1] << endl;
 }
 
 //******* 組織の描画サブルーチン ***************************************
@@ -1263,7 +1335,7 @@ void graph_s1()
 			chann.at<cv::Vec3b>(i,j) = cv::Vec3b(abs(int(col_B)), abs(int(col_G)), abs(int(col_R)));
 		}
 	}
-	cv::imwrite("LLG_Terfenol_" + std::to_string(int(time1)) + "_Dr_2d.png", chann);*/
+	cv::imwrite("LLG_Terfenol_" + std::to_string(int(time1)) + "_Dr_2d.png", chann);
 
 	for(i=0;i<=ndm;i++){
 		for(j=0;j<=ndm;j++){
@@ -1280,7 +1352,7 @@ void graph_s1()
 			chann.at<cv::Vec3b>(i,j) = cv::Vec3b(abs(int(col_B)), abs(int(col_G)), abs(int(col_R)));
 		}
 	}
-	cv::imwrite("LLG_Terfenol_" + std::to_string(int(time1)) + "_p_2d.png", chann);
+	cv::imwrite("FePd_" + std::to_string(int(time1)) + "_" +  std::to_string(int(name_id)) + "_p_2d.png", chann);*/
 
 	for(i=0;i<=ndm;i++){
 		for(j=0;j<=ndm;j++){
@@ -1297,9 +1369,9 @@ void graph_s1()
 			chann.at<cv::Vec3b>(i,j) = cv::Vec3b(abs(int(col_B)), abs(int(col_G)), abs(int(col_R)));
 		}
 	}
-	cv::imwrite("LLG_Terfenol_" + std::to_string(int(time1)) + "_m_2d.png", chann);
+	cv::imwrite("FePd_" +  std::to_string(int(num_id)) + "_" +  std::to_string(int(name_id)) + "_" + std::to_string(int(time1))  + "_m_2d.png", chann);
 
-	for(i=0;i<=ndm;i++){
+	/*for(i=0;i<=ndm;i++){
 		for(j=0;j<=ndm;j++){
 			col_R=0;//場の色をRGBにて設定
 			col_G=0;
@@ -1314,26 +1386,21 @@ void graph_s1()
 			chann.at<cv::Vec3b>(i,j) = cv::Vec3b(abs(int(col_B)), abs(int(col_G)), abs(int(col_R)));
 		}
 	}
-	cv::imwrite("LLG_Terfenol_" + std::to_string(int(time1)) + "_wall_2d.png", chann);
+	cv::imwrite("LLG_Terfenol_" + std::to_string(int(time1)) + "_wall_2d.png", chann);*/
 
-	/*ofstream outputfile("check_Terfenol_" + std::to_string(int(time1)) + "_2d.txt");
-	for(i=0;i<=ndm;i++){
-		for(j=0;j<=ndm;j++){
-			if(i%(nd/16)==0 && j%(nd/16)==0){
-				col_R=m[i][j][0];//場の色をRGBにて設定
-				col_G=m[i][j][1];
-				col_B=m[i][j][2];
-				col_R *= 100;
-				col_G *= 100;
-				col_B *= 100;
-				col_R += 128;
-				col_G += 128;
-				col_B += 128;
-				outputfile <<  j << " " << ndm-i << " " <<  0.5*(nd/16)*m[i][j][1] << " " <<  0.5*(nd/16)*m[i][j][0] << endl;
-			}
-		}
-	}
-	outputfile.close();*/
+	ofstream outputfile("check_Terfenol_" +  std::to_string(int(num_id)) + "_" +  std::to_string(int(name_id)) + "_" + std::to_string(int(time1)) + "_2d.txt");
+	outputfile << Eanis_ave << endl;
+	outputfile << Eexternal_ave << endl;
+	outputfile << Eexch_ave << endl;
+	outputfile << Ems_ave << endl;
+	outputfile << Eme_ave << endl;
+
+	//cout << "Eanis_ave : " << Eanis_ave << endl;
+	//cout << "Eexternal_ave : " << Eexternal_ave << endl;
+	//cout << "Eexch_ave : " << Eexch_ave << endl;
+	//cout << "Ems_ave : " << Ems_ave << endl;
+	//cout << "Eme_ave : " << Eme_ave << endl;
+	outputfile.close();
 }
 
 
