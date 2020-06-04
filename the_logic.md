@@ -16,8 +16,11 @@
 
 <img src="https://latex.codecogs.com/gif.latex?\mathbf{H_{eff}}=-\frac{1}{\mu_{0}}\frac{\partial&space;E}{\partial\mathbf{M}}=-\frac{1}{\mu_{0}}\frac{\left&space;(&space;E_{anis}&plus;E_{exch}&plus;E_{ms}&plus;E_{external}&plus;E_{elastic}&space;\right&space;)}{\partial\mathbf{M}}\:&space;\:&space;\:&space;\:&space;\:&space;(2)"><br><br>
 
-このプログラム内では, 簡単のため 
-<img src="https://latex.codecogs.com/gif.latex?\inline&space;\dpi{80}&space;\mathbf{M}=M_{s}\mathbf{m}"> とする。
+エネルギー項は順に結晶磁気異方性、交換、静磁、外部、弾性エネルギーであり、下記に求め方は順に示す。また、このプログラム内では簡単のため、 
+<img src="https://latex.codecogs.com/gif.latex?\inline&space;\dpi{80}&space;\mathbf{M}=M_{s}\mathbf{m}"> とする。<br><br>
+
+## 結晶磁気異方性エネルギー<br>
+
 <img src="https://latex.codecogs.com/gif.latex?\inline&space;\dpi{80}&space;E_{anis}"> は結晶磁気異方性エネルギーであり、立方晶では<br><br>
 
 <img src="https://latex.codecogs.com/gif.latex?E_{anis}=\int&space;\left&space;[&space;K_{1}&space;\left&space;(&space;m_{1}^{2}m_{2}^{2}&plus;m_{1}^{2}m_{3}^{2}&plus;m_{2}^{2}m_{3}^{2}&space;\right&space;)&plus;K_{2}m_{1}^{2}m_{2}^{2}m_{3}^{2}\right&space;]dV\:&space;\:&space;\:&space;\:&space;\:&space;(3)"><br><br>
@@ -25,6 +28,8 @@
 となる。この時、
 <img src="https://latex.codecogs.com/gif.latex?\inline&space;\dpi{80}&space;m_{i}"> は単位磁化ベクトルの成分であり、
 <img src="https://latex.codecogs.com/gif.latex?\inline&space;\dpi{80}&space;K_{1},&space;K_{2}"> は異方性定数を表している。<br><br>
+
+## 交換エネルギー<br>
 
 <img src="https://latex.codecogs.com/gif.latex?\inline&space;\dpi{80}&space;E_{exch}"> は交換エネルギーであり、磁化の向きの空間変動によってのみ決定され、<br><br>
 
@@ -35,12 +40,14 @@
 <img src="https://latex.codecogs.com/gif.latex?\inline&space;\dpi{80}&space;m_{i,j}=\frac{\partial&space;m_{i}}{\partial&space;x_{j}}"> とし、
 <img src="https://latex.codecogs.com/gif.latex?x_{j}"> をデカルト座標の j 番目の位置ベクトル成分とする。<br><br>
 
-<img src="https://latex.codecogs.com/gif.latex?\inline&space;\dpi{80}&space;E_{ms}"> は静磁気エネルギーであり、<br><br>
+## 静磁エネルギー<br>
+
+<img src="https://latex.codecogs.com/gif.latex?\inline&space;\dpi{80}&space;E_{ms}"> は静磁エネルギーであり、<br><br>
 
 <img src="https://latex.codecogs.com/gif.latex?E_{ms}=-\frac{1}{2}\mu&space;_{0}M_{s}\int&space;\mathbf{H_{d}\cdot&space;m}dV\:&space;\:&space;\:&space;\:&space;\:&space;(5)" ><br><br>
 
 となる。この時、
-<img src="https://latex.codecogs.com/gif.latex?\inline&space;\dpi{80}&space;\mathbf{H_{d}}"> は磁気モーメント間の長距離相互作用によって決定される浮遊磁場であり、
+<img src="https://latex.codecogs.com/gif.latex?\inline&space;\dpi{80}&space;\mathbf{H_{d}}"> は磁気モーメント間の長距離相互作用によって決定される漂遊磁界であり、
 
 <img src="https://latex.codecogs.com/gif.latex?H_{d1,1}&plus;H_{d2,2}&plus;H_{d3,3}=-M_{s}\left&space;(&space;m_{d1,1}&plus;m_{d2,2}&plus;m_{d3,3}&space;\right&space;)\:&space;\:&space;\:&space;\:&space;\:&space;(6)" ><br><br>
 
@@ -53,11 +60,30 @@
 のように磁気スカラーポテンシャル
 <img src="https://latex.codecogs.com/gif.latex?\inline&space;\dpi{80}&space;\mathbf{\phi_{j}}"> を導入することで、(6)式は<br><br>
 
-<img src="https://latex.codecogs.com/gif.latex?\Delta&space;\phi&space;=M_s(m_{1,1}&plus;m_{2,2}&plus;m_{3,3})\:&space;\:&space;\:&space;\:&space;\:&space;(8)" >
+<img src="https://latex.codecogs.com/gif.latex?\Delta&space;\phi&space;=M_s(m_{1,1}&plus;m_{2,2}&plus;m_{3,3})\:&space;\:&space;\:&space;\:&space;\:&space;(8)" ><br><br>
 
-のように書き直される。
+のように書き直される。この(8)式のポテンシャルの解はフーリエ空間で次のように与えられる。<br><br>
+
+<img src="https://latex.codecogs.com/gif.latex?\phi&space;(\xi&space;)=-i\frac{M_s\left&space;[&space;m_1(\xi)\xi_1&plus;m_2(\xi)\xi_2&plus;m_3(\xi)\xi_3&space;\right&space;]}{\xi_{1}^{2}&plus;\xi_{2}^{2}&plus;\xi_{3}^{2}}\:&space;\:&space;\:&space;\:&space;\:&space;(9)" ><br><br>
+
+ここで、
+<img src="https://latex.codecogs.com/gif.latex?\inline&space;\dpi{80}&space;i=\sqrt{-1},&space;\:&space;\:&space;\xi_i" > はフーリエ空間の座標であり、
+<img src="https://latex.codecogs.com/gif.latex?\inline&space;\dpi{80}&space;\phi(\xi),&space;\:&space;\:&space;m_i(\xi)" >  はそれぞれ、
+<img src="https://latex.codecogs.com/gif.latex?\inline&space;\dpi{80}&space;\phi,&space;\:&space;\:&space;m_i" > のフーリエ変換である。つまり実空間での各値は逆フーリエ変換によって求めることができる。これらのことを用いて
+<img src="https://latex.codecogs.com/gif.latex?\inline&space;\dpi{80}&space;\mathbf{H_{d}}"> を求めることができる。<br><br>
+
+## 外部エネルギー<br>
+
+<img src="https://latex.codecogs.com/gif.latex?\inline&space;\dpi{80}&space;E_{extarnal}"> は外部エネルギーであり、外部磁界
+<img src="https://latex.codecogs.com/gif.latex?\inline&space;\dpi{80}&space;H_{ex}"> を用いて<br><br>
+
+<img src="https://latex.codecogs.com/gif.latex?E_{extarmal}=-\mu_0M_s\int\mathbf{H_{ex}}&space;\cdot&space;\mathbf{m}\:&space;dV\:&space;\:&space;\:&space;\:&space;\:&space;(7)"><br><br>
+
+と表すことができる。立方体材料の場合は、局所的な磁化に関する変形は固有ひずみ（応力を常時ないひずみ）によって記述され、
+
+
 
 [](
 式番号の付け方\
-<<\:&space;\:&space;\:&space;\:&space;\:&space;(7)>>
+<<\:&space;\:&space;\:&space;\:&space;\:&space;(7)>>\
 )
