@@ -16,7 +16,7 @@
 
 <img src="https://latex.codecogs.com/gif.latex?\mathbf{H_{eff}}=-\frac{1}{\mu_{0}}\frac{\partial&space;E}{\partial\mathbf{M}}=-\frac{1}{\mu_{0}}\frac{\left&space;(&space;E_{anis}&plus;E_{exch}&plus;E_{ms}&plus;E_{external}&plus;E_{elastic}&space;\right&space;)}{\partial\mathbf{M}}\:&space;\:&space;\:&space;\:&space;\:&space;(2)"><br><br>
 
-エネルギー項は順に結晶磁気異方性、交換、静磁、外部、弾性エネルギーであり、下記に求め方は順に示す。また、このプログラム内では簡単のため、 
+エネルギー項は順に結晶磁気異方性、交換、静磁、外部、弾性エネルギーであり、下記に求め方を順に示す。また、このプログラム内では簡単のため、 
 <img src="https://latex.codecogs.com/gif.latex?\inline&space;\dpi{80}&space;\mathbf{M}=M_{s}\mathbf{m}"> とする。<br><br>
 
 ## 結晶磁気異方性エネルギー<br>
@@ -44,10 +44,10 @@
 
 <img src="https://latex.codecogs.com/gif.latex?\inline&space;\dpi{80}&space;E_{ms}"> は静磁エネルギーであり、<br><br>
 
-<img src="https://latex.codecogs.com/gif.latex?E_{ms}=-\frac{1}{2}\mu&space;_{0}M_{s}\int&space;\mathbf{H_{d}\cdot&space;m}dV\:&space;\:&space;\:&space;\:&space;\:&space;(5)" ><br><br>
+<img src="https://latex.codecogs.com/gif.latex?E_{ms}=-\frac{1}{2}\mu&space;_{0}M_{s}\int&space;\mathbf{H_{d}\cdot&space;m}\:&space;dV\:&space;\:&space;\:&space;\:&space;\:&space;(5)" ><br><br>
 
 となる。この時、
-<img src="https://latex.codecogs.com/gif.latex?\inline&space;\dpi{80}&space;\mathbf{H_{d}}"> は磁気モーメント間の長距離相互作用によって決定される漂遊磁界であり、
+<img src="https://latex.codecogs.com/gif.latex?\inline&space;\dpi{80}&space;\mathbf{H_{d}}"> は磁気モーメント間の長距離相互作用によって決定される漂遊磁界であり、<br><br>
 
 <img src="https://latex.codecogs.com/gif.latex?H_{d1,1}&plus;H_{d2,2}&plus;H_{d3,3}=-M_{s}\left&space;(&space;m_{d1,1}&plus;m_{d2,2}&plus;m_{d3,3}&space;\right&space;)\:&space;\:&space;\:&space;\:&space;\:&space;(6)" ><br><br>
 
@@ -77,13 +77,29 @@
 <img src="https://latex.codecogs.com/gif.latex?\inline&space;\dpi{80}&space;E_{extarnal}"> は外部エネルギーであり、外部磁界
 <img src="https://latex.codecogs.com/gif.latex?\inline&space;\dpi{80}&space;H_{ex}"> を用いて<br><br>
 
-<img src="https://latex.codecogs.com/gif.latex?E_{extarmal}=-\mu_0M_s\int\mathbf{H_{ex}}&space;\cdot&space;\mathbf{m}\:&space;dV\:&space;\:&space;\:&space;\:&space;\:&space;(7)"><br><br>
+<img src="https://latex.codecogs.com/gif.latex?E_{extarmal}=-\mu_0M_s\int\mathbf{H_{ex}}&space;\cdot&space;\mathbf{m}\:&space;dV\:&space;\:&space;\:&space;\:&space;\:&space;()"><br><br>
 
-と表すことができる。立方体材料の場合は、局所的な磁化に関する変形は固有ひずみ（応力を常時ないひずみ）によって記述され、
+と表すことができる。<br><br>
 
+## 弾性エネルギー<br>
 
+立方体材料の場合は、局所的な磁化に関する変形は固有ひずみ（応力を常時ないひずみ）によって記述され、<br><br>
 
-[](
-式番号の付け方\
-<<\:&space;\:&space;\:&space;\:&space;\:&space;(7)>>\
-)
+<img src="https://latex.codecogs.com/gif.latex?\varepsilon&space;_{11}^{0}=\frac{3}{2}\lambda&space;_{100}\left&space;(&space;m_1^2-\frac{1}{3}&space;\right&space;),\:&space;\:&space;\varepsilon&space;_{12}^{0}=\frac{3}{2}\lambda&space;_{111}m_1m_2"><br>
+<img src="https://latex.codecogs.com/gif.latex?\varepsilon&space;_{22}^{0}=\frac{3}{2}\lambda&space;_{100}\left&space;(&space;m_1^2-\frac{1}{3}&space;\right&space;),\:&space;\:&space;\varepsilon&space;_{13}^{0}=\frac{3}{2}\lambda&space;_{111}m_1m_3\:&space;\:&space;\:&space;\:&space;\:&space;()"><br>
+<img src="https://latex.codecogs.com/gif.latex?\varepsilon&space;_{33}^{0}=\frac{3}{2}\lambda&space;_{100}\left&space;(&space;m_1^2-\frac{1}{3}&space;\right&space;),\:&space;\:&space;\varepsilon&space;_{23}^{0}=\frac{3}{2}\lambda&space;_{111}m_2m_3"><br><br>
+
+となる。ここで、
+<img src="https://latex.codecogs.com/gif.latex?\inline&space;\dpi{80}&space;\lambda_{100}\:&space;,&space;\:&space;\:&space;\lambda_{111}"> は立方晶の磁歪定数である。このとき、磁歪効果から生じる局所的な変形によって弾性ひずみは全ひずみ
+ を用いて、<br><br>
+
+<img src="https://latex.codecogs.com/gif.latex?e_{ij}=\varepsilon&space;_{ij}-\varepsilon&space;_{ij}^0\:&space;\:&space;\:&space;\:&space;\:&space;()"><br><br>
+
+と表せられる。またこれに対応する弾性エネルギーは
+
+<img src="https://latex.codecogs.com/gif.latex?E_{elastic}=\int&space;\frac{1}{2}c_{ijkl}e_{ij}e{kl}\:&space;dV=\int&space;\frac{1}{2}c_{ijkl}(\varepsilon&space;_{ij}-\varepsilon&space;_{ij}^0)(\varepsilon&space;_{kl}-\varepsilon&space;_{kl}^0)\:&space;dV\:&space;\:&space;\:&space;\:&space;\:&space;()
+">
+
+となる。ここで、
+<img src="https://latex.codecogs.com/gif.latex?\inline&space;\dpi{80}&space;c_{ijkl}">　は弾性係数テンソルであり、次のように行列表現を用いて表すことができる。
+
