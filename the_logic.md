@@ -93,7 +93,7 @@
 <img src="https://latex.codecogs.com/gif.latex?\inline&space;\dpi{80}&space;E_{extarnal}"> は外部エネルギーであり、外部磁界
 <img src="https://latex.codecogs.com/gif.latex?\inline&space;\dpi{80}&space;H_{ex}"> を用いて<br><br>
 
-<img src="https://latex.codecogs.com/gif.latex?E_{extarmal}=-\mu_0M_s\int\mathbf{H_{ex}}&space;\cdot&space;\mathbf{m}\:&space;dV\:&space;\:&space;\:&space;\:&space;\:&space;()"><br><br>
+<img src="https://latex.codecogs.com/gif.latex?E_{extarmal}=-\mu_0M_s\int\mathbf{H_{ex}}&space;\cdot&space;\mathbf{m}\:&space;dV\:&space;\:&space;\:&space;\:&space;\:&space;(13)"><br><br>
 
 と表すことができる。<br><br>
 
@@ -102,20 +102,29 @@
 立方体材料の場合は、局所的な磁化に関する変形は固有ひずみ（応力を常時ないひずみ）によって記述され、<br><br>
 
 <img src="https://latex.codecogs.com/gif.latex?\varepsilon&space;_{11}^{0}=\frac{3}{2}\lambda&space;_{100}\left&space;(&space;m_1^2-\frac{1}{3}&space;\right&space;),\:&space;\:&space;\varepsilon&space;_{12}^{0}=\frac{3}{2}\lambda&space;_{111}m_1m_2"><br>
-<img src="https://latex.codecogs.com/gif.latex?\varepsilon&space;_{22}^{0}=\frac{3}{2}\lambda&space;_{100}\left&space;(&space;m_1^2-\frac{1}{3}&space;\right&space;),\:&space;\:&space;\varepsilon&space;_{13}^{0}=\frac{3}{2}\lambda&space;_{111}m_1m_3\:&space;\:&space;\:&space;\:&space;\:&space;()"><br>
+<img src="https://latex.codecogs.com/gif.latex?\varepsilon&space;_{22}^{0}=\frac{3}{2}\lambda&space;_{100}\left&space;(&space;m_1^2-\frac{1}{3}&space;\right&space;),\:&space;\:&space;\varepsilon&space;_{13}^{0}=\frac{3}{2}\lambda&space;_{111}m_1m_3\:&space;\:&space;\:&space;\:&space;\:&space;(14)"><br>
 <img src="https://latex.codecogs.com/gif.latex?\varepsilon&space;_{33}^{0}=\frac{3}{2}\lambda&space;_{100}\left&space;(&space;m_1^2-\frac{1}{3}&space;\right&space;),\:&space;\:&space;\varepsilon&space;_{23}^{0}=\frac{3}{2}\lambda&space;_{111}m_2m_3"><br><br>
 
 となる。ここで、
 <img src="https://latex.codecogs.com/gif.latex?\inline&space;\dpi{80}&space;\lambda_{100}\:&space;,&space;\:&space;\:&space;\lambda_{111}"> は立方晶の磁歪定数である。このとき、磁歪効果から生じる局所的な変形によって弾性ひずみは全ひずみ
  を用いて、<br><br>
 
-<img src="https://latex.codecogs.com/gif.latex?e_{ij}=\varepsilon&space;_{ij}-\varepsilon&space;_{ij}^0\:&space;\:&space;\:&space;\:&space;\:&space;()"><br><br>
+<img src="https://latex.codecogs.com/gif.latex?e_{ij}=\varepsilon&space;_{ij}-\varepsilon&space;_{ij}^0\:&space;\:&space;\:&space;\:&space;\:&space;(15)"><br><br>
 
-と表せられる。またこれに対応する弾性エネルギーは
+と表せられる。またこれに対応する弾性エネルギーは<br><br>
 
-<img src="https://latex.codecogs.com/gif.latex?E_{elastic}=\int&space;\frac{1}{2}c_{ijkl}e_{ij}e{kl}\:&space;dV=\int&space;\frac{1}{2}c_{ijkl}(\varepsilon&space;_{ij}-\varepsilon&space;_{ij}^0)(\varepsilon&space;_{kl}-\varepsilon&space;_{kl}^0)\:&space;dV\:&space;\:&space;\:&space;\:&space;\:&space;()
-">
+<img src="https://latex.codecogs.com/gif.latex?E_{elastic}=\int&space;\frac{1}{2}c_{ijkl}e_{ij}e{kl}\:&space;dV=\int&space;\frac{1}{2}c_{ijkl}(\varepsilon&space;_{ij}-\varepsilon&space;_{ij}^0)(\varepsilon&space;_{kl}-\varepsilon&space;_{kl}^0)\:&space;dV\:&space;\:&space;\:&space;\:&space;\:&space;(16)
+"><br><br>
 
 となる。ここで、
-<img src="https://latex.codecogs.com/gif.latex?\inline&space;\dpi{80}&space;c_{ijkl}"> は弾性係数テンソルであり、次のように行列表現を用いて表すことができる。
+<img src="https://latex.codecogs.com/gif.latex?\inline&space;\dpi{80}&space;c_{ijkl}"> は弾性係数テンソルであり、フックの法則（線形弾性体において）において次のように行列表現を用いて表すことができる。<br><br>
 
+<img src="https://latex.codecogs.com/gif.latex?\begin{bmatrix}&space;\sigma&space;_{11}&space;\\&space;\sigma&space;_{22}&space;\\&space;\sigma&space;_{33}&space;\\&space;\sigma&space;_{23}&space;\\&space;\sigma&space;_{31}&space;\\&space;\sigma&space;_{12}&space;\end{bmatrix}&space;\begin{bmatrix}&space;c_{1111}&space;&c_{1122}&space;&c_{1133}&space;&c_{1123}&space;&c_{1131}&space;&c_{1112}&space;\\&space;(c_{2211})&space;&c_{2222}&space;&c_{2233}&space;&c_{2223}&space;&c_{2231}&space;&c_{2212}&space;\\&space;(c_{3311})&space;&(c_{3322})&space;&c_{3333}&space;&c_{3323}&space;&c_{3331}&space;&c_{3312}&space;\\&space;(c_{2311})&space;&(c_{2322})&space;&(c_{2333})&space;&c_{2323}&space;&c_{2331}&space;&c_{2312}&space;\\&space;(c_{3111})&space;&(c_{3122})&space;&(c_{3133})&space;&(c_{3123})&space;&c_{3131}&space;&c_{3112}&space;\\&space;(c_{1211})&space;&(c_{1222})&space;&(c_{1233})&space;&(c_{1223})&space;&(c_{1231})&space;&c_{1212}&space;\end{bmatrix}&space;\begin{bmatrix}&space;\varepsilon&space;_{11}&space;\\&space;\varepsilon&space;_{22}&space;\\&space;\varepsilon&space;_{33}&space;\\&space;2\varepsilon&space;_{23}&space;\\&space;2\varepsilon&space;_{31}&space;\\&space;2\varepsilon&space;_{12}&space;\end{bmatrix}\:&space;\:&space;\:&space;\:&space;\:&space;(17)"></a>
+
+本来4階のテンソルである弾性係数テンソルは行列の形で表現することはできないが、応力とひずみの対称性からこのような行列の積で計算することが可能である。また、式(17)内において、弾性係数テンソルは対角行列成分に対して対称的であるので独立な成分は21個となり、Voigt表記を用いると以下のように書き直すことができる。<br><Rb>
+
+<img src="https://latex.codecogs.com/gif.latex?\begin{bmatrix}&space;\sigma&space;_{1}&space;\\&space;\sigma&space;_{2}&space;\\&space;\sigma&space;_{3}&space;\\&space;\sigma&space;_{4}&space;\\&space;\sigma&space;_{5}&space;\\&space;\sigma&space;_{6}&space;\end{bmatrix}&space;\begin{bmatrix}&space;c_{11}&space;&c_{12}&space;&c_{13}&space;&c_{14}&space;&c_{15}&space;&c_{16}&space;\\&space;(c_{21})&space;&c_{22}&space;&c_{23}&space;&c_{24}&space;&c_{25}&space;&c_{26}&space;\\&space;(c_{31})&space;&(c_{32})&space;&c_{33}&space;&c_{34}&space;&c_{35}&space;&c_{36}&space;\\&space;(c_{41})&space;&(c_{42})&space;&(c_{43})&space;&c_{44}&space;&c_{45}&space;&c_{46}&space;\\&space;(c_{51})&space;&(c_{52})&space;&(c_{53})&space;&(c_{54})&space;&c_{55}&space;&c_{56}&space;\\&space;(c_{61})&space;&(c_{62})&space;&(c_{63})&space;&(c_{64})&space;&(c_{65})&space;&c_{66}&space;\end{bmatrix}&space;\begin{bmatrix}&space;\varepsilon&space;_{1}&space;\\&space;\varepsilon&space;_{2}&space;\\&space;\varepsilon&space;_{3}&space;\\&space;\varepsilon&space;_{4}&space;\\&space;\varepsilon&space;_{5}&space;\\&space;\varepsilon&space;_{6}&space;\end{bmatrix}\:&space;\:&space;\:&space;\:&space;\:&space;(18)"><br><br>
+
+立方晶においてはその対称性から弾性係数テンソルの独立な成分数は3つとなり、次のように表すことができる。<br><br>
+
+<img src="https://latex.codecogs.com/gif.latex?\begin{bmatrix}&space;\sigma&space;_{1}&space;\\&space;\sigma&space;_{2}&space;\\&space;\sigma&space;_{3}&space;\\&space;\sigma&space;_{4}&space;\\&space;\sigma&space;_{5}&space;\\&space;\sigma&space;_{6}&space;\end{bmatrix}&space;\begin{bmatrix}&space;c_{11}&space;&c_{12}&space;&c_{12}&space;&0&space;&0&space;&0&space;\\&space;c_{12}&space;&c_{11}&space;&c_{12}&space;&0&space;&0&space;&0&space;\\&space;c_{12}&space;&c_{12}&space;&c_{33}&space;&0&space;&0&space;&0&space;\\&space;0&space;&0&space;&0&space;&c_{44}&space;&0&space;&0&space;\\&space;0&space;&0&space;&0&space;&0&space;&c_{44}&space;&0&space;\\&space;0&space;&0&space;&0&space;&0&space;&0&space;&c_{44}&space;\end{bmatrix}&space;\begin{bmatrix}&space;\varepsilon&space;_{1}&space;\\&space;\varepsilon&space;_{2}&space;\\&space;\varepsilon&space;_{3}&space;\\&space;\varepsilon&space;_{4}&space;\\&space;\varepsilon&space;_{5}&space;\\&space;\varepsilon&space;_{6}&space;\end{bmatrix}\:&space;\:&space;\:&space;\:&space;\:&space;(19)"><br><br>
