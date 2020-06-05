@@ -113,11 +113,13 @@
 
 と表せられる。またこれに対応する弾性エネルギーは<br><br>
 
-<img src="https://latex.codecogs.com/gif.latex?E_{elastic}=\int&space;\frac{1}{2}c_{ijkl}e_{ij}e{kl}\:&space;dV=\int&space;\frac{1}{2}c_{ijkl}(\varepsilon&space;_{ij}-\varepsilon&space;_{ij}^0)(\varepsilon&space;_{kl}-\varepsilon&space;_{kl}^0)\:&space;dV\:&space;\:&space;\:&space;\:&space;\:&space;(16)
+<img src="https://latex.codecogs.com/gif.latex?E_{elastic}=\int&space;\frac{1}{2}c_{ijkl}e_{ij}e_{kl}\:&space;dV=\int&space;\frac{1}{2}c_{ijkl}(\varepsilon&space;_{ij}-\varepsilon&space;_{ij}^0)(\varepsilon&space;_{kl}-\varepsilon&space;_{kl}^0)\:&space;dV\:&space;\:&space;\:&space;\:&space;\:&space;(16)
 "><br><br>
 
 となる。ここで、
-<img src="https://latex.codecogs.com/gif.latex?\inline&space;\dpi{80}&space;c_{ijkl}"> は弾性係数テンソルであり、フックの法則（線形弾性体において）において次のように行列表現を用いて表すことができる。<br><br>
+<img src="https://latex.codecogs.com/gif.latex?\inline&space;\dpi{80}&space;c_{ijkl}"> は弾性係数テンソルである。<br>
+
+ここで弾性係数テンソルに関して説明する。弾性係数テンソルはフックの法則（線形弾性体において）において次のように行列表現を用いて表すことができる。<br><br>
 
 <img src="https://latex.codecogs.com/gif.latex?\begin{bmatrix}&space;\sigma&space;_{11}&space;\\&space;\sigma&space;_{22}&space;\\&space;\sigma&space;_{33}&space;\\&space;\sigma&space;_{23}&space;\\&space;\sigma&space;_{31}&space;\\&space;\sigma&space;_{12}&space;\end{bmatrix}&space;\begin{bmatrix}&space;c_{1111}&space;&c_{1122}&space;&c_{1133}&space;&c_{1123}&space;&c_{1131}&space;&c_{1112}&space;\\&space;(c_{2211})&space;&c_{2222}&space;&c_{2233}&space;&c_{2223}&space;&c_{2231}&space;&c_{2212}&space;\\&space;(c_{3311})&space;&(c_{3322})&space;&c_{3333}&space;&c_{3323}&space;&c_{3331}&space;&c_{3312}&space;\\&space;(c_{2311})&space;&(c_{2322})&space;&(c_{2333})&space;&c_{2323}&space;&c_{2331}&space;&c_{2312}&space;\\&space;(c_{3111})&space;&(c_{3122})&space;&(c_{3133})&space;&(c_{3123})&space;&c_{3131}&space;&c_{3112}&space;\\&space;(c_{1211})&space;&(c_{1222})&space;&(c_{1233})&space;&(c_{1223})&space;&(c_{1231})&space;&c_{1212}&space;\end{bmatrix}&space;\begin{bmatrix}&space;\varepsilon&space;_{11}&space;\\&space;\varepsilon&space;_{22}&space;\\&space;\varepsilon&space;_{33}&space;\\&space;2\varepsilon&space;_{23}&space;\\&space;2\varepsilon&space;_{31}&space;\\&space;2\varepsilon&space;_{12}&space;\end{bmatrix}\:&space;\:&space;\:&space;\:&space;\:&space;(17)"></a>
 
@@ -128,3 +130,10 @@
 立方晶においてはその対称性から弾性係数テンソルの独立な成分数は3つとなり、次のように表すことができる。<br><br>
 
 <img src="https://latex.codecogs.com/gif.latex?\begin{bmatrix}&space;\sigma&space;_{1}&space;\\&space;\sigma&space;_{2}&space;\\&space;\sigma&space;_{3}&space;\\&space;\sigma&space;_{4}&space;\\&space;\sigma&space;_{5}&space;\\&space;\sigma&space;_{6}&space;\end{bmatrix}&space;\begin{bmatrix}&space;c_{11}&space;&c_{12}&space;&c_{12}&space;&0&space;&0&space;&0&space;\\&space;c_{12}&space;&c_{11}&space;&c_{12}&space;&0&space;&0&space;&0&space;\\&space;c_{12}&space;&c_{12}&space;&c_{33}&space;&0&space;&0&space;&0&space;\\&space;0&space;&0&space;&0&space;&c_{44}&space;&0&space;&0&space;\\&space;0&space;&0&space;&0&space;&0&space;&c_{44}&space;&0&space;\\&space;0&space;&0&space;&0&space;&0&space;&0&space;&c_{44}&space;\end{bmatrix}&space;\begin{bmatrix}&space;\varepsilon&space;_{1}&space;\\&space;\varepsilon&space;_{2}&space;\\&space;\varepsilon&space;_{3}&space;\\&space;\varepsilon&space;_{4}&space;\\&space;\varepsilon&space;_{5}&space;\\&space;\varepsilon&space;_{6}&space;\end{bmatrix}\:&space;\:&space;\:&space;\:&space;\:&space;(19)"><br><br>
+
+式(19)のように３つの成分のみをもつ立方晶の弾性係数テンソルを用いて式(16)の弾性エネルギーを表すと<br><br>
+
+<img src="https://latex.codecogs.com/gif.latex?E_{elastic}=\int\left&space;\{&space;\frac{1}{2}c_{11}(&space;e_{11}^{2}&plus;e_{22}^{2}&plus;e_{33}^{2}&space;)&plus;c_{12}(&space;e_{11}e_{22}&plus;e_{22}e_{33}&plus;e_{33}e_{11})&plus;2c_{44}&space;(&space;e_{12}^{2}&plus;e_{23}^{2}&plus;e_{31}^{2})\right&space;\}\:&space;"><br>
+<img src="https://latex.codecogs.com/gif.latex?=\int\left&space;\{&space;\frac{1}{2}c_{11}\left&space;\[(\varepsilon_{11}-\varepsilon_{11}^0&space;)^{2}&plus;(\varepsilon_{22}-\varepsilon_{22}^0&space;)^{2}&plus;(\varepsilon_{33}-\varepsilon_{33}^0&space;)^{2}\right&space;\]&plus;c_{12}\left&space;\[(\varepsilon_{11}-\varepsilon_{11}^0&space;)(\varepsilon_{22}-\varepsilon_{22}^0&space;)&plus;(\varepsilon_{22}-\varepsilon_{22}^0&space;)(\varepsilon_{33}-\varepsilon_{33}^0&space;)&plus;(\varepsilon_{33}-\varepsilon_{33}^0&space;)(\varepsilon_{11}-\varepsilon_{11}^0&space;)\right&space;\]&plus;2c_{44}\left&space;\[(\varepsilon_{12}-\varepsilon_{12}^0&space;)^{2}&plus;(\varepsilon_{23}-\varepsilon_{23}^0&space;)^{2}&plus;(\varepsilon_{31}-\varepsilon_{31}^0&space;)^{2}\right&space;\]\right&space;\}\:&space;\:&space;\:&space;\:&space;\:&space;(19)">
+
+となり、以下の３つの寄与に分けることができる。
