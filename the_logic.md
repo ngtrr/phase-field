@@ -2,10 +2,10 @@
 # **The Landau-Lifshitz-Gilbert equation (LLG)**
 <br>
 
-## The main equation<br>
+## 方程式の概要<br>
 <img src="https://latex.codecogs.com/gif.latex?\inline&space;\dpi{80}&space;M_{s}" title="M_{s}" /> を飽和磁化、
 <img src="https://latex.codecogs.com/gif.latex?\inline&space;\dpi{80}&space;\gamma&space;_{0}" title="\gamma _{0}" /> を磁気回転比、
-<img src="https://latex.codecogs.com/gif.latex?\inline&space;\dpi{80}&space;\alpha" title="\alpha" /> を減衰定数とすると、
+<img src="https://latex.codecogs.com/gif.latex?\inline&space;\dpi{80}&space;\alpha" title="\alpha" /> をダンピング定数とすると、
 ドメイン構造は局所磁化
 <img src="https://latex.codecogs.com/gif.latex?\inline&space;\dpi{80}&space;\mathbf{M(r)}" title="\mathbf{M(r)}" /> の空間分布によって記述されるため、次のLLG方程式を用いて表すことができる。<br><br>
 
@@ -27,7 +27,7 @@
 
 となる。この時、
 <img src="https://latex.codecogs.com/gif.latex?\inline&space;\dpi{80}&space;m_{i}"> は単位磁化ベクトルの成分であり、
-<img src="https://latex.codecogs.com/gif.latex?\inline&space;\dpi{80}&space;K_{1},&space;K_{2}"> は異方性定数を表している。<br><br>
+<img src="https://latex.codecogs.com/gif.latex?\inline&space;\dpi{80}&space;K_{1},&space;K_{2}"> は異方性定数（材料に依存）を表している。<br><br>
 
 ## 交換エネルギー<br>
 
@@ -36,9 +36,9 @@
 <img src="https://latex.codecogs.com/gif.latex?E_{exch}=A\int\left&space;(&space;m_{1,1}^{2}&plus;m_{1,2}^{2}&plus;m_{1,3}^{2}&plus;&space;m_{2,1}^{2}&plus;m_{2,2}^{2}&plus;m_{2,3}^{2}&space;&plus;&space;m_{3,1}^{2}&plus;m_{3,2}^{2}&plus;m_{3,3}^{2}&space;\right&space;)dV\:&space;\:&space;\:&space;\:&space;\:&space;(4)"><br><br>
 
 となる。この時、
-<img src="https://latex.codecogs.com/gif.latex?\inline&space;\dpi{80}&space;A"> は単位磁化ベクトルの成分である。また、添え字内のコンマは空間微分を表しており、以降
+<img src="https://latex.codecogs.com/gif.latex?\inline&space;\dpi{80}&space;A"> は交換定数である。また、添え字内のコンマは空間微分を表しており、以降
 <img src="https://latex.codecogs.com/gif.latex?\inline&space;\dpi{80}&space;m_{i,j}=\frac{\partial&space;m_{i}}{\partial&space;x_{j}}"> とし、
-<img src="https://latex.codecogs.com/gif.latex?x_{j}"> をデカルト座標の j 番目の位置ベクトル成分とする。<br><br>
+<img src="https://latex.codecogs.com/gif.latex?x_{j}"> をデカルト座標の j 番目の位置ベクトル成分とする。なお、本シミュレーション内では各セルに隣接する上下左右４つのセルに関して計算する。<br><br>
 
 ## 静磁エネルギー<br>
 
@@ -47,7 +47,7 @@
 <img src="https://latex.codecogs.com/gif.latex?E_{ms}=-\frac{1}{2}\mu&space;_{0}M_{s}\int&space;\mathbf{H_{d}\cdot&space;m}\:&space;dV\:&space;\:&space;\:&space;\:&space;\:&space;(5)" ><br><br>
 
 となる。この時、
-<img src="https://latex.codecogs.com/gif.latex?\inline&space;\dpi{80}&space;\mathbf{H_{d}}"> は磁気モーメント間の長距離相互作用によって決定される漂遊磁界であり、<br><br>
+<img src="https://latex.codecogs.com/gif.latex?\inline&space;\dpi{80}&space;\mathbf{H_{d}}"> は反磁界であり、<br><br>
 
 <img src="https://latex.codecogs.com/gif.latex?H_{d1,1}&plus;H_{d2,2}&plus;H_{d3,3}=-M_{s}\left&space;(&space;m_{d1,1}&plus;m_{d2,2}&plus;m_{d3,3}&space;\right&space;)\:&space;\:&space;\:&space;\:&space;\:&space;(6)" ><br><br>
 
@@ -64,13 +64,28 @@
 
 のように書き直される。この(8)式のポテンシャルの解はフーリエ空間で次のように与えられる。<br><br>
 
-<img src="https://latex.codecogs.com/gif.latex?\phi&space;(\xi&space;)=-i\frac{M_s\left&space;[&space;m_1(\xi)\xi_1&plus;m_2(\xi)\xi_2&plus;m_3(\xi)\xi_3&space;\right&space;]}{\xi_{1}^{2}&plus;\xi_{2}^{2}&plus;\xi_{3}^{2}}\:&space;\:&space;\:&space;\:&space;\:&space;(9)" ><br><br>
+<img src="https://latex.codecogs.com/gif.latex?\phi&space;(k)=-i\frac{M_s\left&space;[&space;m_1(k)k_1&plus;m_2(k)k_2&plus;m_3(k)k_3&space;\right&space;]}{k_{1}^{2}&plus;k_{2}^{2}&plus;k_{3}^{2}}\:&space;\:&space;\:&space;\:&space;\:&space;(9)" ><br><br>
 
 ここで、
-<img src="https://latex.codecogs.com/gif.latex?\inline&space;\dpi{80}&space;i=\sqrt{-1},&space;\:&space;\:&space;\xi_i" > はフーリエ空間の座標であり、
-<img src="https://latex.codecogs.com/gif.latex?\inline&space;\dpi{80}&space;\phi(\xi),&space;\:&space;\:&space;m_i(\xi)" >  はそれぞれ、
+<img src="https://latex.codecogs.com/gif.latex?\inline&space;\dpi{80}&space;i=\sqrt{-1},&space;\:&space;\:&space;k_i" > はフーリエ空間の座標であり、
+<img src="https://latex.codecogs.com/gif.latex?\inline&space;\dpi{80}&space;\phi(k),&space;\:&space;\:&space;m_i(k)" >  はそれぞれ、
 <img src="https://latex.codecogs.com/gif.latex?\inline&space;\dpi{80}&space;\phi,&space;\:&space;\:&space;m_i" > のフーリエ変換である。つまり実空間での各値は逆フーリエ変換によって求めることができる。これらのことを用いて
-<img src="https://latex.codecogs.com/gif.latex?\inline&space;\dpi{80}&space;\mathbf{H_{d}}"> を求めることができる。<br><br>
+<img src="https://latex.codecogs.com/gif.latex?\inline&space;\dpi{80}&space;\mathbf{H_{d}}"> を求めることができる。しかし、式(9)において
+<img src="https://latex.codecogs.com/gif.latex?\inline&space;\dpi{80}&space;k_1=k_2=k_3=0"> となる点（フーリエ空間の原点）において無限に発散してまう。この点での寄与は系全体での平均磁化<br><br>
+
+<img src="https://latex.codecogs.com/gif.latex?\mathbf{\bar{M}}=\int\delta&space;M(r)&space;\:&space;dV\:&space;\:&space;\:&space;\:&space;\:&space;(10)">
+
+による反磁界に対応している。つまり、磁化の空間分布は
+
+
+のように空間に依存する磁化
+<img src="https://latex.codecogs.com/gif.latex?\inline&space;\dpi{80}&space;\delta&space;M(r)"> と空間に依存しない磁化
+<img src="https://latex.codecogs.com/gif.latex?\inline&space;\dpi{80}&space;\mathbf{\bar{M}}"> の和で表され、(9)式では空間に依存した磁化の寄与のみを計算している。つまり、
+反磁場係数
+<img src="https://latex.codecogs.com/gif.latex?\inline&space;\dpi{80}&space;N"> を用いて次の反磁界を追加して考慮する必要がある。<br><br>
+
+<img src="https://latex.codecogs.com/gif.latex?\mathbf{H_d(\bar{M})}=N\mathbf{\bar{M}}\:&space;\:&space;\:&space;\:&space;\:&space;(11)">
+
 
 ## 外部エネルギー<br>
 
