@@ -113,8 +113,10 @@
 
 と表せられる。またこれに対応する弾性エネルギーは<br><br>
 
-<img src="https://latex.codecogs.com/gif.latex?E_{elastic}=\int&space;\frac{1}{2}c_{ijkl}e_{ij}e_{kl}\:&space;dV=\int&space;\frac{1}{2}c_{ijkl}(\varepsilon&space;_{ij}-\varepsilon&space;_{ij}^0)(\varepsilon&space;_{kl}-\varepsilon&space;_{kl}^0)\:&space;dV\:&space;\:&space;\:&space;\:&space;\:&space;(16)
-"><br><br>
+<img src="https://latex.codecogs.com/gif.latex?E_{elastic}=\int&space;\frac{1}{2}c_{ijkl}e_{ij}e_{kl}\:&space;dV="><br>
+<img src="https://latex.codecogs.com/gif.latex?=\int&space;\frac{1}{2}c_{ijkl}(\varepsilon&space;_{ij}-\varepsilon&space;_{ij}^0)(\varepsilon&space;_{kl}-\varepsilon&space;_{kl}^0)\:&space;dV\:&space;\:&space;\:&space;\:&space;\:&space;(16)"><br><br>
+
+<img src="https://latex.codecogs.com/gif.latex?E_{elastic}=\int&space;\frac{1}{2}c_{ijkl}e_{ij}e_{kl}\:&space;dV=\int&space;\frac{1}{2}c_{ijkl}(\varepsilon&space;_{ij}-\varepsilon&space;_{ij}^0)(\varepsilon&space;_{kl}-\varepsilon&space;_{kl}^0)\:&space;dV\:&space;\:&space;\:&space;\:&space;\:&space;(16)"><br><br>
 
 となる。ここで、
 <img src="https://latex.codecogs.com/gif.latex?\inline&space;\dpi{80}&space;c_{ijkl}"> は弾性係数テンソルである。<br>
