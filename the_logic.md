@@ -75,16 +75,17 @@
 
 <img src="https://latex.codecogs.com/gif.latex?\mathbf{\bar{M}}=\int\delta&space;M(r)&space;\:&space;dV\:&space;\:&space;\:&space;\:&space;\:&space;(10)">
 
-による反磁界に対応している。つまり、磁化の空間分布は
+による反磁界に対応している。つまり、磁化の空間分布は<br><br>
 
+<img src="https://latex.codecogs.com/gif.latex?\mathbf{M(r)}=\mathbf{\bar{M}}+\delta&space;M(\mathbf{r})&space;\:&space;dV\:&space;\:&space;\:&space;\:&space;\:&space;(11)"><br><br>
 
 のように空間に依存する磁化
-<img src="https://latex.codecogs.com/gif.latex?\inline&space;\dpi{80}&space;\delta&space;M(r)"> と空間に依存しない磁化
+<img src="https://latex.codecogs.com/gif.latex?\inline&space;\dpi{80}&space;\delta&space;M(\mathbf{r})"> と空間に依存しない磁化
 <img src="https://latex.codecogs.com/gif.latex?\inline&space;\dpi{80}&space;\mathbf{\bar{M}}"> の和で表され、(9)式では空間に依存した磁化の寄与のみを計算している。つまり、
 反磁場係数
 <img src="https://latex.codecogs.com/gif.latex?\inline&space;\dpi{80}&space;N"> を用いて次の反磁界を追加して考慮する必要がある。<br><br>
 
-<img src="https://latex.codecogs.com/gif.latex?\mathbf{H_d(\bar{M})}=N\mathbf{\bar{M}}\:&space;\:&space;\:&space;\:&space;\:&space;(11)">
+<img src="https://latex.codecogs.com/gif.latex?\mathbf{H_d(\bar{M})}=N\mathbf{\bar{M}}\:&space;\:&space;\:&space;\:&space;\:&space;(12)">
 
 
 ## 外部エネルギー<br>
@@ -116,5 +117,5 @@
 ">
 
 となる。ここで、
-<img src="https://latex.codecogs.com/gif.latex?\inline&space;\dpi{80}&space;c_{ijkl}">　は弾性係数テンソルであり、次のように行列表現を用いて表すことができる。
+<img src="https://latex.codecogs.com/gif.latex?\inline&space;\dpi{80}&space;c_{ijkl}"> は弾性係数テンソルであり、次のように行列表現を用いて表すことができる。
 
