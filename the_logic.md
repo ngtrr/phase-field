@@ -136,4 +136,8 @@
 <img src="https://latex.codecogs.com/gif.latex?=\int\frac{1}{2}c_{11}\left&space;\[(\varepsilon_{11}-\varepsilon_{11}^0&space;)^{2}&plus;(\varepsilon_{22}-\varepsilon_{22}^0&space;)^{2}&plus;(\varepsilon_{33}-\varepsilon_{33}^0&space;)^{2}\right&space;\]&plus;c_{12}\left&space;\[(\varepsilon_{11}-\varepsilon_{11}^0&space;)(\varepsilon_{22}-\varepsilon_{22}^0&space;)&plus;(\varepsilon_{22}-\varepsilon_{22}^0&space;)(\varepsilon_{33}-\varepsilon_{33}^0&space;)&plus;(\varepsilon_{33}-\varepsilon_{33}^0&space;)(\varepsilon_{11}-\varepsilon_{11}^0&space;)\right&space;\]&plus;2c_{44}\left&space;\[(\varepsilon_{12}-\varepsilon_{12}^0&space;)^{2}&plus;(\varepsilon_{23}-\varepsilon_{23}^0&space;)^{2}&plus;(\varepsilon_{31}-\varepsilon_{31}^0&space;)^{2}\right&space;\]\:&space;\:&space;\:&space;\:&space;\:&space;(19)"><br><br>
 
 
-となり、以下の３つの寄与に分けることができる。
+となり、以下の３つの寄与に分けることができる。<br><br>
+
+```math
+a^2
+```
