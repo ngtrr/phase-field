@@ -14,9 +14,9 @@
 <img src="https://latex.codecogs.com/gif.latex?\inline&space;\dpi{80}&space;\mathbf{H_{eff}}"> は有効磁界であり、次のように表すことができる。
 （<img src="https://latex.codecogs.com/gif.latex?\inline&space;\dpi{80}&space;\mu&space;_{0}" title="\mu _{0}"> は真空の透磁率）<br><br>
 
-<img src="https://latex.codecogs.com/gif.latex?\mathbf{H_{eff}}=-\frac{1}{\mu_{0}}\frac{\partial&space;E}{\partial\mathbf{M}}=-\frac{1}{\mu_{0}}\frac{\left&space;(&space;E_{anis}&plus;E_{exch}&plus;E_{ms}&plus;E_{external}&plus;E_{elastic}&space;\right&space;)}{\partial\mathbf{M}}\:&space;\:&space;\:&space;\:&space;\:&space;(2)"><br><br>
+<img src="https://latex.codecogs.com/gif.latex?\mathbf{H_{eff}}=-\frac{1}{\mu_{0}}\frac{\partial&space;E}{\partial\mathbf{M}}=-\frac{1}{\mu_{0}}\frac{\left&space;(&space;E_{anis}&plus;E_{exch}&plus;E_{ms}&plus;E_{external}&plus;E_{me}&space;\right&space;)}{\partial\mathbf{M}}\:&space;\:&space;\:&space;\:&space;\:&space;(2)"><br><br>
 
-エネルギー項は順に結晶磁気異方性、交換、静磁、外部、弾性エネルギーであり、下記に求め方を順に示す。また、このプログラム内では簡単のため、 
+エネルギー項は順に結晶磁気異方性、交換、静磁、Zeeman、磁気弾性エネルギーであり、下記に求め方を順に示す。また、このプログラム内では簡単のため、 
 <img src="https://latex.codecogs.com/gif.latex?\inline&space;\dpi{80}&space;\mathbf{M}=M_{s}\mathbf{m}"> とする。<br><br>
 
 ## 結晶磁気異方性エネルギー<br>
@@ -88,7 +88,7 @@
 <img src="https://latex.codecogs.com/gif.latex?\mathbf{H_d(\bar{M})}=N\mathbf{\bar{M}}\:&space;\:&space;\:&space;\:&space;\:&space;(12)">
 
 
-## 外部エネルギー<br>
+## Zeemanエネルギー<br>
 
 <img src="https://latex.codecogs.com/gif.latex?\inline&space;\dpi{80}&space;E_{extarnal}"> は外部エネルギーであり、外部磁界
 <img src="https://latex.codecogs.com/gif.latex?\inline&space;\dpi{80}&space;H_{ex}"> を用いて<br><br>
@@ -97,7 +97,7 @@
 
 と表すことができる。<br><br>
 
-## 弾性エネルギー<br>
+## 磁気弾性エネルギー<br>
 
 立方体材料の場合は、局所的な磁化に関する変形は固有ひずみ（応力を常時ないひずみ）によって記述され、<br><br>
 
@@ -133,11 +133,7 @@
 式(19)のように３つの成分のみをもつ立方晶の弾性係数テンソルを用いて式(16)の弾性エネルギーを表すと<br><br>
 
 <img src="https://latex.codecogs.com/gif.latex?E_{elastic}=\int\frac{1}{2}c_{11}(&space;e_{11}^{2}&plus;e_{22}^{2}&plus;e_{33}^{2}&space;)&plus;c_{12}(&space;e_{11}e_{22}&plus;e_{22}e_{33}&plus;e_{33}e_{11})&plus;2c_{44}&space;(&space;e_{12}^{2}&plus;e_{23}^{2}&plus;e_{31}^{2})"><br>
-<img src="https://latex.codecogs.com/gif.latex?=\int\frac{1}{2}c_{11}\left&space;\[(\varepsilon_{11}-\varepsilon_{11}^0&space;)^{2}&plus;(\varepsilon_{22}-\varepsilon_{22}^0&space;)^{2}&plus;(\varepsilon_{33}-\varepsilon_{33}^0&space;)^{2}\right&space;\]&plus;c_{12}\left&space;\[(\varepsilon_{11}-\varepsilon_{11}^0&space;)(\varepsilon_{22}-\varepsilon_{22}^0&space;)&plus;(\varepsilon_{22}-\varepsilon_{22}^0&space;)(\varepsilon_{33}-\varepsilon_{33}^0&space;)&plus;(\varepsilon_{33}-\varepsilon_{33}^0&space;)(\varepsilon_{11}-\varepsilon_{11}^0&space;)\right&space;\]&plus;2c_{44}\left&space;\[(\varepsilon_{12}-\varepsilon_{12}^0&space;)^{2}&plus;(\varepsilon_{23}-\varepsilon_{23}^0&space;)^{2}&plus;(\varepsilon_{31}-\varepsilon_{31}^0&space;)^{2}\right&space;\]\:&space;\:&space;\:&space;\:&space;\:&space;(19)"><br><br>
+<img src="https://latex.codecogs.com/gif.latex?\dpi{100}(e_{ij}=\varepsilon&space;_{ij}-\varepsilon&space;_{ij}^0)"><br><br>
 
 
 となり、以下の３つの寄与に分けることができる。<br><br>
-
-```math
-a^2
-```
