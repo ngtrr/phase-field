@@ -134,7 +134,7 @@
 
 <img src="https://latex.codecogs.com/gif.latex?E_{elastic}=\int\left\{\frac{1}{2}c_{11}(&space;e_{11}^{2}&plus;e_{22}^{2}&plus;e_{33}^{2}&space;)&plus;c_{12}(&space;e_{11}e_{22}&plus;e_{22}e_{33}&plus;e_{33}e_{11})&plus;2c_{44}&space;(&space;e_{12}^{2}&plus;e_{23}^{2}&plus;e_{31}^{2})\right\}\:&space;\:&space;\:&space;\:&space;\:&space;(20)"><br>
 
-<img src="https://latex.codecogs.com/gif.latex?\dpi{100}&space;*\:&space;\:&space;\:&space;\:&space;\:&space;\:&space;\:&space;\:&space;\:&space;\:&space;\:&space;\:&space;\:&space;\:&space;\:&space;(\:&space;e_{ij}=\varepsilon&space;_{ij}-\varepsilon&space;_{ij}^0)"><br><br>
+<img src="https://latex.codecogs.com/gif.latex?\dpi{100}&space;In\:&space;this\:&space;equation\:&space;:\:&space;(\:&space;e_{ij}=\varepsilon&space;_{ij}-\varepsilon&space;_{ij}^0)"><br><br>
 
 となり、以下の３つの寄与に分けることができる。<br><br>
 
