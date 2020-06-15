@@ -5,7 +5,7 @@ g++ -o samplepleple example.cpp `pkg-config --cflags opencv4` `pkg-config --libs
 g++ -std=c++1z -Wall example.cpp -o sample -lm `pkg-config fftw3 --libs` `pkg-config opencv4 --cflags` `pkg-config opencv4 --libs`
 
 Mac
-g++ -std=c++1z -Wall mikan.cpp -o sample -lm `pkg-config fftw3 --libs` `pkg-config opencv --cflags` `pkg-config opencv --libs` -I./
+g++ -std=c++1z -Wall mikan.cpp -o sample -lm `pkg-config fftw3 --libs` `pkg-config opencv4 --cflags` `pkg-config opencv4 --libs` -I./
 
 
 plot "LLG_Galfenol_300_m_2d.png" binary filetype=png with rgbimage

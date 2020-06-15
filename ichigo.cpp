@@ -18,6 +18,7 @@ replot "check300_2d.txt" with vector lc rgb "#000000"
 #include <fftw3.h>
 #include <Eigen/Core>
 #include <Eigen/LU>
+#include <sys/stat.h>
 
 //#include "wingxa.h"
 
@@ -39,7 +40,8 @@ using namespace Eigen;
 	int ig=IG;						//2^ig=ND
 	double alpha=1.5;
 	double time1;					//計算カウント数(時間に比例)
-	double time1max = 10000;
+	double time1max = 100000;
+
 
 	int name_id = 0;
 	int num_id = 0;
@@ -210,6 +212,13 @@ using namespace Eigen;
 	void grad_u();
 	int four_axis(int k,int i,int j);
 
+	time_t now_time;		//現在時刻
+	struct tm* localNow;	//現在時刻の構造体
+	int now_year;
+	int now_mon;
+	int now_mday;
+	int now_hour;
+	int now_min;
 
 //******* メインプログラム ******************************************
 int main(void)
@@ -225,6 +234,8 @@ int main(void)
 	srand(time(NULL));
 
 //****** 計算条件および物質定数の設定 ****************************************
+
+init:;
 	Astar = (2 * A)/(mu0 * Ms * Ms * ld * ld);
 	//Astar = 0.0625;
 	//Astar = 0.00625;
@@ -294,15 +305,21 @@ int main(void)
 	epsilon_phase[2][1] = stretch / 2;
 	epsilon_phase[2][2] = stretch / 2;
 
-
-init:;
-
 	ini000();		//初期場の設定
 	time1 = 0;
 
 //**** シミュレーションスタート ******************************
 start: ;
-
+	if(name_id==0){
+		if(time1>10000.){
+			sigma_a[0][1] = 1.0E7;
+		}
+	}else{
+		if(time1>10000.){
+			sigma_a[2][2] = 1.0E7;
+		}
+	}
+	
 	for(i=0;i<=ndm;i++){
 		for(j=0;j<=ndm;j++){
 			Hanis[i][j][0] = -1/(mu0 * Ms) * (K1*(2 * m[i][j][0] * m[i][j][1] * m[i][j][1] + 2 * m[i][j][0] * m[i][j][2] * m[i][j][2]) + 2*K2 * m[i][j][0] * m[i][j][1] * m[i][j][1] * m[i][j][2] * m[i][j][2]);//ok
@@ -396,15 +413,15 @@ start: ;
 	}
 
 
-	epsilon_homo[0][0] = epsilon_sum[0][0]/SIZE;
-	epsilon_homo[1][1] = epsilon_sum[1][1]/SIZE;
-	epsilon_homo[2][2] = epsilon_sum[2][2]/SIZE;
-	//epsilon_homo[0][0] = s[0][0][0][0] * sigma_a[0][0] + s[0][0][1][1] * (sigma_a[1][1] + sigma_a[2][2]) + epsilon_sum[0][0]/SIZE;
-	//epsilon_homo[1][1] = s[0][0][0][0] * sigma_a[1][1] + s[0][0][1][1] * (sigma_a[0][0] + sigma_a[2][2]) + epsilon_sum[1][1]/SIZE;
-	//epsilon_homo[2][2] = s[0][0][0][0] * sigma_a[2][2] + s[0][0][1][1] * (sigma_a[0][0] + sigma_a[1][1]) + epsilon_sum[2][2]/SIZE;
-	//epsilon_homo[0][1] = epsilon_homo[1][0] = 1/2 * s[0][1][0][1] * sigma_a[0][1] + epsilon_sum[0][1]/SIZE;
-	//epsilon_homo[1][2] = epsilon_homo[2][1] = 1/2 * s[0][1][0][1] * sigma_a[1][2] + epsilon_sum[1][2]/SIZE;
-	//epsilon_homo[2][0] = epsilon_homo[0][2] = 1/2 * s[0][1][0][1] * sigma_a[2][0] + epsilon_sum[2][0]/SIZE;
+	//epsilon_homo[0][0] = epsilon_sum[0][0]/SIZE;
+	//epsilon_homo[1][1] = epsilon_sum[1][1]/SIZE;
+	//epsilon_homo[2][2] = epsilon_sum[2][2]/SIZE;
+	epsilon_homo[0][0] = s[0][0][0][0] * sigma_a[0][0] + s[0][0][1][1] * (sigma_a[1][1] + sigma_a[2][2]) + epsilon_sum[0][0]/SIZE;
+	epsilon_homo[1][1] = s[0][0][0][0] * sigma_a[1][1] + s[0][0][1][1] * (sigma_a[0][0] + sigma_a[2][2]) + epsilon_sum[1][1]/SIZE;
+	epsilon_homo[2][2] = s[0][0][0][0] * sigma_a[2][2] + s[0][0][1][1] * (sigma_a[0][0] + sigma_a[1][1]) + epsilon_sum[2][2]/SIZE;
+	epsilon_homo[0][1] = epsilon_homo[1][0] = 1/2 * s[0][1][0][1] * sigma_a[0][1] + epsilon_sum[0][1]/SIZE;
+	epsilon_homo[1][2] = epsilon_homo[2][1] = 1/2 * s[0][1][0][1] * sigma_a[1][2] + epsilon_sum[1][2]/SIZE;
+	epsilon_homo[2][0] = epsilon_homo[0][2] = 1/2 * s[0][1][0][1] * sigma_a[2][0] + epsilon_sum[2][0]/SIZE;
 
 	for(k=0;k<3;k++){
 		for(i=0;i<=ndm;i++){
@@ -1179,15 +1196,15 @@ start: ;
 
 
 	while(num_id <= 0){
-		while(name_id <= 30){
+		while(name_id < 0){
 
-			for(i=0;i<=ndm;i++){
+			/*for(i=0;i<=ndm;i++){
 				for(j=0;j<=ndm;j++){
 					//Hexternal[i][j][0] = num_id * 1.0E+3;
 					//Hexternal[i][j][1] = num_id * -1.0E+3;
 					//Hexternal[i][j][2] = 0;
 				}
-			}
+			}*/
 
 			cout << "num_id  : " << num_id << "  -  name_id  : " << name_id << endl;
 
@@ -1259,10 +1276,43 @@ void graph_s1()
 	printf("time %f\n",time1);//計算カウント数の表示
     
 
+
+	if(time1==0){
+		string name;
+		if(int(name_id)==0){
+			now_time = time(nullptr);		//現在時刻の取得
+			localNow = std::localtime(&now_time);		//現在時刻の構造体への格納
+			now_year = localNow->tm_year + 1900;
+			now_mon = localNow->tm_mon + 1;
+			now_mday = localNow->tm_mday;
+			now_hour = localNow->tm_hour;
+			now_min = localNow->tm_min;
+
+			name = "SimulationDate_" + std::to_string(now_year) + std::to_string(now_mon) + std::to_string(now_mday) + "_" + std::to_string(now_hour) + ":" + std::to_string(now_min);
+			mkdir(name.c_str(), S_IRWXU);		//シミュレーション結果の保存ディレクトリを作成
+		}
+		name = "SimulationDate_" + std::to_string(now_year) + std::to_string(now_mon) + std::to_string(now_mday) + "_" + std::to_string(now_hour) + ":" + std::to_string(now_min) + "/term_" + std::to_string(int(name_id));
+		mkdir(name.c_str(), S_IRWXU);
+		name = "SimulationDate_" + std::to_string(now_year) + std::to_string(now_mon) + std::to_string(now_mday) + "_" + std::to_string(now_hour) + ":" + std::to_string(now_min) + "/term_" + to_string(int(name_id)) + "/Structure";
+		mkdir(name.c_str(), S_IRWXU);
+		name = "SimulationDate_" + std::to_string(now_year) + std::to_string(now_mon) + std::to_string(now_mday) + "_" + std::to_string(now_hour) + ":" + std::to_string(now_min) + "/term_" + to_string(int(name_id)) + "/Magnetic_Domain";
+		mkdir(name.c_str(), S_IRWXU);
+		name = "SimulationDate_" + std::to_string(now_year) + std::to_string(now_mon) + std::to_string(now_mday) + "_" + std::to_string(now_hour) + ":" + std::to_string(now_min) + "/term_" + to_string(int(name_id)) + "/Energy_list";
+		mkdir(name.c_str(), S_IRWXU);
+		name = "SimulationDate_" + std::to_string(now_year) + std::to_string(now_mon) + std::to_string(now_mday) + "_" + std::to_string(now_hour) + ":" + std::to_string(now_min) + "/term_" + to_string(int(name_id)) + "/Elastic_Energy";
+		mkdir(name.c_str(), S_IRWXU);
+		name = "SimulationDate_" + std::to_string(now_year) + std::to_string(now_mon) + std::to_string(now_mday) + "_" + std::to_string(now_hour) + ":" + std::to_string(now_min) + "/term_" + to_string(int(name_id)) + "/Drive_Energy";
+		mkdir(name.c_str(), S_IRWXU);
+		name = "SimulationDate_" + std::to_string(now_year) + std::to_string(now_mon) + std::to_string(now_mday) + "_" + std::to_string(now_hour) + ":" + std::to_string(now_min) + "/term_" + to_string(int(name_id)) + "/Inhomogenious_stress";
+		mkdir(name.c_str(), S_IRWXU);
+		name = "SimulationDate_" + std::to_string(now_year) + std::to_string(now_mon) + std::to_string(now_mday) + "_" + std::to_string(now_hour) + ":" + std::to_string(now_min) + "/term_" + to_string(int(name_id)) + "/Eigen_stress";
+		mkdir(name.c_str(), S_IRWXU);
+	}
+
 	//差分ブロックの半分の長さ	//スクリーン座標系に変換（+1は整数化時の切捨て補正）
 	cv::Mat chann(cv::Size(nd, nd), CV_8UC3, cv::Scalar(255, 255, 255));
 
-	/*for(i=0;i<=ndm;i++){
+	for(i=0;i<=ndm;i++){
 		for(j=0;j<=ndm;j++){
 			col_R=epsilon_zero[i][j][0][0];//場の色をRGBにて設定
 			col_G=epsilon_zero[i][j][1][1];
@@ -1277,7 +1327,7 @@ void graph_s1()
 			chann.at<cv::Vec3b>(i,j) = cv::Vec3b(abs(int(col_B)), abs(int(col_G)), abs(int(col_R)));
 		}
 	}
-	cv::imwrite("LLG_Terfenol_" + std::to_string(int(time1)) + "_strain_2d.png", chann);
+	cv::imwrite("SimulationDate_" + std::to_string(now_year) + std::to_string(now_mon) + std::to_string(now_mday) + "_" + std::to_string(now_hour) + ":" + std::to_string(now_min) + "/term_" + to_string(int(name_id)) + "/Eigen_stress/LLG_Terfenol_" + std::to_string(int(time1)) + "_strain_2d.png", chann);
 
 	for(i=0;i<=ndm;i++){
 		for(j=0;j<=ndm;j++){
@@ -1298,7 +1348,8 @@ void graph_s1()
 			chann.at<cv::Vec3b>(i,j) = cv::Vec3b(abs(int(col_B)), abs(int(col_G)), abs(int(col_R)));
 		}
 	}
-	cv::imwrite("LLG_Terfenol_" + std::to_string(int(time1)) + "_u_2d.png", chann);
+
+	cv::imwrite("SimulationDate_" + std::to_string(now_year) + std::to_string(now_mon) + std::to_string(now_mday) + "_" + std::to_string(now_hour) + ":" + std::to_string(now_min) + "/term_" + to_string(int(name_id)) + "/Inhomogenious_stress/LLG_Terfenol_" + std::to_string(int(time1)) + "_u_2d.png", chann);
 
 
 	for(i=0;i<=ndm;i++){
@@ -1318,7 +1369,7 @@ void graph_s1()
 			chann.at<cv::Vec3b>(i,j) = cv::Vec3b(abs(int(col_B)), abs(int(col_G)), abs(int(col_R)));
 		}
 	}
-	cv::imwrite("LLG_Terfenol_" + std::to_string(int(time1)) + "_elas_2d.png", chann);
+	cv::imwrite("SimulationDate_" + std::to_string(now_year) + std::to_string(now_mon) + std::to_string(now_mday) + "_" + std::to_string(now_hour) + ":" + std::to_string(now_min) + "/term_" + to_string(int(name_id)) + "/Elastic_Energy/LLG_Terfenol_" + std::to_string(int(time1)) + "_elas_2d.png", chann);
 
 	for(i=0;i<=ndm;i++){
 		for(j=0;j<=ndm;j++){
@@ -1335,8 +1386,8 @@ void graph_s1()
 			chann.at<cv::Vec3b>(i,j) = cv::Vec3b(abs(int(col_B)), abs(int(col_G)), abs(int(col_R)));
 		}
 	}
-	cv::imwrite("LLG_Terfenol_" + std::to_string(int(time1)) + "_Dr_2d.png", chann);
-
+	cv::imwrite("SimulationDate_" + std::to_string(now_year) + std::to_string(now_mon) + std::to_string(now_mday) + "_" + std::to_string(now_hour) + ":" + std::to_string(now_min) + "/term_" + to_string(int(name_id)) + "/Drive_Energy/LLG_Terfenol_" + std::to_string(int(time1)) + "_Dr_2d.png", chann);
+	
 	for(i=0;i<=ndm;i++){
 		for(j=0;j<=ndm;j++){
 			col_R=p[i][j][0];//場の色をRGBにて設定
@@ -1352,7 +1403,7 @@ void graph_s1()
 			chann.at<cv::Vec3b>(i,j) = cv::Vec3b(abs(int(col_B)), abs(int(col_G)), abs(int(col_R)));
 		}
 	}
-	cv::imwrite("FePd_" + std::to_string(int(time1)) + "_" +  std::to_string(int(name_id)) + "_p_2d.png", chann);*/
+	cv::imwrite("SimulationDate_" + std::to_string(now_year) + std::to_string(now_mon) + std::to_string(now_mday) + "_" + std::to_string(now_hour) + ":" + std::to_string(now_min) + "/term_" + to_string(int(name_id)) + "/Structure/FePd_" + std::to_string(int(time1)) + "_" +  std::to_string(int(name_id)) + "_p_2d.png", chann);
 
 	for(i=0;i<=ndm;i++){
 		for(j=0;j<=ndm;j++){
@@ -1369,7 +1420,7 @@ void graph_s1()
 			chann.at<cv::Vec3b>(i,j) = cv::Vec3b(abs(int(col_B)), abs(int(col_G)), abs(int(col_R)));
 		}
 	}
-	cv::imwrite("FePd_" +  std::to_string(int(num_id)) + "_" +  std::to_string(int(name_id)) + "_" + std::to_string(int(time1))  + "_m_2d.png", chann);
+	cv::imwrite("SimulationDate_" + std::to_string(now_year) + std::to_string(now_mon) + std::to_string(now_mday) + "_" + std::to_string(now_hour) + ":" + std::to_string(now_min) + "/term_" + to_string(int(name_id)) + "/Magnetic_Domain/FePd_" +  std::to_string(int(num_id)) + "_" +  std::to_string(int(name_id)) + "_" + std::to_string(int(time1))  + "_m_2d.png", chann);
 
 	/*for(i=0;i<=ndm;i++){
 		for(j=0;j<=ndm;j++){
@@ -1386,9 +1437,9 @@ void graph_s1()
 			chann.at<cv::Vec3b>(i,j) = cv::Vec3b(abs(int(col_B)), abs(int(col_G)), abs(int(col_R)));
 		}
 	}
-	cv::imwrite("LLG_Terfenol_" + std::to_string(int(time1)) + "_wall_2d.png", chann);*/
-
-	ofstream outputfile("check_Terfenol_" +  std::to_string(int(num_id)) + "_" +  std::to_string(int(name_id)) + "_" + std::to_string(int(time1)) + "_2d.txt");
+	cv::imwrite("LLG_Terfenol_" + std::to_string(int(time1)) + "_wall_2d.png", chann);
+	*/
+	ofstream outputfile("SimulationDate_" + std::to_string(now_year) + std::to_string(now_mon) + std::to_string(now_mday) + "_" + std::to_string(now_hour) + ":" + std::to_string(now_min) + "/term_" + to_string(int(name_id)) + "/Energy_list/check_Terfenol_" +  std::to_string(int(num_id)) + "_" +  std::to_string(int(name_id)) + "_" + std::to_string(int(time1)) + "_2d.txt");
 	outputfile << Eanis_ave << endl;
 	outputfile << Eexternal_ave << endl;
 	outputfile << Eexch_ave << endl;
