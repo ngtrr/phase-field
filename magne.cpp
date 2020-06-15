@@ -40,15 +40,15 @@ using namespace Eigen;
 	double filter[3][3][3];
 
 	//**************************	Terfenol-D	**************************************
-	double Ms = 8.0E+5;
-  	double K1 = -6.0E+4, K2 = 0.0E+4;
-  	double ram100 = 0.0E+4, ram111 = 1.64E-3;
-  	double c11 = 1.41E+11, c12 = 6.48E+10, c44 = 4.87E+10;
-	double A = 9.0E-12;
-  	double Astar;
-	double delt = 0.1;
-	double mu0 = 1.0;
-	double ld = 1.0E-9;
+	double Ms = 8.0E+5;							//飽和磁化
+  	double K1 = -6.0E+4, K2 = 0.0E+4;					//異方性定数
+  	double ram100 = 0.0E+4, ram111 = 1.64E-3;				//磁歪定数（ラムダ）
+  	double c11 = 1.41E+11, c12 = 6.48E+10, c44 = 4.87E+10;			//立方晶の弾性係数テンソル成分
+	double A = 9.0E-12;							//交換定数
+  	double Astar;								//交換定数を計算ステップ用の変数として変換
+	double delt = 0.1;							//時間きざみステップ
+	double mu0 = 1.0;							//真空の透磁率
+	double ld = 1.0E-9;							//セルサイズ
 
 	//**************************	Galfenol	**************************************
 	/*double Ms = 1.432E+6;
@@ -57,7 +57,7 @@ using namespace Eigen;
   	double c11 = 1.96E+11, c12 = 1.56E+11, c44 = 1.23E+11;
 	double A = 1.3E-11;
   	double Astar;
-	double delt = 0.1;
+	double delt = 0.1;	
 	double mu0 = 1.0;
 	double ld = 1.0E-06;*/
 
@@ -65,99 +65,99 @@ using namespace Eigen;
 	double root2 = 1.41421356237;
 	double root6 = 2.44948974278;
 
-	double xf[SIZEX];
-	double yf[SIZEY];
-	double zf[SIZEZ];
+	double xf[SIZEX];		//フーリエ空間座標
+	double yf[SIZEY];		//フーリエ空間座標
+	double zf[SIZEZ];		//フーリエ空間座標
 
-	double fai[ND][ND];
-	double faifour[ND][ND];
-	double faifour_i[ND][ND];
+	double fai[ND][ND];		//フィールド関数
+	double faifour[ND][ND];		//フィールド関数のフーリエ変換（実数部分）
+	double faifour_i[ND][ND];	//フィールド関数のフーリエ変換（虚数部分）
 
-	double m_ave[3];
-	double m2_ave[3];
-	double mm_ave[3];
+	double m_ave[3];		//磁気モーメントの成分の平均
+	double m2_ave[3];		//磁気モーメントの各成分の二乗の平均
+	double mm_ave[3];		//磁気モーメントの各成分をx→y、y→z、z→xと変換したときの平均
 
-	double N[3];
+	double N[3];			//反磁場係数（形状に依存）
 
-	double m[ND][ND][3];
-	double mstar1[ND][ND][3];
-	double mstar2[ND][ND][3];
-	double mfour[ND][ND][3];
-	double mstarfour[ND][ND][3];
-	double mstar2four[ND][ND][3];
-	double mfour_i[ND][ND][3];
-	double mstarfour_i[ND][ND][3];
-	double mstar2four_i[ND][ND][3];
+	double m[ND][ND][3];		//各領域の磁気モーメント
+	double mstar1[ND][ND][3];	//計算ステップ用の変数（ガウスザイデル）
+	double mstar2[ND][ND][3];	//計算ステップ用の変数（ガウスザイデル）
+	double mfour[ND][ND][3];	//フーリエ変換（実数部分）
+	double mstarfour[ND][ND][3];	//フーリエ変換（虚数部分）
+	double mstar2four[ND][ND][3];	//フーリエ変換（実数部分）
+	double mfour_i[ND][ND][3];	//フーリエ変換（虚数部分）
+	double mstarfour_i[ND][ND][3];	//フーリエ変換（実数部分）
+	double mstar2four_i[ND][ND][3];	//フーリエ変換（虚数部分）
 
-	double g[ND][ND][3];
-	double gstar[ND][ND][3];
-	double gfour[ND][ND][3];
-	double gstarfour[ND][ND][3];
-	double gfour_i[ND][ND][3];
-	double gstarfour_i[ND][ND][3];
+	double g[ND][ND][3];		//計算ステップ用の変数（ガウスザイデル）
+	double gstar[ND][ND][3];	//計算ステップ用の変数（ガウスザイデル）
+	double gfour[ND][ND][3];	//フーリエ変換（実数部分）
+	double gstarfour[ND][ND][3];	//フーリエ変換（虚数部分）
+	double gfour_i[ND][ND][3];	//フーリエ変換（実数部分）
+	double gstarfour_i[ND][ND][3];	//フーリエ変換（虚数部分）
 
-	double h[ND][ND][3];
-	double hfour[ND][ND][3];
-	double hfour_i[ND][ND][3];
+	double h[ND][ND][3];		//磁界の総和（磁化モーメント基準）
+	double hfour[ND][ND][3];	//磁界の総和（磁化モーメント基準）のフーリエ変換（実数部分）
+	double hfour_i[ND][ND][3];	//磁界の総和（磁化モーメント基準）のフーリエ変換（虚数部分）
 
-	double Hanis[ND][ND][3];
-	double Hms[ND][ND][3];
-	double Hexternal[ND][ND][3];
-	double Helastic[ND][ND][3];
-	double Hlandau[ND][ND][3];
-	double Hgradient[ND][ND][3];
-	double Hme[ND][ND][3];
+	double Hanis[ND][ND][3];	//結晶磁気異方性による磁界
+	double Hms[ND][ND][3];		//静磁エネルギーによる磁界
+	double Hexternal[ND][ND][3];	//外部磁界
+	double Helastic[ND][ND][3];	//弾性エネルギーによる磁界
+	double Hlandau[ND][ND][3];	//自由エネルギーによる磁界
+	double Hgradient[ND][ND][3];	//勾配エネルギーによる磁界
+	double Hme[ND][ND][3];		//磁気弾性エネルギーによる磁界
 
-	double fourier_output[ND][ND];
-	double fourier_output_i[ND][ND];
-	double fourier_input[ND][ND];
+	double fourier_output[ND][ND];		//フーリエ変換のアウトプットの置き場所（実数部分）
+	double fourier_output_i[ND][ND];	//フーリエ変換のアウトプットの置き場所（虚数部分）
+	double fourier_input[ND][ND];		//フーリエ変換のインプットの置き場所
 
 	double filter_output[ND][ND];
 
-	double epsilon_zero[ND][ND][3][3];
-	double epsilon_zerofour[ND][ND][3][3];
-	double epsilon_zerofour_i[ND][ND][3][3];
+	double epsilon_zero[ND][ND][3][3];		//固有ひずみ（アイゲンひずみ）
+	double epsilon_zerofour[ND][ND][3][3];		//固有ひずみのフーリエ変換（実数部分）
+	double epsilon_zerofour_i[ND][ND][3][3];	//固有ひずみのフーリエ変換（虚数部分）
 
-	double epsilon_homo[3][3];
+	double epsilon_homo[3][3];	//均一ひずみ
 
-	double eta[ND][ND][3][3];
+	double eta[ND][ND][3][3];	//不均一ひずみ
 
-	double epsilon_zero_grad[ND][ND][3][3][3];
-	double epsilon_homo_grad[3][3][3];
-	double eta_grad[ND][ND][3][3][3];
+	double epsilon_zero_grad[ND][ND][3][3][3];	//固有ひずみの偏微分
+	double epsilon_homo_grad[3][3][3];		//均一ひずみの偏微分
+	double eta_grad[ND][ND][3][3][3];		//不均一ひずみの偏微分
 
-	double c[3][3][3][3];
-	double s[3][3][3][3];
-	MatrixXd c_matrix(6,6);
-	MatrixXd s_matrix(6,6);
+	double c[3][3][3][3];		//弾性係数テンソル
+	double s[3][3][3][3];		//弾性コンプライアンス係数テンソル
+	MatrixXd c_matrix(6,6);		//弾性係数テンソルのアイゲンへの受け渡し変数
+	MatrixXd s_matrix(6,6);		//弾性コンプライアンス係数テンソルのアイゲンへの受け渡し変数
 
-	double Dfour[ND][ND];
-	double Dfour_i[ND][ND];
-	double Nfour[ND][ND][3][3];
-	double Nfour_i[ND][ND][3][3];
+	double Dfour[ND][ND];		//K行列の補因子のフーリエ変換（実数部分）
+	double Dfour_i[ND][ND];		//K行列の補因子のフーリエ変換（虚数部分）
+	double Nfour[ND][ND][3][3];	//K行列の行列式のフーリエ変換（実数部分）
+	double Nfour_i[ND][ND][3][3];	//K行列の行列式のフーリエ変換（虚数部分）
 
-	double u[ND][ND][3];
-	double ufour[ND][ND][3];
-	double ufour_i[ND][ND][3];
-	double u_grad[ND][ND][3][3];
+	double u[ND][ND][3];		//変位
+	double ufour[ND][ND][3];	//変位のフーリエ変換（実数部分）
+	double ufour_i[ND][ND][3];	//変位のフーリエ変換（虚数部分）
+	double u_grad[ND][ND][3][3];	//変位の偏微分
 
-	double sigma_a[3][3];
+	double sigma_a[3][3];　　//応力
 
-	double e1[ND][ND];
-	double e2[ND][ND];
-	double e3[ND][ND];
-	double e4[ND][ND];
-	double e5[ND][ND];
-	double e6[ND][ND];
+	double e1[ND][ND];	//弾性ひずみ
+	double e2[ND][ND];	//弾性ひずみ
+	double e3[ND][ND];	//弾性ひずみ
+	double e4[ND][ND];	//弾性ひずみ
+	double e5[ND][ND];	//弾性ひずみ
+	double e6[ND][ND];	//弾性ひずみ
 
-	double e1_grad[ND][ND][3];
-	double e2_grad[ND][ND][3];
-	double e3_grad[ND][ND][3];
-	double e4_grad[ND][ND][3];
-	double e5_grad[ND][ND][3];
-	double e6_grad[ND][ND][3];
+	double e1_grad[ND][ND][3];	//弾性ひずみの偏微分
+	double e2_grad[ND][ND][3];	//弾性ひずみの偏微分
+	double e3_grad[ND][ND][3];	//弾性ひずみの偏微分
+	double e4_grad[ND][ND][3];	//弾性ひずみの偏微分
+	double e5_grad[ND][ND][3];	//弾性ひずみの偏微分
+	double e6_grad[ND][ND][3];	//弾性ひずみの偏微分
 
-	double Q1 ,Q2 ,Q3 ,Q4 ,Q5;
+	double Q1 ,Q2 ,Q3 ,Q4 ,Q5;	
 	double B;
 
 	void ini000();			//初期場の設定サブル−チン
@@ -174,9 +174,9 @@ using namespace Eigen;
 
 int main(void){
 
-	int i;
-	int j;
-	int k;
+	int i;		//x方向領域
+	int j;		//y方向領域
+	int k;		//方向の指定（0:x,1:y,2:z）
 	int l;
 	int ii;
 	int jj;
@@ -185,13 +185,13 @@ int main(void){
 
 	double mlength;
 
-	srand(time(NULL));
+	srand(time(NULL));	//乱数初期化
 
 	Astar = (2 * A)/(mu0 * Ms * Ms * ld * ld);
 	//Astar = 0.0625 ;
 	cout << "Astar : " << Astar << endl;
 
-	for(i=0;i<=ndm;i++){
+	for(i=0;i<=ndm;i++){			//初期設定
 		for(j=0;j<=ndm;j++){
 			for(k=0;k<3;k++){
 				Hms[i][j][k] = 0;//init
@@ -219,26 +219,26 @@ int main(void){
 		}
 	}
 
-	for(i=0;i<=ndm;i++){
+	for(i=0;i<=ndm;i++){	//フーリエ変換の周期的境界条件のために設定
 		xf[i] = i - nd2;
 		yf[i] = i - nd2;
 	}
 
-	N[0] = 0.333;
+	N[0] = 0.333;		//球状の形状を仮定
 	N[1] = 0.333;
 	N[2] = 0.333;
 
-	c[0][0][0][0] = c[1][1][1][1] = c[2][2][2][2] = c11;
+	c[0][0][0][0] = c[1][1][1][1] = c[2][2][2][2] = c11;		//立方体の対称性を仮定
 	c[1][2][1][2] = c[0][2][0][2] = c[0][1][0][1] = c44;
 	c[0][0][1][1] = c[0][0][2][2] = c[1][1][2][2] = c[1][1][0][0] = c[2][2][0][0] = c[2][2][1][1] = c12;
 
-	c_matrix(0,0) = c_matrix(1,1) = c_matrix(2,2) = c11;
+	c_matrix(0,0) = c_matrix(1,1) = c_matrix(2,2) = c11;		//アイゲンに渡す
 	c_matrix(3,3) = c_matrix(4,4) = c_matrix(5,5) = c44;
 	c_matrix(0,1) = c_matrix(0,2) = c_matrix(1,2) = c_matrix(1,0) = c_matrix(2,0) = c_matrix(2,1) = c12;
 
-	s_matrix = c_matrix.inverse();
+	s_matrix = c_matrix.inverse();		//逆行列として代入
 
-	s[0][0][0][0] = s[1][1][1][1] = s[2][2][2][2] = s_matrix(0,0);
+	s[0][0][0][0] = s[1][1][1][1] = s[2][2][2][2] = s_matrix(0,0);	//アイゲンから逆行列情報をもらう
 	s[1][2][1][2] = s[0][2][0][2] = s[0][1][0][1] = s_matrix(3,3);
 	s[0][0][1][1] = s[0][0][2][2] = s[1][1][2][2] = s[1][1][0][0] = s[2][2][0][0] = s[2][2][1][1] = s_matrix(0,1);
 
@@ -250,7 +250,7 @@ int main(void){
 	start: ;
 
 	for(i=0;i<=ndm;i++){
-		for(j=0;j<=ndm;j++){
+		for(j=0;j<=ndm;j++){		//各領域について磁界の成分を計算
 			Hanis[i][j][0] = -1/(mu0 * Ms) * (K1*(2 * m[i][j][0] * m[i][j][1] * m[i][j][1] + 2 * m[i][j][0] * m[i][j][2] * m[i][j][2]) + 2*K2 * m[i][j][0] * m[i][j][1] * m[i][j][1] * m[i][j][2] * m[i][j][2]);//ok
 			Hanis[i][j][1] = -1/(mu0 * Ms) * (K1*(2 * m[i][j][1] * m[i][j][2] * m[i][j][2] + 2 * m[i][j][1] * m[i][j][0] * m[i][j][0]) + 2*K2 * m[i][j][1] * m[i][j][2] * m[i][j][2] * m[i][j][0] * m[i][j][0]);//ok
 			Hanis[i][j][2] = -1/(mu0 * Ms) * (K1*(2 * m[i][j][2] * m[i][j][0] * m[i][j][0] + 2 * m[i][j][2] * m[i][j][1] * m[i][j][1]) + 2*K2 * m[i][j][2] * m[i][j][0] * m[i][j][0] * m[i][j][1] * m[i][j][1]);//ok
@@ -265,14 +265,14 @@ int main(void){
 
 	for(k=0;k<3;k++){
 		for(i=0;i<=ndm;i++){
-			for(j=0;j<=ndm;j++){
+			for(j=0;j<=ndm;j++){	//各領域の磁気モーメントの成分をフーリエ変換用の変数に渡す
 				fourier_input[i][j] = m[i][j][k];
 			}
 		}
-		fft3d();
+		fft3d();　//フーリエ変換（outputに算出）
 		for(i=0;i<=ndm;i++){
 			for(j=0;j<=ndm;j++){
-				mfour[i][j][k] = fourier_output[i][j];
+				mfour[i][j][k] = fourier_output[i][j];		//フーリエ変換の計算結果を保存
 				mfour_i[i][j][k] = fourier_output_i[i][j];
 				if (isinf(mfour[i][j][k]) == 1){
 					cout << "mfour        " << i << " : " << j << "   -    " << dec << mfour[i][j][k] << endl;
@@ -284,27 +284,27 @@ int main(void){
 	for(i=0;i<=ndm;i++){
 		for(j=0;j<=ndm;j++){
 			//cout << "faifour        " << i << " : " << j << "   -    " << dec << faifour[i][j] << endl;
-			if(xf[i]*xf[i] + yf[j]*yf[j] == 0){
+			if(xf[i]*xf[i] + yf[j]*yf[j] == 0){		//原点の場合
 				faifour[i][j] = 0;
 				faifour_i[i][j] = 0;
 				//faifour[i][j] = Ms*(mfour_i[i][j][0]*xf[i] + mfour_i[i][j][1]*yf[j] + mfour_i[i][j][2]*0 )/1;
 				//faifour_i[i][j] = -1*Ms*(mfour[i][j][0]*xf[i] + mfour[i][j][1]*yf[j] + mfour[i][j][2]*0 )/1;
-			}else{
+			}else{						//フィールド関数のフーリエ変換結果の計算（磁気モーメントのみフーリエ変換されている）
 				faifour[i][j] = Ms*(mfour_i[i][j][0]*xf[i] + mfour_i[i][j][1]*yf[j] + mfour_i[i][j][2]*0 )/(xf[i]*xf[i] + yf[j]*yf[j] + 0);
 				faifour_i[i][j] = -1*Ms*(mfour[i][j][0]*xf[i] + mfour[i][j][1]*yf[j] + mfour[i][j][2]*0 )/(xf[i]*xf[i] + yf[j]*yf[j] + 0);
 			}
 		}
 	}
 
-	for(i=0;i<=ndm;i++){
+	for(i=0;i<=ndm;i++){　　//フィールド関数のフーリエ変換結果をフーリエ変換用変数に渡す
 		for(j=0;j<=ndm;j++){
 			fourier_output[i][j] = faifour[i][j];
 			fourier_output_i[i][j] = faifour_i[i][j];
 		}
 	}
-	ifft3d();
+	ifft3d();		//逆フーリエ変換
 	for(i=0;i<=ndm;i++){
-		for(j=0;j<=ndm;j++){
+		for(j=0;j<=ndm;j++){	//逆フーリエ変換結果をフィールド関数に代入（フィールド関数の計算終了）
 			fai[i][j] = fourier_input[i][j];
 		}
 	}
@@ -312,11 +312,11 @@ int main(void){
 	grad_fai();
 
 	for(k=0;k<3;k++){
-		m_ave[k] = 0;
+		m_ave[k] = 0;		//平均値の保存場用のクリア
 		m2_ave[k] = 0;
 		mm_ave[k] = 0;
 		for(i=0;i<=ndm;i++){
-			for(j=0;j<=ndm;j++){
+			for(j=0;j<=ndm;j++){		//各平均の算出
 				m_ave[k] += m[i][j][k] / SIZE;
 				m2_ave[k] += m[i][j][k] * m[i][j][k] / SIZE;
 				mm_ave[k] += m[i][j][(k + 1) % 3] * m[i][j][(k + 2) % 3] / SIZE;
@@ -325,7 +325,7 @@ int main(void){
 	}
 
 	//cout << "m_ave  :   " << m_ave[0] << " : " << m_ave[1] << " : "  << m_ave[2] << endl;
-	for(i=0;i<=ndm;i++){
+	for(i=0;i<=ndm;i++){		//反磁界の追加項の計算
 		for(j=0;j<=ndm;j++){
 			for(k=0;k<3;k++){
 				//cout << "   " << endl;
@@ -338,7 +338,7 @@ int main(void){
 	
 
 
-	for(i=0;i<=ndm;i++){
+	for(i=0;i<=ndm;i++){		//各領域の固有ひずみの計算
 		for(j=0;j<=ndm;j++){
 			epsilon_zero[i][j][0][0] = 3/2 * ram100 * (m[i][j][0] * m[i][j][0] - 1/3);
 			epsilon_zero[i][j][1][1] = 3/2 * ram100 * (m[i][j][1] * m[i][j][1] - 1/3);
@@ -347,7 +347,7 @@ int main(void){
 			epsilon_zero[i][j][0][2] = epsilon_zero[i][j][2][0] = 3/2 * ram111 * m[i][j][0] * m[i][j][2];
 			epsilon_zero[i][j][1][2] = epsilon_zero[i][j][2][1] = 3/2 * ram111 * m[i][j][1] * m[i][j][2];
 
-
+					//各領域の固有ひずみの偏微分を計算
 			epsilon_zero_grad[i][j][0][0][0] = 3/2 * ram100 * (2 * m[i][j][0]);
 			epsilon_zero_grad[i][j][0][1][0] = epsilon_zero_grad[i][j][1][0][0] = 3/2 * ram111 * m[i][j][1];
 			epsilon_zero_grad[i][j][0][2][0] = epsilon_zero_grad[i][j][2][0][0] = 3/2 * ram111 * m[i][j][2];
@@ -361,7 +361,7 @@ int main(void){
 			epsilon_zero_grad[i][j][1][2][2] = epsilon_zero_grad[i][j][2][1][2] = 3/2 * ram111 * m[i][j][1];
 		}
 	}
-
+	//均一ひずみを計算
 	epsilon_homo[0][0] = s[0][0][0][0] * sigma_a[0][0] + s[0][0][1][1] * (sigma_a[1][1] + sigma_a[2][2]) + 3/2 * ram100 * (m2_ave[0] - 1/3);
 	epsilon_homo[1][1] = s[0][0][0][0] * sigma_a[1][1] + s[0][0][1][1] * (sigma_a[0][0] + sigma_a[2][2]) + 3/2 * ram100 * (m2_ave[1] - 1/3);
 	epsilon_homo[2][2] = s[0][0][0][0] * sigma_a[2][2] + s[0][0][1][1] * (sigma_a[0][0] + sigma_a[1][1]) + 3/2 * ram100 * (m2_ave[2] - 1/3);
@@ -369,7 +369,7 @@ int main(void){
 	epsilon_homo[1][2] = epsilon_homo[2][1] = 1/2 * s[0][1][0][1] * sigma_a[1][2] + 3/2 * ram111 * mm_ave[0];
 	epsilon_homo[2][0] = epsilon_homo[0][2] = 1/2 * s[0][1][0][1] * sigma_a[2][0] + 3/2 * ram111 * mm_ave[1];
 
-	for(l=0;l<3;l++){
+	for(l=0;l<3;l++){		//固有ひずみをフーリエ変換
 		for(k=0;k<3;k++){
 			for(i=0;i<=ndm;i++){
 				for(j=0;j<=ndm;j++){
@@ -387,7 +387,7 @@ int main(void){
 	}
 
 
-	for(i=0;i<=ndm;i++){
+	for(i=0;i<=ndm;i++){		//行列Kに対する補因子Nと行列式Dのフーリエ変換した結果を代入
 		for(j=0;j<=ndm;j++){
 			Dfour[i][j] = c44 * c44 * c11 * (xf[i] * xf[i] + yf[j] * yf[j] + zf[k] * zf[k]) * (xf[i] * xf[i] + yf[j] * yf[j] + zf[k] * zf[k]) * (xf[i] * xf[i] + yf[j] * yf[j] + zf[k] * zf[k]) + c44 * (c11-c12-2*c44) * (c11+c12) * (xf[i] * xf[i] + yf[j] * yf[j] + zf[k] * zf[k]) * (xf[i] * xf[i] * yf[j] * yf[j] + zf[k] * zf[k] * yf[j] * yf[j] + xf[i] * xf[i] * zf[k] * zf[k] ) + (c11 - c12 - 2*c44) * (c11 - c12 - 2*c44) * (c11+2*c12+c44) * xf[i] * xf[i] * yf[j] * yf[j] * zf[k] * zf[k];
 			Nfour[i][j][0][0] = c44 * c44 + c44 * (c11 - c44) * (xf[i] * xf[i] + yf[j] * yf[j] + zf[k] * zf[k]) * (yf[j] * yf[j] + zf[k] * zf[k]) + (c11-c12-2*c44) * (c11+c12) * yf[j] * yf[j] * zf[k] * zf[k];
@@ -406,7 +406,7 @@ int main(void){
 				ufour_i[i][j][kk] = 0;
 				for(jj=0;jj<3;jj++){
 					for(ii=0;ii<3;ii++){
-						for(ll=0;ll<3;ll++){
+						for(ll=0;ll<3;ll++){		//変位のフーリエ変換した結果を代入
 							if(c[ii][jj][kk][ll] * four_axis(jj, i, j) * four_axis(ll, i, j) == 0 ){
 								ufour[i][j][kk] += 0;
 								ufour_i[i][j][kk] += 0;
@@ -424,7 +424,7 @@ int main(void){
 		}
 	}
 
-	for(k=0;k<3;k++){
+	for(k=0;k<3;k++){		//変位の逆フーリエ変換
 		for(i=0;i<=ndm;i++){
 			for(j=0;j<=ndm;j++){
 				fourier_output[i][j] = ufour[i][j][k];
@@ -439,9 +439,9 @@ int main(void){
 		}
 	}
 
-	grad_u();
+	grad_u();		//変位を偏微分
 
-	for(l=0;l<3;l++){
+	for(l=0;l<3;l++){		//不均一ひずみを計算
 		for(k=0;k<3;k++){
 			for(i=0;i<=ndm;i++){
 				for(j=0;j<=ndm;j++){
@@ -451,7 +451,7 @@ int main(void){
 		}
 	}
 
-	for(i=0;i<=ndm;i++){
+	for(i=0;i<=ndm;i++){		//弾性エネルギーによる磁界を計算
 		for(j=0;j<=ndm;j++){
 			for(k=0;k<3;k++){
 				Helastic[i][j][k] = 0;
@@ -472,7 +472,7 @@ int main(void){
 	}
 
 	for(i=0;i<=ndm;i++){
-		for(j=0;j<=ndm;j++){
+		for(j=0;j<=ndm;j++){		//弾性ひずみを計算
 			e1[i][j] = (epsilon_zero[i][j][0][0] + epsilon_zero[i][j][1][1] + epsilon_zero[i][j][2][2]) / root3;
 			e2[i][j] = (epsilon_zero[i][j][0][0] - epsilon_zero[i][j][1][1]) / root2;
 			e3[i][j] = (2 * epsilon_zero[i][j][2][2] - epsilon_zero[i][j][1][1] - epsilon_zero[i][j][0][0]) / root6;
@@ -480,6 +480,7 @@ int main(void){
 			e5[i][j] = epsilon_zero[i][j][0][2];
 			e6[i][j] = epsilon_zero[i][j][0][1];
 
+			//弾性ひずみの偏微分を計算
 			e1_grad[i][j][0] = root3 * ram100 * m[i][j][0];
 			e1_grad[i][j][1] = root3 * ram100 * m[i][j][1];
 			e1_grad[i][j][2] = root3 * ram100 * m[i][j][2];
@@ -517,7 +518,7 @@ int main(void){
 
 	//*********************************  STEP 1  ******************************************************
 
-	for(i=0;i<=ndm;i++){
+	for(i=0;i<=ndm;i++){		//磁界の総和（磁気モーメント換算）を算出
 		for(j=0;j<=ndm;j++){
 			for(k=0;k<3;k++){
 				h[i][j][k] = (Hanis[i][j][k]  + Hms[i][j][k] + Hexternal[i][j][k] + Helastic[i][j][k] + Hlandau[i][j][k] + Hme[i][j][k])/Ms;
@@ -531,7 +532,7 @@ int main(void){
 	//cout << "h  :   " << h[100][100][0]  << " : " << h[100][100][1]  << " : " << h[100][100][2] << endl;
 
 	// hfour mfour　の計算 (fft)
-	for(k=0;k<3;k++){
+	for(k=0;k<3;k++){		//磁化の総和をフーリエ変換
 		for(i=0;i<=ndm;i++){
 			for(j=0;j<=ndm;j++){
 				fourier_input[i][j] = h[i][j][k];
@@ -546,7 +547,7 @@ int main(void){
 		}
 	}
 
-	for(i=0;i<=ndm;i++){
+	for(i=0;i<=ndm;i++){		//計算ステップ用の変数gのフーリエ変換の答えを計算
 		for(j=0;j<=ndm;j++){
 			for(k=0;k<3;k++){
 				gfour[i][j][k] = (mfour[i][j][k] + delt*hfour[i][j][k])/(1+(xf[i]*xf[i] + yf[j]*yf[j] + 0)*Astar*delt);
@@ -556,7 +557,7 @@ int main(void){
 	}
 	
 
-	for(k=0;k<3;k++){
+	for(k=0;k<3;k++){		//gの逆フーリエ変換
 		for(i=0;i<=ndm;i++){
 			for(j=0;j<=ndm;j++){
 				fourier_output[i][j] = gfour[i][j][k];
@@ -573,13 +574,13 @@ int main(void){
 
 
 
-	for(i=0;i<=ndm;i++){
+	for(i=0;i<=ndm;i++){		//m*[x]の計算（ガウスザイデル）
 		for(j=0;j<=ndm;j++){
 			mstar1[i][j][0] = m[i][j][0] + (g[i][j][1] * m[i][j][2] - g[i][j][2] * m[i][j][1] );
 		}
 	}
 
-	for(i=0;i<=ndm;i++){
+	for(i=0;i<=ndm;i++){		//フーリエ変換
 		for(j=0;j<=ndm;j++){
 			fourier_input[i][j] = mstar1[i][j][0];
 		}
@@ -592,7 +593,7 @@ int main(void){
 		}
 	}
 
-	for(i=0;i<=ndm;i++){
+	for(i=0;i<=ndm;i++){		//g*[x]のフーリエ変換の結果を代入
 		for(j=0;j<=ndm;j++){
 			gstarfour[i][j][0] = (mstarfour[i][j][0] + delt*hfour[i][j][0])/(1+(xf[i]*xf[i] + yf[j]*yf[j] + 0)*Astar*delt);
 			gstarfour_i[i][j][0] = (mstarfour_i[i][j][0] + delt*hfour_i[i][j][0])/(1+(xf[i]*xf[i] + yf[j]*yf[j] + 0)*Astar*delt);
@@ -600,7 +601,7 @@ int main(void){
 	}
 
 
-	for(i=0;i<=ndm;i++){
+	for(i=0;i<=ndm;i++){		//g*[x]の逆フーリエ変換
 		for(j=0;j<=ndm;j++){
 			fourier_output[i][j] = gstarfour[i][j][0];
 			fourier_output_i[i][j] = gstarfour_i[i][j][0];
@@ -613,7 +614,7 @@ int main(void){
 		}
 	}
 
-	for(i=0;i<=ndm;i++){
+	for(i=0;i<=ndm;i++){		//m*[y]の計算（ガウスザイデル）↓xと同様
 		for(j=0;j<=ndm;j++){
 			mstar1[i][j][1] = m[i][j][1] + (g[i][j][2] * mstar1[i][j][0] - gstar[i][j][0] * m[i][j][2] );
 		}
@@ -653,7 +654,7 @@ int main(void){
 		}
 	}
 
-	for(i=0;i<=ndm;i++){
+	for(i=0;i<=ndm;i++){		//m*[z]の計算（ガウスザイデル）
 		for(j=0;j<=ndm;j++){
 			mstar1[i][j][2] = m[i][j][2] + (gstar[i][j][0] * mstar1[i][j][1] - gstar[i][j][1] * mstar1[i][j][0] );
 		}
@@ -675,7 +676,7 @@ int main(void){
 
 	//*********************************  STEP 2  ******************************************************
 
-	for(i=0;i<=ndm;i++){
+	for(i=0;i<=ndm;i++){		//m**の計算
 		for(j=0;j<=ndm;j++){
 			for(k=0;k<3;k++){
 				mstar2four[i][j][k] = (mstarfour[i][j][k] + alpha*delt*hfour[i][j][k])/(1+(xf[i]*xf[i] + yf[j]*yf[j] + 0)*Astar*alpha*delt);
@@ -701,7 +702,7 @@ int main(void){
 
 	//*********************************  STEP 3  ******************************************************
 
-	for(i=0;i<=ndm;i++){
+	for(i=0;i<=ndm;i++){		//m**の二乗平均を用いて磁気モーメントを算出
 		for(j=0;j<=ndm;j++){
 			mlength = sqrt( mstar2[i][j][0] * mstar2[i][j][0] + mstar2[i][j][1] * mstar2[i][j][1] + mstar2[i][j][2] * mstar2[i][j][2] );
 			for(k=0;k<3;k++){
@@ -711,7 +712,7 @@ int main(void){
 	}
 
 
-	for(i=0;i<=ndm;i++){
+	for(i=0;i<=ndm;i++){		//磁気モーメントの成分ををm[x]あたりに変換
 		for(j=0;j<=ndm;j++){
 			mlength = sqrt( m[i][j][0] * m[i][j][0] + m[i][j][1] * m[i][j][1] + m[i][j][2] * m[i][j][2] );
 			for(k=0;k<3;k++){
