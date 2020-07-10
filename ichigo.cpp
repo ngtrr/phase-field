@@ -198,6 +198,7 @@ using namespace Eigen;
 
 
 	void ini000();			//初期場の設定サブル−チン
+	void apply_stress(double step_num);			//計算途中で条件を変更(応力印加など)
 	void graph_s1();		//組織描画サブル−チン
 	void table();				//sinとcosのテーブルとビット反転テーブルの作成サブル−チン
 	void fft();					//１次元高速フーリエ変換
@@ -310,6 +311,8 @@ init:;
 
 //**** シミュレーションスタート ******************************
 start: ;
+	apply_stress(10000.);
+	/*
 	if(name_id==0){
 		if(time1>10000.){
 			sigma_a[0][1] = 1.0E7;
@@ -318,7 +321,7 @@ start: ;
 		if(time1>10000.){
 			sigma_a[2][2] = 1.0E7;
 		}
-	}
+	}*/
 	
 	for(i=0;i<=ndm;i++){
 		for(j=0;j<=ndm;j++){
@@ -1264,6 +1267,23 @@ void ini000()
 	}
 	//cout << "p0  " << p[10][10][0] << endl;
 	//cout << "p1  " << p[10][10][1] << endl;
+}
+
+void apply_stress(double step_num){
+	if(name_id==0){
+		if(time1 > step_num){
+			sigma_a[0][1] = 1.0E7;
+		}
+	}else{
+		if(time1 > step_num){
+			sigma_a[2][2] = 1.0E7;
+		}
+	}
+	/*
+	if(time1 > step_num){
+		sigma_a[0][1] = 1.0E7;
+	}
+	*/
 }
 
 //******* 組織の描画サブルーチン ***************************************
