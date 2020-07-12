@@ -7,6 +7,7 @@ g++ -std=c++1z -Wall example.cpp -o sample -lm `pkg-config fftw3 --libs` `pkg-co
 Mac
 g++ -std=c++1z -Wall mikan.cpp -o sample -lm `pkg-config fftw3 --libs` `pkg-config opencv4 --cflags` `pkg-config opencv4 --libs` -I./
 
+g++ -std=c++1z -Wall ichigo.cpp -o ichi -lm `pkg-config fftw3 --libs` `pkg-config opencv --cflags` `pkg-config opencv --libs` `pkg-config eigen3 --cflags`
 
 plot "LLG_Galfenol_300_m_2d.png" binary filetype=png with rgbimage
 replot "check300_2d.txt" with vector lc rgb "#000000"
