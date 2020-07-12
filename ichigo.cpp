@@ -12,6 +12,7 @@ replot "check300_2d.txt" with vector lc rgb "#000000"
 #include <math.h>
 #include <iostream>
 #include <fstream>
+#include <unordered_map>
 #include <vector>
 #include <opencv2/opencv.hpp>
 #include <complex.h>
@@ -71,10 +72,7 @@ using namespace Eigen;
 	double mu0 = 1.0;
 	double ld = 18E-9;
 	double G = 2.0E-8/(250*ld*ld);
-
 	double B = 2.00E+11;
-
-
 	double smob = 4.0E-9;
 	double ds_fac = 0.01;
 
