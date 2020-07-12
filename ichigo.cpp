@@ -1279,11 +1279,13 @@ void apply_stress(double step_num){
 			sigma_a[2][2] = 1.0E7;
 		}
 	}
-	/*
-	if(time1 > step_num){
-		sigma_a[0][1] = 1.0E7;
-	}
-	*/
+	/*if(time1 > step_num){
+		for(int i=0;i<=ndm;i++){
+			for(int j=0;j<=ndm;j++){
+				Hexternal[i][j][0] = 2.0E+5;
+			}
+		}
+	}*/
 }
 
 //******* 組織の描画サブルーチン ***************************************
