@@ -163,6 +163,8 @@ Khachatuyanの理論に従うと<br><br>
 
 <img src="https://latex.codecogs.com/gif.latex?\eta_{ij}&space;=&space;\frac{1}{2}\left&space;(&space;u_{i,j}&space;&plus;&space;u_{j,i}&space;\right&space;)\:&space;\:&space;\:&space;\:&space;\:&space;(27)" ><br><br>
 
+と表すことができる。
+
 
 
 
