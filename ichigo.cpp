@@ -1,13 +1,8 @@
-//g++ -o samplepleple example.cpp `pkg-config --cflags opencv4` `pkg-config --libs opencv4`
-//for magenetostriction model by llg equation with phase-field simulation only 2d
+#include "ichigo.h"
 
-/*
-plot "LLG_Galfenol_300_m_2d.png" binary filetype=png with rgbimage
-replot "check300_2d.txt" with vector lc rgb "#000000"
-*/
-
-#include <stdio.h>
+/*#include <stdio.h>
 #include <stdlib.h>
+#include<string>
 #include <time.h> 
 #include <math.h>
 #include <iostream>
@@ -19,29 +14,25 @@ replot "check300_2d.txt" with vector lc rgb "#000000"
 #include <fftw3.h>
 #include <Eigen/Core>
 #include <Eigen/LU>
-#include <sys/stat.h>
-
-//#include "wingxa.h"
+#include <sys/stat.h>*/
 
 
 using namespace std;
 using namespace Eigen;
 
-#define DRND(x) ((double)(x)/RAND_MAX*rand())//乱数の関数設定
+/*#define DRND(x) ((double)(x)/RAND_MAX*rand())//乱数の関数設定
 
 #define ND 256			//差分計算における計算領域一辺の分割数(高速フーリエ変換を用いるため２のべき乗)
 #define IG 8				//2^IG=ND
 #define SIZEX (ND)
 #define SIZEY (ND)
 #define SIZEZ 1
-#define SIZE (SIZEX*SIZEY*SIZEZ)
+#define SIZE (SIZEX*SIZEY*SIZEZ)*/
 
 	int nd=ND, ndm=ND-1; 	//計算領域の一辺の差分分割数(差分ブロック数)、ND-1を定義
 	int nd2=ND/2;				 	//ND/2を定義：高速フ−リエ変換で使用
 	int ig=IG;						//2^ig=ND
-	double alpha=1.5;
 	double time1;					//計算カウント数(時間に比例)
-	double time1max = 100000;
 
 
 	int name_id = 0;
@@ -49,34 +40,30 @@ using namespace Eigen;
 
 	double filter[3][3][3];
 
-
-    //*******************  FePd  ************************
-	/*double Ms = 6.02E+5;
-  	double K1 = 2.7E+3, K2 = -6.1E+3;
-  	double ram100 = 0.0E+4, ram111 = 1.64E-3;
-  	double c11 = 1.495E+11, c12 = 1.43E+12, c44 = 7.05E+10;
-	double A = 2.0E-11;
-  	double Astar;
-	double delt = 0.01;
-	double mu0 = 1.0;
-	double ld = 1.8E-8;*/
-
-    //******************* NiMnGa ************************
+	string m_path;
+	string p_path;
+	double time1max = 100000;
+	int graph_step = 100;
+	int name_max = 0;
+	int num_max = 0;
 	double Ms = 6.02E+5;
+	double alpha=1.5;
   	double K1 = 2.7E+3, K2 = -6.1E+3;
 	double Ks = 1.65E+8;
 	double stretch = 0.034;
   	double ram100 = 0.0E-2, ram111 = 1.64E-3;
   	double c11 = 1.6E+11, c12 = 1.52E+11, c44 = 0.43E+11;
 	double A = 4.0E-9;
-  	double Astar;
 	double delt = 0.1;
 	double mu0 = 1.0;
 	double ld = 18E-9;
-	double G = 2.0E-8/(250*ld*ld);
+	double G_para = 8.0E-11;
 	double B = 2.00E+11;
 	double smob = 4.0E-9;
 	double ds_fac = 0.01;
+
+  	double Astar;
+	double G = G_para/(ld*ld);
 
 	double xf[SIZEX];
 	double yf[SIZEY];
@@ -87,7 +74,6 @@ using namespace Eigen;
 	double faifour_i[ND][ND];
 
 	double m_ave[3];
-
 	double N[3];
 
 	double m[ND][ND][3];
@@ -194,14 +180,10 @@ using namespace Eigen;
 
 	double sigma_a[3][3];
 
-
+	/*void load_txt(string file_path);
 	void ini000();			//初期場の設定サブル−チン
-	void apply_stress(double step_num);			//計算途中で条件を変更(応力印加など)
+	void apply_stress(double step_num, string file_path);			//計算途中で条件を変更(応力印加など)
 	void graph_s1();		//組織描画サブル−チン
-	void table();				//sinとcosのテーブルとビット反転テーブルの作成サブル−チン
-	void fft();					//１次元高速フーリエ変換
-	void rcfft();				//２次元高速フーリエ変換
-	void datsave();			//デ−タ保存サブル−チン
 
 	int DCexchange2D();
 	int fft3d();
@@ -209,7 +191,7 @@ using namespace Eigen;
 	int convolution3D(int switch_num);
 	void grad_fai();
 	void grad_u();
-	int four_axis(int k,int i,int j);
+	int four_axis(int k,int i,int j);*/
 
 	time_t now_time;		//現在時刻
 	struct tm* localNow;	//現在時刻の構造体
@@ -220,7 +202,7 @@ using namespace Eigen;
 	int now_min;
 
 //******* メインプログラム ******************************************
-int main(void)
+int evolution(void)
 {
 
 	int   i, j, k, l, ii, jj, kk, ll;		//整数
@@ -235,10 +217,9 @@ int main(void)
 //****** 計算条件および物質定数の設定 ****************************************
 
 init:;
-	Astar = (2 * A)/(mu0 * Ms * Ms * ld * ld);
 	//Astar = 0.0625;
 	//Astar = 0.00625;
-	cout << "Astar : " << Astar << endl;
+	//cout << "Astar : " << Astar << endl;
 
 	for(i=0;i<=ndm;i++){
 		for(j=0;j<=ndm;j++){
@@ -267,6 +248,10 @@ init:;
 	sigma_a[1][2] = 0;
 	sigma_a[2][0] = 0;
 	sigma_a[2][1] = 0;
+
+	ini000();		//初期場の設定
+
+	Astar = (2 * A)/(mu0 * Ms * Ms * ld * ld);
 
 	for(i=0;i<=ndm;i++){
 		xf[i] = i - nd2;
@@ -304,12 +289,11 @@ init:;
 	epsilon_phase[2][1] = stretch / 2;
 	epsilon_phase[2][2] = stretch / 2;
 
-	ini000();		//初期場の設定
 	time1 = 0;
 
 //**** シミュレーションスタート ******************************
 start: ;
-	apply_stress(10000.);
+	apply_stress(1000.,"material_parameter02.txt");
 	/*
 	if(name_id==0){
 		if(time1>10000.){
@@ -329,10 +313,8 @@ start: ;
 		}
 	}
 
-	//if(time1<=100.){Nstep=10;} else{Nstep=200;}		//データ保存する時間間隔の変更
-	//if((((int)(time1) % Nstep)==0)) {datsave();} 	//一定繰返しカウント毎に組織データを保存
-	if((((int)(time1) % 100)==0)) {graph_s1();} 		//一定繰返しカウント毎に組織を表示
-	//if((((int)(time1) % 100)==0)) {datsave();} 		//一定繰返しカウント毎にデータを保存
+	if((((int)(time1) % graph_step)==0)) {graph_s1();} 		//一定繰返しカウント毎に組織を表示
+
 
 
 
@@ -1221,54 +1203,248 @@ end:;
 	return 0;
 }
 
+void load_txt(string file_path){
+	int i, j ,k;
+
+	ifstream ifs(file_path);
+    if (!ifs) {
+        cerr << "ファイルオープンに失敗" << endl;
+        exit(1);
+    }
+
+    string buf;
+    getline(ifs, buf);
+    if (!ifs) {
+        cerr << "読み込みに失敗" << endl;
+        exit(1);
+    }else{
+		m_path = buf;
+    	cout << "m_path : " << m_path << endl;
+	}
+
+    getline(ifs, buf);
+	p_path = buf;
+    cout << "p_path : " << p_path << endl;
+
+    getline(ifs, buf);
+	time1max = stod(buf.c_str());
+    cout << "time1max : " << time1max << endl;
+
+    getline(ifs, buf);
+	graph_step = stoi(buf.c_str());
+    cout << "graph_step : " << graph_step << endl;
+
+    getline(ifs, buf);
+	name_max = stoi(buf.c_str());
+    cout << "name_max : " << name_max << endl;
+
+    getline(ifs, buf);
+	num_max = stoi(buf.c_str());
+    cout << "num_max : " << num_max << endl;
+
+    getline(ifs, buf);
+	Ms = stod(buf.c_str());
+    cout << "Ms : " << Ms << endl;
+
+    getline(ifs, buf);
+	alpha = stod(buf.c_str());
+    cout << "alpha : " << alpha << endl;
+
+    getline(ifs, buf);
+	K1 = stod(buf.c_str());
+    cout << "K1 : " << K1 << endl;
+
+    getline(ifs, buf);
+	K2 = stod(buf.c_str());
+    cout << "K2 : " << K2 << endl;
+
+    getline(ifs, buf);
+	Ks = stod(buf.c_str());
+    cout << "Ks : " << Ks << endl;
+
+    getline(ifs, buf);
+	stretch = stod(buf.c_str());
+    cout << "stretch : " << stretch << endl;
+
+    getline(ifs, buf);
+	ram100 = stod(buf.c_str());
+    cout << "ram100 : " << ram100 << endl;
+
+    getline(ifs, buf);
+	ram111 = stod(buf.c_str());
+    cout << "ram111 : " << ram111 << endl;
+
+    getline(ifs, buf);
+	c11 = stod(buf.c_str());
+    cout << "c11 : " << c11 << endl;
+
+    getline(ifs, buf);
+	c12 = stod(buf.c_str());
+    cout << "c12 : " << c12 << endl;
+
+    getline(ifs, buf);
+	c44 = stod(buf.c_str());
+    cout << "c44 : " << c44 << endl;
+
+    getline(ifs, buf);
+	A = stod(buf.c_str());
+    cout << "A : " << A << endl;
+
+    getline(ifs, buf);
+	delt = stod(buf.c_str());
+    cout << "delt : " << delt << endl;
+
+    getline(ifs, buf);
+	mu0 = stod(buf.c_str());
+    cout << "mu0 : " << mu0 << endl;
+
+    getline(ifs, buf);
+	ld = stod(buf.c_str());
+    cout << "ld : " << ld << endl;
+
+    getline(ifs, buf);
+	G = stod(buf.c_str());
+    cout << "G : " << G << endl;
+
+    getline(ifs, buf);
+	B = stod(buf.c_str());
+    cout << "B : " << B << endl;
+
+    getline(ifs, buf);
+	smob = stod(buf.c_str());
+    cout << "smob : " << smob << endl;
+
+    getline(ifs, buf);
+	ds_fac = stod(buf.c_str());
+    cout << "ds_fac : " << ds_fac << endl;
+
+    getline(ifs, buf);
+	sigma_a[0][0] = stod(buf.c_str());
+    cout << "sigma_a[0][0] : " << sigma_a[0][0] << endl;
+
+    getline(ifs, buf);
+	sigma_a[0][1] = stod(buf.c_str());
+    cout << "sigma_a[0][1] : " << sigma_a[0][1] << endl;
+
+    getline(ifs, buf);
+	sigma_a[0][2] = stod(buf.c_str());
+    cout << "sigma_a[0][2] : " << sigma_a[0][2] << endl;
+
+    getline(ifs, buf);
+	sigma_a[1][0] = stod(buf.c_str());
+    cout << "sigma_a[1][0] : " << sigma_a[1][0] << endl;
+
+    getline(ifs, buf);
+	sigma_a[1][1] = stod(buf.c_str());
+    cout << "sigma_a[1][1] : " << sigma_a[1][1] << endl;
+
+    getline(ifs, buf);
+	sigma_a[1][2] = stod(buf.c_str());
+    cout << "sigma_a[1][2] : " << sigma_a[1][2] << endl;
+
+    getline(ifs, buf);
+	sigma_a[2][0] = stod(buf.c_str());
+    cout << "sigma_a[2][0] : " << sigma_a[2][0] << endl;
+
+    getline(ifs, buf);
+	sigma_a[2][1] = stod(buf.c_str());
+    cout << "sigma_a[2][1] : " << sigma_a[2][1] << endl;
+
+    getline(ifs, buf);
+	sigma_a[2][2] = stod(buf.c_str());
+    cout << "sigma_a[2][2] : " << sigma_a[2][2] << endl;
+
+
+    getline(ifs, buf);
+	for(i=0;i<=ndm;i++){
+		for(j=0;j<=ndm;j++){
+			Hexternal[i][j][0] = stod(buf.c_str());
+		}
+	}
+    cout << "Hexternal[i][j][0] : " << Hexternal[100][100][0] << endl;
+
+    getline(ifs, buf);
+	for(i=0;i<=ndm;i++){
+		for(j=0;j<=ndm;j++){
+			Hexternal[i][j][1] = stod(buf.c_str());
+		}
+	}
+    cout << "Hexternal[i][j][1] : " << Hexternal[100][100][1] << endl;
+
+    getline(ifs, buf);
+	for(i=0;i<=ndm;i++){
+		for(j=0;j<=ndm;j++){
+			Hexternal[i][j][2] = stod(buf.c_str());
+		}
+	}
+    cout << "Hexternal[i][j][2] : " << Hexternal[100][100][2] << endl;
+
+	//std::getline(ifs, buf);
+    //cout << "#" << buf << endl;
+    //cout << "##" << name_max << endl;
+	//name_max = std::stoi(buf.c_str());
+	
+	/*while (getline(ifs, buf)) {
+        cout << "#" << buf << endl;
+    }*/
+}
+
 //************ 初期場の設定サブル−チン *************
 void ini000()
 {
 	int i, j ,k;
 	double mlength;
+	int rand_switch = 0;
+
+	load_txt("material_parameter01.txt");
 
 	cv::Mat_<uchar> image , image2;
 	if(SIZEX == 256){
-		image = cv::imread("a.png" ,0);
-		image2 = cv::imread("wave.jpg" ,0);
-		//image = cv::imread("test120.000000.png" ,0);
+		image = cv::imread(m_path);
+		image2 = cv::imread(p_path);
+
+		if(image.empty() == true || image2.empty() == true){
+			cout << "error : failed to load image! switch to random mode." << endl;
+			rand_switch = 1;
+		}
 	}else if(SIZEX == 512){
 		image = cv::imread("c.jpg" ,0);
 	}else{
 		cout << "error : no image to load" << endl;
+		rand_switch = 1;
 	}
 
 	srand(time(NULL)); // 乱数初期化
 
 	for(i=0;i<=ndm;i++){
 		for(j=0;j<=ndm;j++){
-			for(k=0;k<3;k++){
-				m[i][j][k] = rand() % 201 - 100;
-				//epsilon_zero[i][j][k][k] = DRND(0.01);
+
+			if(rand_switch == 1){
+				for(k=0;k<3;k++){
+					m[i][j][k] = rand() % 201 - 100;
+				}
+				p[i][j][0] = DRND(0.9);
+				p[i][j][1] = DRND(1);
+			}else{
+				m[i][j][2] = (double(image.at<cv::Vec3b>(i,j)[0])-128);//調整必要
+				m[i][j][1] = (double(image.at<cv::Vec3b>(i,j)[1])-128);
+				m[i][j][0] = (double(image.at<cv::Vec3b>(i,j)[2])-128);
+
+				p[i][j][0] = (double(image2.at<cv::Vec3b>(i,j)[2])/200);//調整必要
+				p[i][j][1] = (double(image2.at<cv::Vec3b>(i,j)[1])/200);
 			}
 
-			p[i][j][0] = DRND(0.9);
-			p[i][j][1] = DRND(1);
 
-			//p[i][j][0] = 0;
-			//p[i][j][1] = 1;
-			//p[i][j][1] = (255 - (image[i][j]))/128;
-
-			//m[i][j][0] = int(image2[i][j]);
-			//m[i][j][1] = int(255-image2[i][j]);
-			//m[i][j][2] = int(100-image[i][j]/2);
 			mlength = sqrt( m[i][j][0] * m[i][j][0] + m[i][j][1] * m[i][j][1] + m[i][j][2] * m[i][j][2] );
 			for(k=0;k<3;k++){
 				m[i][j][k] = m[i][j][k] / mlength;
 			}
 		}
 	}
-	//cout << "p0  " << p[10][10][0] << endl;
-	//cout << "p1  " << p[10][10][1] << endl;
 }
 
-void apply_stress(double step_num){
-	if(name_id==0){
+void apply_stress(double step_num, string file_path){
+	/*if(name_id==0){
 		if(time1 > step_num){
 			sigma_a[0][1] = 1.0E7;
 		}
@@ -1276,7 +1452,7 @@ void apply_stress(double step_num){
 		if(time1 > step_num){
 			sigma_a[2][2] = 1.0E7;
 		}
-	}
+	}*/
 	/*if(time1 > step_num){
 		for(int i=0;i<=ndm;i++){
 			for(int j=0;j<=ndm;j++){
@@ -1284,6 +1460,9 @@ void apply_stress(double step_num){
 			}
 		}
 	}*/
+	if(time1 == step_num){
+		load_txt(file_path);
+	}
 }
 
 //******* 組織の描画サブルーチン ***************************************
