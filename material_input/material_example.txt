@@ -1,0 +1,37 @@
+m_path;
+p_path;
+time1max = 100000;
+graph_step = 100;
+name_max = 0;
+num_max = 0;
+Ms = 6.02E+5;
+alpha=1.5;
+K1 = 2.7E+3
+K2 = -6.1E+3;
+Ks = 1.65E+8;
+stretch = 0.034;
+ram100 = 0.0E-2
+ram111 = 1.64E-3;
+c11 = 1.6E+11
+c12 = 1.52E+11
+c44 = 0.43E+11;
+A = 4.0E-9;
+delt = 0.1;
+mu0 = 1.0;
+ld = 18E-9;
+G_para = 8.0E-11
+B = 2.00E+11;
+smob = 4.0E-9;
+ds_fac = 0.01;
+sigma_a[0][0];
+sigma_a[0][1];
+sigma_a[0][2];
+sigma_a[1][0];
+sigma_a[1][1];
+sigma_a[1][2];
+sigma_a[2][0];
+sigma_a[2][1];
+sigma_a[2][2];
+Hexternal[i][j][0] = 2.0E+5;
+Hexternal[i][j][1] = 0.0E+5;
+Hexternal[i][j][2] = 0.0E+5;
