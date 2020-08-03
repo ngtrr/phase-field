@@ -1,5 +1,5 @@
-d.png
-e.png
+image/d.png
+image/e.png
 100000
 100
 10
