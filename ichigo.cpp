@@ -1,8 +1,18 @@
+/*
+
+g++ -std=c++1z ichigo.cpp -c -lm `pkg-config fftw3 --libs` `pkg-config opencv --cflags` `pkg-config opencv --libs` `pkg-config eigen3 --cflags`
+ar r libfsma.a ichigo.o
+g++ -std=c++1z -Wall main.cpp -o main -lm -L. -lfsma `pkg-config fftw3 --libs` `pkg-config opencv --cflags` `pkg-config opencv --libs` `pkg-config eigen3 --cflags`
+./main
+
+
+*/
+
 #include "ichigo.h"
 
-/*#include <stdio.h>
+#include <stdio.h>
 #include <stdlib.h>
-#include<string>
+#include <string>
 #include <time.h> 
 #include <math.h>
 #include <iostream>
@@ -14,20 +24,20 @@
 #include <fftw3.h>
 #include <Eigen/Core>
 #include <Eigen/LU>
-#include <sys/stat.h>*/
+#include <sys/stat.h>
 
 
 using namespace std;
 using namespace Eigen;
 
-/*#define DRND(x) ((double)(x)/RAND_MAX*rand())//乱数の関数設定
+#define DRND(x) ((double)(x)/RAND_MAX*rand())//乱数の関数設定
 
 #define ND 256			//差分計算における計算領域一辺の分割数(高速フーリエ変換を用いるため２のべき乗)
 #define IG 8				//2^IG=ND
 #define SIZEX (ND)
 #define SIZEY (ND)
 #define SIZEZ 1
-#define SIZE (SIZEX*SIZEY*SIZEZ)*/
+#define SIZE (SIZEX*SIZEY*SIZEZ)
 
 	int nd=ND, ndm=ND-1; 	//計算領域の一辺の差分分割数(差分ブロック数)、ND-1を定義
 	int nd2=ND/2;				 	//ND/2を定義：高速フ−リエ変換で使用
@@ -180,8 +190,8 @@ using namespace Eigen;
 
 	double sigma_a[3][3];
 
-	/*void load_txt(string file_path);
-	void ini000();			//初期場の設定サブル−チン
+	/*void load_txt(std::string file_path);
+	void ini000(std::string file_path);			//初期場の設定サブル−チン
 	void apply_stress(double step_num, string file_path);			//計算途中で条件を変更(応力印加など)
 	void graph_s1();		//組織描画サブル−チン
 
@@ -202,7 +212,7 @@ using namespace Eigen;
 	int now_min;
 
 //******* メインプログラム ******************************************
-int evolution(void)
+int evolution(std::string file_path)
 {
 
 	int   i, j, k, l, ii, jj, kk, ll;		//整数
@@ -227,9 +237,10 @@ init:;
 				Hms[i][j][k] = 0;//init
 				Helastic[i][j][k] = 0;//ok
 			}
-			Hexternal[i][j][0] = 0.0E+6;//ok
+			/*Hexternal[i][j][0] = 0.0E+6;//ok
 			Hexternal[i][j][1] = 0.0E+6;//ok
 			Hexternal[i][j][2] = 0.0E+6;//ok
+			*/
 
 			//Hanis[i][j][0] = 0;//(4 * K1)/(3 );// * 1.0E+7;//ok
 			//Hanis[i][j][1] = 0;//(4 * K1)/(3 );// * 1.0E+7;//ok
@@ -238,7 +249,7 @@ init:;
 		}
 	}
 
-	sigma_a[0][0] = 0;
+	/*sigma_a[0][0] = 0;
 	sigma_a[1][1] = 0;
 	sigma_a[2][2] = 0;
 
@@ -247,9 +258,9 @@ init:;
 	sigma_a[1][0] = 0;
 	sigma_a[1][2] = 0;
 	sigma_a[2][0] = 0;
-	sigma_a[2][1] = 0;
+	sigma_a[2][1] = 0;*/
 
-	ini000();		//初期場の設定
+	ini000(file_path);		//初期場の設定
 
 	Astar = (2 * A)/(mu0 * Ms * Ms * ld * ld);
 
@@ -1203,7 +1214,7 @@ end:;
 	return 0;
 }
 
-void load_txt(string file_path){
+void load_txt(std::string file_path){
 	int i, j ,k;
 
 	ifstream ifs(file_path);
@@ -1303,8 +1314,8 @@ void load_txt(string file_path){
     cout << "ld : " << ld << endl;
 
     getline(ifs, buf);
-	G = stod(buf.c_str());
-    cout << "G : " << G << endl;
+	G_para = stod(buf.c_str());
+    cout << "G_para : " << G_para << endl;
 
     getline(ifs, buf);
 	B = stod(buf.c_str());
@@ -1390,13 +1401,13 @@ void load_txt(string file_path){
 }
 
 //************ 初期場の設定サブル−チン *************
-void ini000()
+void ini000(std::string file_path)
 {
 	int i, j ,k;
 	double mlength;
 	int rand_switch = 0;
 
-	load_txt("material_parameter01.txt");
+	load_txt(file_path);
 
 	cv::Mat_<uchar> image , image2;
 	if(SIZEX == 256){
