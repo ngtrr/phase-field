@@ -1,8 +1,8 @@
 /*
 
-g++ -std=c++1z ichigo.cpp -c -lm `pkg-config fftw3 --libs` `pkg-config opencv --cflags` `pkg-config opencv --libs` `pkg-config eigen3 --cflags`
+g++ -std=c++1z ichigo.cpp -c -lm `pkg-config fftw3 --libs` `pkg-config opencv4 --cflags` `pkg-config opencv4 --libs` `pkg-config eigen3 --cflags`
 ar r libfsma.a ichigo.o
-g++ -std=c++1z -Wall main.cpp -o main -lm -L. -lfsma `pkg-config fftw3 --libs` `pkg-config opencv --cflags` `pkg-config opencv --libs` `pkg-config eigen3 --cflags`
+g++ -std=c++1z -Wall main.cpp -o main -lm -L. -lfsma `pkg-config fftw3 --libs` `pkg-config opencv4 --cflags` `pkg-config opencv4 --libs` `pkg-config eigen3 --cflags`
 ./main
 
 
@@ -1189,8 +1189,8 @@ start: ;
 	graph_s1();
 
 
-	while(num_id <= 0){
-		while(name_id < 0){
+	while(num_id <= num_max){
+		while(name_id < name_max){
 
 			/*for(i=0;i<=ndm;i++){
 				for(j=0;j<=ndm;j++){
