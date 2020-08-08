@@ -28,7 +28,7 @@ using namespace std;
 #define SIZE (SIZEX*SIZEY*SIZEZ)
 
 
-cv::Mat_<uchar> image = cv::imread("a.jpg", 0);
+cv::Mat_<uchar> image = cv::imread("image/a.jpg", 0);
 
 int DCexchange2D( fftw_complex *data, int cols, int rows, int depth )
 {
@@ -124,7 +124,7 @@ int fft3d(void){
 		for( i=0; i<SIZEX; i++ ){
 			idx = SIZEX*j+i;
 			//printf("%d %d %lf %lf\n", i, j, out[idx][0]*scale, out[idx][1]*scale );
-            image[i][j] = int(abs(out[idx][0]*scale*255));
+            image[i][j] = int(abs(out[idx][0]));
 		}
 	}
     cv::imwrite("Result1.png", image);
